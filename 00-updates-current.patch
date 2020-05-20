@@ -1,0 +1,11 @@
+Index: usr.sbin/httpd/parse.y
+@@ -564,7 +564,8 @@
+ 
+ 			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
+ 				if ((s->srv_conf.flags & SRVFLAG_LOCATION) &&
+-				    s->srv_conf.id == srv_conf->id &&
++				    s->srv_conf.parent_id ==
++				    srv_conf->parent_id &&
+ 				    strcmp(s->srv_conf.location,
+ 				    srv_conf->location) == 0)
+ 					break;

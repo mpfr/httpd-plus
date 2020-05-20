@@ -1,0 +1,165 @@
+Index: usr.sbin/httpd/http.h
+@@ -208,6 +208,7 @@
+ 	char		*media_name;
+ 	char		*media_type;
+ 	char		*media_subtype;
++	char		*media_cache;
+ };
+ /*
+  * Some default media types based on (2014-08-04 version):
+Index: usr.sbin/httpd/httpd.conf.5
+@@ -686,15 +686,18 @@
+ section must include one or more lines of the following syntax,
+ enclosed in curly braces:
+ .Bl -tag -width Ds
+-.It Ar type/subtype Ar name Op Ar name ...
++.It Ar type/subtype Oo Bro Ic cache Ar string Brc Oc Ar name Oo Ar name ... Oc
+ Set the media
+ .Ar type
+ and
+ .Ar subtype
+ to the specified extension
+ .Ar name .
+-One or more names can be specified per line.
+-Each line may end with an optional semicolon.
++One or more names can be specified per entry.
++If required, a
++.Ar cache
++control header string may be specified.
++Each entry may end with an optional semicolon.
+ .It Ic include Ar file
+ Include types definitions from an external file, for example
+ .Pa /usr/share/misc/mime.types .
+@@ -725,14 +728,14 @@
+ }
+ 
+ types {
+-	text/css		css
+-	text/html		html htm
+-	text/plain		txt
+-	image/gif		gif
+-	image/jpeg		jpeg jpg
+-	image/png		png
+-	application/javascript	js
+-	application/xml		xml
++	text/css					css
++	text/html					html htm
++	text/plain					txt
++	image/gif					gif
++	image/jpeg { cache "max-age=2592000, public" }	jpeg jpg
++	image/png					png
++	application/javascript				js
++	application/xml					xml
+ }
+ .Ed
+ .Pp
+Index: usr.sbin/httpd/httpd.h
+@@ -56,7 +56,8 @@
+ #define HTTPD_MAX_ALIAS_IP	16
+ #define HTTPD_REALM_MAX		255
+ #define HTTPD_LOCATION_MAX	255
+-#define HTTPD_DEFAULT_TYPE	{ "bin", "application", "octet-stream", NULL }
++#define HTTPD_DEFAULT_TYPE	{ \
++	"bin", "application", "octet-stream", "", NULL }
+ #define HTTPD_LOGVIS		VIS_NL|VIS_TAB|VIS_CSTYLE
+ #define HTTPD_TLS_CERT		"/etc/ssl/server.crt"
+ #define HTTPD_TLS_KEY		"/etc/ssl/private/server.key"
+@@ -88,6 +89,7 @@
+ 
+ #define MEDIATYPE_NAMEMAX	128	/* file name extension */
+ #define MEDIATYPE_TYPEMAX	64	/* length of type/subtype */
++#define MEDIATYPE_CACHEMAX	128	/* length of cache control */
+ 
+ #define CONFIG_RELOAD		0x00
+ #define CONFIG_MEDIA		0x01
+@@ -453,6 +455,7 @@
+ 	char			 media_name[MEDIATYPE_NAMEMAX];
+ 	char			 media_type[MEDIATYPE_TYPEMAX];
+ 	char			 media_subtype[MEDIATYPE_TYPEMAX];
++	char			 media_cache[MEDIATYPE_CACHEMAX];
+ 	char			*media_encoding;
+ 	RB_ENTRY(media_type)	 media_entry;
+ };
+Index: usr.sbin/httpd/parse.y
+@@ -140,7 +140,7 @@
+ %token	PROTOCOLS REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TICKET
+ %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
+ %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
+-%token	CA CLIENT CRL OPTIONAL PARAM FORWARDED
++%token	CA CLIENT CRL OPTIONAL PARAM FORWARDED CACHE
+ %token	<v.string>	STRING
+ %token  <v.number>	NUMBER
+ %type	<v.port>	port
+@@ -1145,7 +1145,7 @@
+ 		| mediaoptsl nl
+ 		;
+ 
+-mediaoptsl	: mediastring medianames_l optsemicolon
++mediaoptsl	: mediastring optmediacache medianames_l optsemicolon
+ 		| include
+ 		;
+ 
+@@ -1166,6 +1166,24 @@
+ 		}
+ 		;
+ 
++optmediacache	: /* empty */ {
++			*media.media_cache = '\0';
++		}
++		| '{' optnl mediacache '}'
++		;
++
++mediacache	: CACHE STRING optnl {
++			if (strlcpy(media.media_cache, $2,
++			    sizeof(media.media_cache)) >=
++			    sizeof(media.media_cache)) {
++				yyerror("cache string too long");
++				free($2);
++				YYERROR;
++			}
++			free($2);
++		}
++		;
++
+ medianames_l	: medianames_l medianamesl
+ 		| medianamesl
+ 		;
+@@ -1293,6 +1311,7 @@
+ 		{ "body",		BODY },
+ 		{ "buffer",		BUFFER },
+ 		{ "ca",			CA },
++		{ "cache",		CACHE },
+ 		{ "certificate",	CERTIFICATE },
+ 		{ "chroot",		CHROOT },
+ 		{ "ciphers",		CIPHERS },
+@@ -1805,6 +1824,7 @@
+ 			(void)strlcpy(m.media_subtype,
+ 			    mediatypes[i].media_subtype,
+ 			    sizeof(m.media_subtype));
++			*m.media_cache = '\0';
+ 			m.media_encoding = NULL;
+ 
+ 			if (media_add(conf->sc_mediatypes, &m) == NULL) {
+Index: usr.sbin/httpd/server_http.c
+@@ -1433,7 +1433,7 @@
+ 	struct http_descriptor	*desc = clt->clt_descreq;
+ 	struct http_descriptor	*resp = clt->clt_descresp;
+ 	const char		*error;
+-	struct kv		*ct, *cl;
++	struct kv		*ct, *cl, *cc;
+ 	char			 tmbuf[32];
+ 
+ 	if (desc == NULL || media == NULL ||
+@@ -1469,6 +1469,12 @@
+ 	if (size >= 0 && ((cl =
+ 	    kv_add(&resp->http_headers, "Content-Length", NULL)) == NULL ||
+ 	    kv_set(cl, "%lld", (long long)size) == -1))
++		return (-1);
++
++	/* Set cache control, if specified */
++	if (*media->media_cache != '\0' && ((cc =
++	    kv_add(&resp->http_headers, "Cache-Control", NULL)) == NULL ||
++	    kv_set(cc, "%s", media->media_cache) == -1))
+ 		return (-1);
+ 
+ 	/* Set last modification time */
