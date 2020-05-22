@@ -30,7 +30,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .It Ic include Ar file
  Include types definitions from an external file, for example
  .Pa /usr/share/misc/mime.types .
-@@ -720,14 +723,14 @@
+@@ -725,14 +728,14 @@
  }
  
  types {
@@ -141,7 +141,7 @@ Index: usr.sbin/httpd/parse.y
  
  			if (media_add(conf->sc_mediatypes, &m) == NULL) {
 Index: usr.sbin/httpd/server_http.c
-@@ -1430,7 +1430,7 @@
+@@ -1432,7 +1432,7 @@
  	struct http_descriptor	*desc = clt->clt_descreq;
  	struct http_descriptor	*resp = clt->clt_descresp;
  	const char		*error;
@@ -150,7 +150,7 @@ Index: usr.sbin/httpd/server_http.c
  	char			 tmbuf[32];
  
  	if (desc == NULL || media == NULL ||
-@@ -1466,6 +1466,12 @@
+@@ -1468,6 +1468,12 @@
  	if (size >= 0 && ((cl =
  	    kv_add(&resp->http_headers, "Content-Length", NULL)) == NULL ||
  	    kv_set(cl, "%lld", (long long)size) == -1))

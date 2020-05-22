@@ -9,6 +9,11 @@ Add-ons for the [OpenBSD](https://www.openbsd.org) [`httpd(8)`](http://man.openb
 Bug fixes:
 * Failing detection of `location` duplicates (see on [tech@](https://marc.info/?l=openbsd-tech&m=157313087000813))
 
+Commits to `-current` merged into `-stable`:
+* [Commits on May 16, 2020](https://github.com/openbsd/src/commit/83a0d42a38eeac687972cf5d09e1d9b2f003b4cf)
+* [Commits on May 18, 2020](https://github.com/openbsd/src/commit/aa3aed545c710959415b79b9b939bd135e4ca9f6)
+* [Commits on May 22, 2020](https://github.com/openbsd/src/commit/8643c0edbdaf122a89210ba0359ae06546ed9f17)
+
 ### cache-control-headers
 
 Optional HTTP `Cache-Control` headers via `httpd.conf(5)`.
@@ -143,12 +148,12 @@ server "www.example.com" {
 
 ## How to uninstall
 
-As patching the source code will be undone automatically right after building and installing the extended `httpd` daemon, the original version may be easily recovered by performing a de novo rebuild and reinstall.
+As patching the source code will be undone automatically right after building and installing the `httpd-plus` daemon, the original version may be easily recovered by performing a de novo rebuild and reinstall.
 
 ```
 # cd /usr/src/usr.sbin/httpd
-# make clean
 # make obj
+# make clean
 # make
 # make install
 # rcctl restart httpd

@@ -1,3 +1,31 @@
+Index: usr.sbin/httpd/httpd.conf.5
+@@ -1,4 +1,4 @@
+-.\"	$OpenBSD: httpd.conf.5,v 1.110 2020/04/23 21:10:53 jmc Exp $
++.\"	$OpenBSD: httpd.conf.5,v 1.111 2020/05/16 16:58:11 jmc Exp $
+ .\"
+ .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
+ .\"
+@@ -14,7 +14,7 @@
+ .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ .\"
+-.Dd $Mdocdate: April 23 2020 $
++.Dd $Mdocdate: May 16 2020 $
+ .Dt HTTPD.CONF 5
+ .Os
+ .Sh NAME
+@@ -699,6 +699,11 @@
+ Include types definitions from an external file, for example
+ .Pa /usr/share/misc/mime.types .
+ .El
++.Sh FILES
++.Bl -tag -width /etc/examples/httpd.conf -compact
++.It Pa /etc/examples/httpd.conf
++Example configuration file.
++.El
+ .Sh EXAMPLES
+ Example configuration files for
+ .Nm
 Index: usr.sbin/httpd/parse.y
 @@ -564,7 +564,8 @@
  
@@ -9,3 +37,59 @@ Index: usr.sbin/httpd/parse.y
  				    strcmp(s->srv_conf.location,
  				    srv_conf->location) == 0)
  					break;
+Index: usr.sbin/httpd/server_file.c
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: server_file.c,v 1.66 2018/06/15 12:36:05 reyk Exp $	*/
++/*	$OpenBSD: server_file.c,v 1.68 2020/05/22 07:18:17 bentley Exp $	*/
+ 
+ /*
+  * Copyright (c) 2006 - 2017 Reyk Floeter <reyk@openbsd.org>
+@@ -477,14 +477,17 @@
+ 
+ 	/* A CSS stylesheet allows minimal customization by the user */
+ 	style = "body { background-color: white; color: black; font-family: "
+-	    "sans-serif; }\nhr { border: 0; border-bottom: 1px dashed; }\n";
++	    "sans-serif; }\nhr { border: 0; border-bottom: 1px dashed; }\n"
++	    "@media (prefers-color-scheme: dark) {\n"
++	    "body { background-color: #1E1F21; color: #EEEFF1; }\n"
++	    "a { color: #BAD7FF; }\n}";
++
+ 	/* Generate simple HTML index document */
+ 	if (evbuffer_add_printf(evb,
+ 	    "<!DOCTYPE html>\n"
+ 	    "<html>\n"
+ 	    "<head>\n"
+-	    "<meta http-equiv=\"Content-Type\" content=\"text/html; "
+-	    "charset=utf-8\"/>\n"
++	    "<meta charset=\"utf-8\">\n"
+ 	    "<title>Index of %s</title>\n"
+ 	    "<style type=\"text/css\"><!--\n%s\n--></style>\n"
+ 	    "</head>\n"
+Index: usr.sbin/httpd/server_http.c
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: server_http.c,v 1.137 2020/02/25 15:18:41 sthen Exp $	*/
++/*	$OpenBSD: server_http.c,v 1.139 2020/05/22 07:18:17 bentley Exp $	*/
+ 
+ /*
+  * Copyright (c) 2006 - 2018 Reyk Floeter <reyk@openbsd.org>
+@@ -921,15 +921,17 @@
+ 	/* A CSS stylesheet allows minimal customization by the user */
+ 	style = "body { background-color: white; color: black; font-family: "
+ 	    "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif; }\n"
+-	    "hr { border: 0; border-bottom: 1px dashed; }\n";
++	    "hr { border: 0; border-bottom: 1px dashed; }\n"
++	    "@media (prefers-color-scheme: dark) {\n"
++	    "body { background-color: #1E1F21; color: #EEEFF1; }\n"
++	    "a { color: #BAD7FF; }\n}";
+ 
+ 	/* Generate simple HTML error document */
+ 	if ((bodylen = asprintf(&body,
+ 	    "<!DOCTYPE html>\n"
+ 	    "<html>\n"
+ 	    "<head>\n"
+-	    "<meta http-equiv=\"Content-Type\" content=\"text/html; "
+-	    "charset=utf-8\"/>\n"
++	    "<meta charset=\"utf-8\">\n"
+ 	    "<title>%03d %s</title>\n"
+ 	    "<style type=\"text/css\"><!--\n%s\n--></style>\n"
+ 	    "</head>\n"
