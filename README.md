@@ -46,6 +46,12 @@ server "www.example.com" {
 }
 ```
 
+_Note:_ Even with this add-on installed, WordPress is unable to discover that the OpenBSD web server is now capable to perform required URL rewrites. This will make the [Permalink Settings Screen](https://wordpress.org/support/article/settings-permalinks-screen/) not behave as expected. Luckily, and for this case exactly, the [got_url_rewrite hook](https://developer.wordpress.org/reference/hooks/got_url_rewrite/) exists. Adding the following line of code into the current theme's `functions.php` file will straighten things out.
+
+```
+add_filter('got_url_rewrite', '__return_true');
+```
+
 ### fastcgi-script-overrides
 
 Definition of `script` overrides for `location` specific `fastcgi` environments via `httpd.conf(5)`.
@@ -135,7 +141,13 @@ server "www.example.com" {
 	#
 	```
 
-1. Adapt your `httpd.conf` to newly added features. For further information, just have a look at the updated `httpd.conf(5)` manpage via `man httpd.conf`.
+1. Adapt your `httpd.conf` to newly added features. For further information, just have a look at the updated `httpd.conf(5)` manpage via `man httpd.conf`. Make sure your new configuration is valid.
+
+	```
+	# httpd -n
+	configuration OK
+	#
+	```
 
 1. Restart the `httpd` daemon.
 
