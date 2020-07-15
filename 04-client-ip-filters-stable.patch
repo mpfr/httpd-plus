@@ -258,7 +258,7 @@ Index: usr.sbin/httpd/parse.y
  hsts		: HSTS '{' optnl hstsflags_l '}'
  		| HSTS hstsflags
  		| HSTS
-@@ -1307,7 +1378,120 @@
+@@ -1307,7 +1378,121 @@
  	int		 k_val;
  };
  
@@ -329,7 +329,13 @@ Index: usr.sbin/httpd/parse.y
 +			if (memcmp(&clt_fltr[--j], &rbuf, sizeof(rbuf)) == 0)
 +				goto next;
 +#if DEBUG
-+		if (rbuf.type == IPv6)
++		if (rbuf.type == IPv4)
++			DPRINTF("%s: \"%s\" xff:%u type:%d bits:%d range:"
++			    "%08X...%08X",
++			    __func__, buf, rbuf.xff, rbuf.type, bits,
++			    be32toh(rbuf.first.ipv4.s_addr),
++			    be32toh(rbuf.last.ipv4.s_addr));
++		else
 +			DPRINTF("%s: \"%s\" xff:%u type:%d bits:%d range:"
 +			    "%016llX%016llX...%016llX%016llX",
 +			    __func__, buf, rbuf.xff, rbuf.type, bits,
@@ -337,11 +343,6 @@ Index: usr.sbin/httpd/parse.y
 +			    be64toh(*(uint64_t *)&rbuf.first.ipv6.s6_addr[8]),
 +			    be64toh(*(uint64_t *)rbuf.last.ipv6.s6_addr),
 +			    be64toh(*(uint64_t *)&rbuf.last.ipv6.s6_addr[8]));
-+		else
-+			DPRINTF("%s: \"%s\" xff:%u type:%d bits:%d range:"
-+			    "%08X...%08X", __func__, buf, rbuf.xff,
-+			    rbuf.type, bits, be32toh(rbuf.first.ipv4.s_addr),
-+			    be32toh(rbuf.last.ipv4.s_addr));
 +#endif
 +		clt_fltr[i++] = rbuf;
 +next:
@@ -379,7 +380,7 @@ Index: usr.sbin/httpd/parse.y
  yyerror(const char *fmt, ...)
  {
  	va_list		 ap;
-@@ -1361,6 +1545,7 @@
+@@ -1361,6 +1546,7 @@
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
  		{ "found",		FOUND },
@@ -473,7 +474,14 @@ Index: usr.sbin/httpd/server_http.c
 +			continue;
 +		}
 +#if DEBUG
-+		if (caddr->type == IPv6)
++		if (caddr->type == IPv4)
++			DPRINTF("%s: xff:%u type:%d client:%08X "
++			    "range:%08X...%08X",
++			    __func__, clt_fltr[i].xff, clt_fltr[i].type,
++			    be32toh(caddr->value.ipv4.s_addr),
++			    be32toh(clt_fltr[i].first.ipv4.s_addr),
++			    be32toh(clt_fltr[i].last.ipv4.s_addr));
++		else
 +			DPRINTF("%s: xff:%u type:%d client:%016llX%016llX "
 +			    "range:%016llX%016llX...%016llX%016llX",
 +			    __func__, clt_fltr[i].xff, clt_fltr[i].type,
@@ -489,24 +497,17 @@ Index: usr.sbin/httpd/server_http.c
 +			    clt_fltr[i].last.ipv6.s6_addr),
 +			    be64toh(*(uint64_t *)
 +			    &clt_fltr[i].last.ipv6.s6_addr[8]));
-+		else
-+			DPRINTF("%s: xff:%u type:%d client:%08X "
-+			    "range:%08X...%08X",
-+			    __func__, clt_fltr[i].xff, clt_fltr[i].type,
-+			    be32toh(caddr->value.ipv4.s_addr),
-+			    be32toh(clt_fltr[i].first.ipv4.s_addr),
-+			    be32toh(clt_fltr[i].last.ipv4.s_addr));
 +#endif
-+		if ((caddr->type == IPv6 &&
-+		    memcmp(&caddr->value.ipv6, &clt_fltr[i].first.ipv6,
-+		    sizeof(struct in6_addr)) >= 0 &&
-+		    memcmp(&caddr->value.ipv6, &clt_fltr[i].last.ipv6,
-+		    sizeof(struct in6_addr)) <= 0) ||
-+		    (caddr->type == IPv4 &&
++		if ((caddr->type == IPv4 &&
 +		    memcmp(&caddr->value.ipv4, &clt_fltr[i].first.ipv4,
 +		    sizeof(struct in_addr)) >= 0 &&
 +		    memcmp(&caddr->value.ipv4, &clt_fltr[i].last.ipv4,
-+		    sizeof(struct in_addr)) <= 0))
++		    sizeof(struct in_addr)) <= 0) ||
++		    (caddr->type == IPv6 &&
++		    memcmp(&caddr->value.ipv6, &clt_fltr[i].first.ipv6,
++		    sizeof(struct in6_addr)) >= 0 &&
++		    memcmp(&caddr->value.ipv6, &clt_fltr[i].last.ipv6,
++		    sizeof(struct in6_addr)) <= 0))
 +			return ((SRVFLAG_CLIENT_FROM & srv_conf->flags) == 0);
 +	}
 +	return ((SRVFLAG_CLIENT_NOT_FROM & srv_conf->flags) == 0);
