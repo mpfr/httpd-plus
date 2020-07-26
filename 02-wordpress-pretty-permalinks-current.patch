@@ -27,7 +27,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Ic location
  option,
 Index: usr.sbin/httpd/httpd.h
-@@ -405,13 +405,16 @@
+@@ -393,13 +393,16 @@
  #define SRVFLAG_DEFAULT_TYPE	0x00800000
  #define SRVFLAG_PATH_REWRITE	0x01000000
  #define SRVFLAG_NO_PATH_REWRITE	0x02000000
@@ -45,7 +45,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define TCPFLAG_NODELAY		0x01
  #define TCPFLAG_NNODELAY	0x02
-@@ -704,6 +707,7 @@
+@@ -692,6 +695,7 @@
  	 server_root_strip(const char *, int);
  struct server_config *
  	 server_getlocation(struct client *, const char *);

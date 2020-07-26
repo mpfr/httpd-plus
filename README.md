@@ -13,6 +13,7 @@ Commits to `-current` merged into `-stable`:
 * [Commits on May 16, 2020](https://github.com/openbsd/src/commit/83a0d42a38eeac687972cf5d09e1d9b2f003b4cf)
 * [Commits on May 18, 2020](https://github.com/openbsd/src/commit/aa3aed545c710959415b79b9b939bd135e4ca9f6)
 * [Commits on May 22, 2020](https://github.com/openbsd/src/commit/8643c0edbdaf122a89210ba0359ae06546ed9f17)
+* [Commits on July 25, 2020](https://github.com/openbsd/src/commit/8ae2ff809e5f555ca12a854168511dd4bdbb8de2)
 
 ### cache-control-headers
 

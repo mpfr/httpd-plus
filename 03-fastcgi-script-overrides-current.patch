@@ -10,7 +10,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  Strip
  .Ar number
 Index: usr.sbin/httpd/httpd.h
-@@ -490,6 +490,7 @@
+@@ -478,6 +478,7 @@
  	uint32_t		 parent_id;
  	char			 name[HOST_NAME_MAX+1];
  	char			 location[HTTPD_LOCATION_MAX];
