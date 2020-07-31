@@ -1,3 +1,70 @@
+Index: usr.sbin/httpd/httpd.c
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: httpd.c,v 1.68 2018/09/09 21:06:51 bluhm Exp $	*/
++/*	$OpenBSD: httpd.c,v 1.69 2020/07/30 21:06:19 benno Exp $	*/
+ 
+ /*
+  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
+@@ -551,59 +551,6 @@
+ 	return (0);
+ }
+ 
+-const char *
+-canonicalize_host(const char *host, char *name, size_t len)
+-{
+-	struct sockaddr_in	 sin4;
+-	struct sockaddr_in6	 sin6;
+-	size_t			 i, j;
+-	size_t			 plen;
+-	char			 c;
+-
+-	if (len < 2)
+-		goto fail;
+-
+-	/*
+-	 * Canonicalize an IPv4/6 address
+-	 */
+-	if (inet_pton(AF_INET, host, &sin4) == 1)
+-		return (inet_ntop(AF_INET, &sin4, name, len));
+-	if (inet_pton(AF_INET6, host, &sin6) == 1)
+-		return (inet_ntop(AF_INET6, &sin6, name, len));
+-
+-	/*
+-	 * Canonicalize a hostname
+-	 */
+-
+-	/* 1. remove repeated dots and convert upper case to lower case */
+-	plen = strlen(host);
+-	memset(name, 0, len);
+-	for (i = j = 0; i < plen; i++) {
+-		if (j >= (len - 1))
+-			goto fail;
+-		c = tolower((unsigned char)host[i]);
+-		if ((c == '.') && (j == 0 || name[j - 1] == '.'))
+-			continue;
+-		name[j++] = c;
+-	}
+-
+-	/* 2. remove trailing dots */
+-	for (i = j; i > 0; i--) {
+-		if (name[i - 1] != '.')
+-			break;
+-		name[i - 1] = '\0';
+-		j--;
+-	}
+-	if (j <= 0)
+-		goto fail;
+-
+-	return (name);
+-
+- fail:
+-	errno = EINVAL;
+-	return (NULL);
+-}
+-
+ const char *
+ url_decode(char *url)
+ {
 Index: usr.sbin/httpd/httpd.conf.5
 @@ -1,4 +1,4 @@
 -.\"	$OpenBSD: httpd.conf.5,v 1.110 2020/04/23 21:10:53 jmc Exp $
@@ -29,7 +96,7 @@ Index: usr.sbin/httpd/httpd.conf.5
 Index: usr.sbin/httpd/httpd.h
 @@ -1,4 +1,4 @@
 -/*	$OpenBSD: httpd.h,v 1.146 2020/02/09 09:44:04 florian Exp $	*/
-+/*	$OpenBSD: httpd.h,v 1.147 2020/07/25 21:12:49 benno Exp $	*/
++/*	$OpenBSD: httpd.h,v 1.148 2020/07/30 21:06:19 benno Exp $	*/
  
  /*
   * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -59,6 +126,14 @@ Index: usr.sbin/httpd/httpd.h
  #define KV_FLAG_INVALID		 0x01
  #define KV_FLAG_GLOBBING	 0x02
  	uint8_t			 kv_flags;
+@@ -722,7 +710,6 @@
+ int		 expand_string(char *, size_t, const char *, const char *);
+ const char	*url_decode(char *);
+ char		*url_encode(const char *);
+-const char	*canonicalize_host(const char *, char *, size_t);
+ const char	*canonicalize_path(const char *, char *, size_t);
+ size_t		 path_info(char *);
+ char		*escape_html(const char *);
 Index: usr.sbin/httpd/parse.y
 @@ -564,7 +564,8 @@
  
