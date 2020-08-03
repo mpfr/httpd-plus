@@ -1,7 +1,41 @@
+Index: usr.sbin/httpd/config.c
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: config.c,v 1.57 2019/05/08 19:57:45 reyk Exp $	*/
++/*	$OpenBSD: config.c,v 1.58 2020/08/03 10:55:58 benno Exp $	*/
+ 
+ /*
+  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
+@@ -135,9 +135,7 @@
+ int
+ config_getcfg(struct httpd *env, struct imsg *imsg)
+ {
+-	struct privsep		*ps = env->sc_ps;
+ 	struct ctl_flags	 cf;
+-	unsigned int		 what;
+ 
+ 	if (IMSG_DATA_SIZE(imsg) != sizeof(cf))
+ 		return (0); /* ignore */
+@@ -148,8 +146,6 @@
+ 	env->sc_flags = cf.cf_flags;
+ 	memcpy(env->sc_tls_sid, cf.cf_tls_sid, sizeof(env->sc_tls_sid));
+ 
+-	what = ps->ps_what[privsep_process];
+-
+ 	if (privsep_process != PROC_PARENT)
+ 		proc_compose(env->sc_ps, PROC_PARENT,
+ 		    IMSG_CFG_DONE, NULL, 0);
+@@ -683,7 +679,6 @@
+ 		if ((srv->srv_conf.return_uri = get_data(p + s,
+ 		    srv->srv_conf.return_uri_len)) == NULL)
+ 			goto fail;
+-		s += srv->srv_conf.return_uri_len;
+ 	}
+ 
+ 	return (0);
 Index: usr.sbin/httpd/httpd.c
 @@ -1,4 +1,4 @@
 -/*	$OpenBSD: httpd.c,v 1.68 2018/09/09 21:06:51 bluhm Exp $	*/
-+/*	$OpenBSD: httpd.c,v 1.69 2020/07/30 21:06:19 benno Exp $	*/
++/*	$OpenBSD: httpd.c,v 1.70 2020/08/03 11:05:24 Exp $	*/
  
  /*
   * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -64,6 +98,80 @@ Index: usr.sbin/httpd/httpd.c
 -
  const char *
  url_decode(char *url)
+ {
+@@ -1111,50 +1058,6 @@
+ 	memset(kv, 0, sizeof(*kv));
+ }
+ 
+-struct kv *
+-kv_inherit(struct kv *dst, struct kv *src)
+-{
+-	memset(dst, 0, sizeof(*dst));
+-	memcpy(dst, src, sizeof(*dst));
+-	TAILQ_INIT(&dst->kv_children);
+-
+-	if (src->kv_key != NULL) {
+-		if ((dst->kv_key = strdup(src->kv_key)) == NULL) {
+-			kv_free(dst);
+-			return (NULL);
+-		}
+-	}
+-	if (src->kv_value != NULL) {
+-		if ((dst->kv_value = strdup(src->kv_value)) == NULL) {
+-			kv_free(dst);
+-			return (NULL);
+-		}
+-	}
+-
+-	return (dst);
+-}
+-
+-int
+-kv_log(struct evbuffer *log, struct kv *kv)
+-{
+-	char	*msg;
+-
+-	if (log == NULL)
+-		return (0);
+-	if (asprintf(&msg, " [%s%s%s]",
+-	    kv->kv_key == NULL ? "(unknown)" : kv->kv_key,
+-	    kv->kv_value == NULL ? "" : ": ",
+-	    kv->kv_value == NULL ? "" : kv->kv_value) == -1)
+-		return (-1);
+-	if (evbuffer_add(log, msg, strlen(msg)) == -1) {
+-		free(msg);
+-		return (-1);
+-	}
+-	free(msg);
+-
+-	return (0);
+-}
+-
+ struct kv *
+ kv_find(struct kvtree *keys, struct kv *kv)
+ {
+@@ -1326,22 +1282,6 @@
+ 	return (buf);
+ }
+ 
+-const char *
+-print_time(struct timeval *a, struct timeval *b, char *buf, size_t len)
+-{
+-	struct timeval		tv;
+-	unsigned long		h, sec, min;
+-
+-	timerclear(&tv);
+-	timersub(a, b, &tv);
+-	sec = tv.tv_sec % 60;
+-	min = tv.tv_sec / 60 % 60;
+-	h = tv.tv_sec / 60 / 60;
+-
+-	snprintf(buf, len, "%.2lu:%.2lu:%.2lu", h, min, sec);
+-	return (buf);
+-}
+-
+ const char *
+ printb_flags(const uint32_t v, const char *bits)
  {
 Index: usr.sbin/httpd/httpd.conf.5
 @@ -1,4 +1,4 @@
@@ -145,6 +253,38 @@ Index: usr.sbin/httpd/parse.y
  				    strcmp(s->srv_conf.location,
  				    srv_conf->location) == 0)
  					break;
+Index: usr.sbin/httpd/proc.c
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: proc.c,v 1.38 2018/09/09 21:06:51 bluhm Exp $	*/
++/*	$OpenBSD: proc.c,v 1.39 2020/08/03 10:57:21 benno Exp $	*/
+ 
+ /*
+  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
+@@ -401,7 +401,7 @@
+ 			free(cause);
+ 		} else
+ 			log_warnx("lost child: pid %u", pid);
+-	} while (pid != -1 || (pid == -1 && errno == EINTR));
++	} while (pid != -1 || errno == EINTR);
+ }
+ 
+ void
+Index: usr.sbin/httpd/server_fcgi.c
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: server_fcgi.c,v 1.81 2020/02/09 09:44:04 florian Exp $	*/
++/*	$OpenBSD: server_fcgi.c,v 1.82 2020/08/03 10:58:38 benno Exp $	*/
+ 
+ /*
+  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
+@@ -684,7 +684,7 @@
+ 
+ 	/* Date header is mandatory and should be added as late as possible */
+ 	key.kv_key = "Date";
+-	if ((kv = kv_find(&resp->http_headers, &key)) == NULL &&
++	if (kv_find(&resp->http_headers, &key) == NULL &&
+ 	    (server_http_time(time(NULL), tmbuf, sizeof(tmbuf)) <= 0 ||
+ 	    kv_add(&resp->http_headers, "Date", tmbuf) == NULL))
+ 		return (-1);
 Index: usr.sbin/httpd/server_file.c
 @@ -1,4 +1,4 @@
 -/*	$OpenBSD: server_file.c,v 1.66 2018/06/15 12:36:05 reyk Exp $	*/
@@ -176,7 +316,7 @@ Index: usr.sbin/httpd/server_file.c
 Index: usr.sbin/httpd/server_http.c
 @@ -1,4 +1,4 @@
 -/*	$OpenBSD: server_http.c,v 1.137 2020/02/25 15:18:41 sthen Exp $	*/
-+/*	$OpenBSD: server_http.c,v 1.139 2020/05/22 07:18:17 bentley Exp $	*/
++/*	$OpenBSD: server_http.c,v 1.140 2020/08/03 10:59:53 benno Exp $	*/
  
  /*
   * Copyright (c) 2006 - 2018 Reyk Floeter <reyk@openbsd.org>
@@ -201,3 +341,13 @@ Index: usr.sbin/httpd/server_http.c
  	    "<title>%03d %s</title>\n"
  	    "<style type=\"text/css\"><!--\n%s\n--></style>\n"
  	    "</head>\n"
+@@ -1271,8 +1273,7 @@
+ 				    hostname, FNM_CASEFOLD);
+ 			}
+ 			if (ret == 0 &&
+-			    (portval == -1 ||
+-			    (portval != -1 && portval == srv_conf->port))) {
++			    (portval == -1 || portval == srv_conf->port)) {
+ 				/* Replace host configuration */
+ 				clt->clt_srv_conf = srv_conf;
+ 				srv_conf = NULL;

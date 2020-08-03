@@ -9,12 +9,13 @@ Add-ons for the [OpenBSD](https://www.openbsd.org) [`httpd(8)`](http://man.openb
 Bug fixes:
 * Failing detection of `location` duplicates (see on [tech@](https://marc.info/?l=openbsd-tech&m=157313087000813))
 
-Commits to `-current` merged into `-stable`:
-* [Commits on May 16, 2020](https://github.com/openbsd/src/commit/83a0d42a38eeac687972cf5d09e1d9b2f003b4cf)
-* [Commits on May 18, 2020](https://github.com/openbsd/src/commit/aa3aed545c710959415b79b9b939bd135e4ca9f6)
-* [Commits on May 22, 2020](https://github.com/openbsd/src/commit/8643c0edbdaf122a89210ba0359ae06546ed9f17)
-* [Commits on July 25, 2020](https://github.com/openbsd/src/commit/8ae2ff809e5f555ca12a854168511dd4bdbb8de2)
-* [Commits on July 30, 2020](https://github.com/openbsd/src/commit/8e304376b367ee76f257ecd22fae486aa9f20325)
+[Commits](https://github.com/openbsd/src/commits/master/usr.sbin/httpd) to `-current` merged into `-stable`:
+* May 16, 2020
+* May 18, 2020
+* May 22, 2020
+* July 25, 2020
+* July 30, 2020
+* August 3, 2020
 
 ### cache-control-headers
 

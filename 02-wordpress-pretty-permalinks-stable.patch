@@ -198,7 +198,7 @@ Index: usr.sbin/httpd/server_http.c
  
  #include "httpd.h"
  #include "http.h"
-@@ -1312,7 +1314,11 @@
+@@ -1311,7 +1313,11 @@
  		goto fail;
  
  	/* Now search for the location */
@@ -211,7 +211,7 @@ Index: usr.sbin/httpd/server_http.c
  
  	/* Optional rewrite */
  	if (srv_conf->flags & SRVFLAG_PATH_REWRITE) {
-@@ -1348,7 +1354,11 @@
+@@ -1347,7 +1353,11 @@
  			goto fail;
  
  		/* Now search for the updated location */
@@ -224,7 +224,7 @@ Index: usr.sbin/httpd/server_http.c
  	}
  
  	if (clt->clt_toread > 0 && (size_t)clt->clt_toread >
-@@ -1414,6 +1424,12 @@
+@@ -1413,6 +1423,12 @@
  				    path, FNM_CASEFOLD);
  			}
  			if (ret == 0 && errstr == NULL) {
@@ -237,7 +237,7 @@ Index: usr.sbin/httpd/server_http.c
  				/* Replace host configuration */
  				clt->clt_srv_conf = srv_conf = location;
  				break;
-@@ -1422,6 +1438,27 @@
+@@ -1421,6 +1437,27 @@
  	}
  
  	return (srv_conf);
