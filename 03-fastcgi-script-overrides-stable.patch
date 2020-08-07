@@ -1,5 +1,20 @@
+
+Copyright (c) 2020 Matthias Pressfreund
+
+Permission to use, copy, modify, and distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -302,6 +302,9 @@
+@@ -303,6 +303,9 @@
  the FastCGI handler is listening on a TCP socket,
  .Ar socket
  starts with a colon followed by the TCP port number.
@@ -10,7 +25,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  Strip
  .Ar number
 Index: usr.sbin/httpd/httpd.h
-@@ -478,6 +478,7 @@
+@@ -479,6 +479,7 @@
  	uint32_t		 parent_id;
  	char			 name[HOST_NAME_MAX+1];
  	char			 location[HTTPD_LOCATION_MAX];
@@ -19,7 +34,7 @@ Index: usr.sbin/httpd/httpd.h
  	char			 path[PATH_MAX];
  	char			 index[PATH_MAX];
 Index: usr.sbin/httpd/parse.y
-@@ -140,7 +140,7 @@
+@@ -141,7 +141,7 @@
  %token	PROTOCOLS REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TICKET
  %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
  %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
@@ -28,7 +43,7 @@ Index: usr.sbin/httpd/parse.y
  %token	<v.string>	STRING
  %token  <v.number>	NUMBER
  %type	<v.port>	port
-@@ -712,6 +712,16 @@
+@@ -713,6 +713,16 @@
  			    param->name, param->value);
  			TAILQ_INSERT_HEAD(&srv_conf->fcgiparams, param, entry);
  		}
@@ -45,7 +60,7 @@ Index: usr.sbin/httpd/parse.y
  		| STRIP NUMBER			{
  			if ($2 < 0 || $2 > INT_MAX) {
  				yyerror("invalid fastcgi strip number");
-@@ -1382,6 +1392,7 @@
+@@ -1383,6 +1393,7 @@
  		{ "rewrite",		REWRITE },
  		{ "root",		ROOT },
  		{ "sack",		SACK },
@@ -54,7 +69,15 @@ Index: usr.sbin/httpd/parse.y
  		{ "socket",		SOCKET },
  		{ "strip",		STRIP },
 Index: usr.sbin/httpd/server_fcgi.c
-@@ -190,9 +190,12 @@
+@@ -1,6 +1,7 @@
+ /*	$OpenBSD: server_fcgi.c,v 1.82 2020/08/03 10:58:38 benno Exp $	*/
+ 
+ /*
++ * Copyright (c) 2020 Matthias Pressfreund
+  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
+  *
+  * Permission to use, copy, modify, and distribute this software for any
+@@ -190,9 +191,12 @@
  	h->type = FCGI_PARAMS;
  	h->content_len = param.total_len = 0;
  

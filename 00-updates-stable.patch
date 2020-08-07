@@ -1,3 +1,18 @@
+
+Copyright (c) 2020 Matthias Pressfreund
+
+Permission to use, copy, modify, and distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
 Index: usr.sbin/httpd/config.c
 @@ -1,4 +1,4 @@
 -/*	$OpenBSD: config.c,v 1.57 2019/05/08 19:57:45 reyk Exp $	*/
@@ -204,7 +219,7 @@ Index: usr.sbin/httpd/httpd.conf.5
 Index: usr.sbin/httpd/httpd.h
 @@ -1,4 +1,4 @@
 -/*	$OpenBSD: httpd.h,v 1.146 2020/02/09 09:44:04 florian Exp $	*/
-+/*	$OpenBSD: httpd.h,v 1.148 2020/07/30 21:06:19 benno Exp $	*/
++/*	$OpenBSD: httpd.h,v 1.149 2020/08/03 11:05:24 benno Exp $	*/
  
  /*
   * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -242,8 +257,33 @@ Index: usr.sbin/httpd/httpd.h
  const char	*canonicalize_path(const char *, char *, size_t);
  size_t		 path_info(char *);
  char		*escape_html(const char *);
+@@ -744,8 +731,6 @@
+ struct kv	*kv_extend(struct kvtree *, struct kv *, char *);
+ void		 kv_purge(struct kvtree *);
+ void		 kv_free(struct kv *);
+-struct kv	*kv_inherit(struct kv *, struct kv *);
+-int		 kv_log(struct evbuffer *, struct kv *);
+ struct kv	*kv_find(struct kvtree *, struct kv *);
+ int		 kv_cmp(struct kv *, struct kv *);
+ struct media_type
+@@ -764,7 +747,6 @@
+ struct auth	*auth_byid(struct serverauth *, uint32_t);
+ void		 auth_free(struct serverauth *, struct auth *);
+ const char	*print_host(struct sockaddr_storage *, char *, size_t);
+-const char	*print_time(struct timeval *, struct timeval *, char *, size_t);
+ const char	*printb_flags(const uint32_t, const char *);
+ void		 getmonotime(struct timeval *);
+ 
 Index: usr.sbin/httpd/parse.y
-@@ -564,7 +564,8 @@
+@@ -1,6 +1,7 @@
+ /*	$OpenBSD: parse.y,v 1.114 2020/02/09 09:44:04 florian Exp $	*/
+ 
+ /*
++ * Copyright (c) 2020 Matthias Pressfreund
+  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
+  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
+  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
+@@ -564,7 +565,8 @@
  
  			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
  				if ((s->srv_conf.flags & SRVFLAG_LOCATION) &&

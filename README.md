@@ -49,11 +49,11 @@ server "www.example.com" {
 }
 ```
 
-_Note:_ Even with this add-on installed, WordPress is unable to discover that the OpenBSD web server is now capable to perform required URL rewrites. This will make the [Permalink Settings Screen](https://wordpress.org/support/article/settings-permalinks-screen/) not behave as expected. Luckily, and for this case exactly, the [got_url_rewrite hook](https://developer.wordpress.org/reference/hooks/got_url_rewrite/) exists. Adding the following line of code into the current theme's `functions.php` file will straighten things out.
-
-```
-add_filter('got_url_rewrite', '__return_true');
-```
+> NOTE: Even with this add-on installed, WordPress is unable to discover that the OpenBSD web server is now capable to perform required URL rewrites. This will make the [Permalink Settings Screen](https://wordpress.org/support/article/settings-permalinks-screen/) not behave as expected. Luckily, and for this case exactly, the [got_url_rewrite hook](https://developer.wordpress.org/reference/hooks/got_url_rewrite/) exists. Adding the following line of code into the current theme's `functions.php` file will straighten things out.
+>
+> ```
+> add_filter('got_url_rewrite', '__return_true');
+> ```
 
 ### fastcgi-script-overrides
 
@@ -114,7 +114,7 @@ server "www.example.com" {
 1. Apply the patch files by running the installation script which will build and install the `httpd-plus` binary (`-stable` or `-current` branch will be detected automatically). After that, the original source code will be restored.
 
 	```
-	# sh httpd-plus-master/install
+	# sh httpd-plus-master/install 2>&1 | tee httpd-plus-install.log
 	Identified -current branch.
 	Backing up original sources ... Done.
 	Applying patch files ...
@@ -122,10 +122,14 @@ server "www.example.com" {
 	Hmm...  Looks like a unified diff to me...
 	The text leading up to this was:
 	--------------------------
+	.
+	.
+	.
 	|Index: usr.sbin/httpd/parse.y
 	--------------------------
 	Patching file usr.sbin/httpd/parse.y using Plan A...
-	Hunk #1 succeeded at 564.
+	Hunk #1 succeeded at 1.
+	Hunk #2 succeeded at 565.
 	done
 	... 01-cache-control-headers-current ...
 	Hmm...  Looks like a unified diff to me...

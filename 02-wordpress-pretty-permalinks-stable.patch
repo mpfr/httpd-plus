@@ -1,5 +1,20 @@
+
+Copyright (c) 2020 Matthias Pressfreund
+
+Permission to use, copy, modify, and distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -395,11 +395,16 @@
+@@ -396,11 +396,16 @@
  .It Ic listen on Ar address Oo Ic tls Oc Ic port Ar number
  Set the listen address and port.
  This statement can be specified multiple times.
@@ -17,7 +32,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  In case of multiple location statements in the same context, the
  first matching location statement will be put into effect, while all
  later ones will be ignored.
-@@ -415,7 +420,7 @@
+@@ -416,7 +421,7 @@
  .Ic tcp
  and
  .Ic tls .
@@ -27,7 +42,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Ic location
  option,
 Index: usr.sbin/httpd/httpd.h
-@@ -393,13 +393,16 @@
+@@ -394,13 +394,16 @@
  #define SRVFLAG_DEFAULT_TYPE	0x00800000
  #define SRVFLAG_PATH_REWRITE	0x01000000
  #define SRVFLAG_NO_PATH_REWRITE	0x02000000
@@ -45,7 +60,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define TCPFLAG_NODELAY		0x01
  #define TCPFLAG_NNODELAY	0x02
-@@ -692,6 +695,7 @@
+@@ -693,6 +696,7 @@
  	 server_root_strip(const char *, int);
  struct server_config *
  	 server_getlocation(struct client *, const char *);
@@ -54,7 +69,7 @@ Index: usr.sbin/httpd/httpd.h
  	 server_http_host(struct sockaddr_storage *, char *, size_t);
  char	*server_http_parsehost(char *, char *, size_t, int *);
 Index: usr.sbin/httpd/parse.y
-@@ -140,11 +140,11 @@
+@@ -141,11 +141,11 @@
  %token	PROTOCOLS REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TICKET
  %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
  %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
@@ -68,7 +83,7 @@ Index: usr.sbin/httpd/parse.y
  %type	<v.tv>		timeout
  %type	<v.string>	numberstring optstring
  %type	<v.auth>	authopts
-@@ -496,38 +496,38 @@
+@@ -497,38 +497,38 @@
  		| fastcgi
  		| authenticate
  		| filter
@@ -115,7 +130,7 @@ Index: usr.sbin/httpd/parse.y
  
  			if (strlcpy(s->srv_conf.name, srv->srv_conf.name,
  			    sizeof(s->srv_conf.name)) >=
-@@ -541,7 +541,18 @@
+@@ -542,7 +542,18 @@
  			/* A location entry uses the parent id */
  			s->srv_conf.parent_id = srv->srv_conf.id;
  			s->srv_conf.flags = SRVFLAG_LOCATION;
@@ -135,7 +150,7 @@ Index: usr.sbin/httpd/parse.y
  				s->srv_conf.flags |= SRVFLAG_LOCATION_MATCH;
  			s->srv_s = -1;
  			memcpy(&s->srv_conf.ss, &srv->srv_conf.ss,
-@@ -561,11 +572,17 @@
+@@ -562,11 +573,17 @@
  			SPLAY_INIT(&srv->srv_clients);
  		} '{' optnl serveropts_l '}'	{
  			struct server	*s = NULL;
@@ -153,7 +168,7 @@ Index: usr.sbin/httpd/parse.y
  				    strcmp(s->srv_conf.location,
  				    srv_conf->location) == 0)
  					break;
-@@ -603,6 +620,11 @@
+@@ -604,6 +621,11 @@
  		}
  		;
  
@@ -165,7 +180,7 @@ Index: usr.sbin/httpd/parse.y
  hsts		: HSTS '{' optnl hstsflags_l '}'
  		| HSTS hstsflags
  		| HSTS
-@@ -1328,6 +1350,7 @@
+@@ -1329,6 +1351,7 @@
  		{ "error",		ERR },
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
@@ -173,7 +188,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "hsts",		HSTS },
  		{ "include",		INCLUDE },
  		{ "index",		INDEX },
-@@ -1343,6 +1366,7 @@
+@@ -1344,6 +1367,7 @@
  		{ "max-age",		MAXAGE },
  		{ "no",			NO },
  		{ "nodelay",		NODELAY },
@@ -182,7 +197,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "on",			ON },
  		{ "optional",		OPTIONAL },
 Index: usr.sbin/httpd/server_http.c
-@@ -20,6 +20,7 @@
+@@ -21,6 +21,7 @@
  #include <sys/queue.h>
  #include <sys/socket.h>
  #include <sys/tree.h>
@@ -190,7 +205,7 @@ Index: usr.sbin/httpd/server_http.c
  
  #include <netinet/in.h>
  #include <arpa/inet.h>
-@@ -36,6 +37,7 @@
+@@ -37,6 +38,7 @@
  #include <event.h>
  #include <ctype.h>
  #include <vis.h>
@@ -198,7 +213,7 @@ Index: usr.sbin/httpd/server_http.c
  
  #include "httpd.h"
  #include "http.h"
-@@ -1311,7 +1313,11 @@
+@@ -1312,7 +1314,11 @@
  		goto fail;
  
  	/* Now search for the location */
@@ -211,7 +226,7 @@ Index: usr.sbin/httpd/server_http.c
  
  	/* Optional rewrite */
  	if (srv_conf->flags & SRVFLAG_PATH_REWRITE) {
-@@ -1347,7 +1353,11 @@
+@@ -1348,7 +1354,11 @@
  			goto fail;
  
  		/* Now search for the updated location */
@@ -224,7 +239,7 @@ Index: usr.sbin/httpd/server_http.c
  	}
  
  	if (clt->clt_toread > 0 && (size_t)clt->clt_toread >
-@@ -1413,6 +1423,12 @@
+@@ -1414,6 +1424,12 @@
  				    path, FNM_CASEFOLD);
  			}
  			if (ret == 0 && errstr == NULL) {
@@ -237,7 +252,7 @@ Index: usr.sbin/httpd/server_http.c
  				/* Replace host configuration */
  				clt->clt_srv_conf = srv_conf = location;
  				break;
-@@ -1421,6 +1437,27 @@
+@@ -1422,6 +1438,27 @@
  	}
  
  	return (srv_conf);
