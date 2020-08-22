@@ -88,7 +88,7 @@ Index: usr.sbin/httpd/httpd.h
  /*	$OpenBSD: httpd.h,v 1.149 2020/08/03 11:05:24 benno Exp $	*/
  
  /*
-+ * Copyright (c) 20020 Matthias Pressfreund
++ * Copyright (c) 2020 Matthias Pressfreund
   * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
   * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
   * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>

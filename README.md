@@ -87,14 +87,25 @@ server "www.example.com" {
 
 ## How to install
 
-`httpd-plus` is a series of patch files always applicable to the lastest `-stable` and `-current` branches. Just follow the steps below.
+`httpd-plus` is a series of consecutive patch files applicable to the lastest `-stable` and `-current` branches. Just follow the steps below.
 
-1. Become `root`.
 1. Make sure the `/usr/src` tree is in place and up-to-date.
+
+1. Make sure your user has sufficient `doas` permissions. To start, `cd` into the user's home directory, here `/home/mpfr`.
+
+	```
+	$ cat /etc/doas.conf
+	permit nopass mpfr
+	$ cd
+	$ pwd
+	/home/mpfr
+	$
+	```
+
 1. Get patch files and installation script downloaded and extracted.
 
 	```
-	# ftp -o - https://codeload.github.com/mpfr/httpd-plus/tar.gz/master | tar xzvf -
+	$ ftp -o - https://codeload.github.com/mpfr/httpd-plus/tar.gz/master | tar xzvf -
 	httpd-plus-master
 	httpd-plus-master/00-updates-current.patch
 	httpd-plus-master/00-updates-stable.patch
@@ -108,13 +119,13 @@ server "www.example.com" {
 	httpd-plus-master/04-client-ip-filters-stable.patch
 	httpd-plus-master/README.md
 	httpd-plus-master/install
-	#
+	$
 	```
 
 1. Apply the patch files by running the installation script which will build and install the `httpd-plus` binary (`-stable` or `-current` branch will be detected automatically). After that, the original source code will be restored.
 
 	```
-	# sh httpd-plus-master/install 2>&1 | tee httpd-plus-install.log
+	$ doas sh httpd-plus-master/install 2>&1 | tee httpd-plus-install.log
 	Identified -current branch.
 	Backing up original sources ... Done.
 	Applying patch files ...
@@ -145,21 +156,21 @@ server "www.example.com" {
 
 	Installing httpd-plus binary and manpage completed successfully.
 	Please consult 'man httpd.conf' for further information on new features.
-	#
+	$
 	```
 
 1. Adapt your `httpd.conf` to newly added features. For further information, just have a look at the updated `httpd.conf(5)` manpage via `man httpd.conf`. Make sure your new configuration is valid.
 
 	```
-	# httpd -n
+	$ doas httpd -n
 	configuration OK
-	#
+	$
 	```
 
 1. Restart the `httpd` daemon.
 
 	```
-	# rcctl restart httpd
+	# doas rcctl restart httpd
 	httpd(ok)
 	httpd(ok)
 	#
@@ -170,10 +181,10 @@ server "www.example.com" {
 As patching the source code will be undone automatically right after building and installing the `httpd-plus` daemon, the original version may be easily recovered by performing a de novo rebuild and reinstall.
 
 ```
-# cd /usr/src/usr.sbin/httpd
-# make obj
-# make clean
-# make
-# make install
-# rcctl restart httpd
+$ cd /usr/src/usr.sbin/httpd
+$ doas make obj
+$ doas make clean
+$ doas make
+$ doas make install
+$ doas rcctl restart httpd
 ```
