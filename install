@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/ksh
 #
 # Copyright (c) 2020 Matthias Pressfreund
 #
@@ -18,14 +18,15 @@
 srcdir='/usr/src/usr.sbin/httpd'
 patchdir="$(pwd)/$(dirname $0)"
 
-Restore () {
-	echo -n "Restoring original sources ... "
+restore()
+{
+	echo -n 'Restoring original sources ... '
 	cd ${srcdir}/..
 	rm -rf ${srcdir} && mv $1 ${srcdir}
-	[ $? -eq 0 ] && echo "Done." || echo "Failed."
+	[[ $? -eq 0 ]] && echo 'Done.' || echo 'Failed.'
 }
 
-if [ ! -d ${srcdir} ]; then
+if [[ ! -d ${srcdir} ]]; then
 	echo "Missing source tree."
 	exit 1
 fi
@@ -33,47 +34,47 @@ fi
 chksum=$(find "${srcdir}" \( -name '*.[chy578]' -o -name 'Makefile' \) \
 	-type f -maxdepth 1 -exec sha256 {} \; | sort -k 2 | sha256)
 chksum_stab='7e383a5b1e09804f332ce25b2fe8d310d46127f23b05994e5bb9a7cb4db44ec2'
-chksum_curr='5423570575bb041f288feb9d0831f7f218b9e2cb2b48024d1b319cb2a24ba5aa'
-if [ "${chksum}" == "${chksum_stab}" ]; then
-	branch="-stable"
-elif [ "${chksum}" == "${chksum_curr}" ]; then
-	branch="-current"
+chksum_curr='d0dc44f0b5df0c3ac9bdcdfb0cdda0618a0e5f76c5861ebdd3d0fe0e30d183af'
+if [[ "${chksum}" == "${chksum_stab}" ]]; then
+	branch='-stable'
+elif [[ "${chksum}" == "${chksum_curr}" ]]; then
+	branch='-current'
 else
-	echo "Sources and patches do not match. Make sure both are up-to-date."
+	echo 'Sources and patches do not match. Make sure both are up-to-date.'
 	exit 1
 fi
 echo "Identified ${branch} branch."
 
-echo -n "Backing up original sources ... "
+echo -n 'Backing up original sources ... '
 while :
 do
 	bakdir="${srcdir}~$RANDOM"
-	[ -d ${bakdir} ] || break
+	[[ -d ${bakdir} ]] || break
 done
 cp -a ${srcdir} ${bakdir}
-if [ $? -eq 0 ]; then
-	echo "Done."
+if [[ $? -eq 0 ]]; then
+	echo 'Done.'
 else
-	echo "Failed."
+	echo 'Failed.'
 	exit 1
 fi
 
-echo "Applying patch files ..."
+echo 'Applying patch files ...'
 for f in $(find "${patchdir}" -type f -name "*${branch}.patch" | sort); do
 	echo "... $(basename ${f} .patch) ..."
 	cat ${f} | (cd /usr/src && patch -p0)
-	if [ $? -ne 0 ]; then
-		Restore "${bakdir}"
+	if [[ $? -ne 0 ]]; then
+		restore "${bakdir}"
 		exit 1
 	fi
 done
 
 cd ${srcdir}
 
-echo "Building and installing httpd-plus binary and manpage ..."
+echo 'Building and installing httpd-plus binary and manpage ...'
 make obj && make && make install
 
-Restore "${bakdir}"
+restore "${bakdir}"
 
-echo "\nInstalling httpd-plus binary and manpage completed successfully."
+echo '\nInstalling httpd-plus binary and manpage completed successfully.'
 echo "Please consult 'man httpd.conf' for further information on new features."

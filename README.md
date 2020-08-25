@@ -125,7 +125,8 @@ server "www.example.com" {
 1. Apply the patch files by running the installation script which will build and install the `httpd-plus` binary (`-stable` or `-current` branch will be detected automatically). After that, the original source code will be restored.
 
 	```
-	$ doas sh httpd-plus-master/install 2>&1 | tee httpd-plus-install.log
+	$ doas chmod ugo+x httpd-plus-master/install
+	$ doas httpd-plus-master/install 2>&1 | tee httpd-plus-install.log
 	Identified -current branch.
 	Backing up original sources ... Done.
 	Applying patch files ...
@@ -140,7 +141,7 @@ server "www.example.com" {
 	--------------------------
 	Patching file usr.sbin/httpd/parse.y using Plan A...
 	Hunk #1 succeeded at 1.
-	Hunk #2 succeeded at 565.
+	Hunk #2 succeeded at 568.
 	done
 	... 01-cache-control-headers-current ...
 	Hmm...  Looks like a unified diff to me...

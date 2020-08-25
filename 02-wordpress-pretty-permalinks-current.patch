@@ -14,7 +14,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -396,11 +396,16 @@
+@@ -400,11 +400,16 @@
  .It Ic listen on Ar address Oo Ic tls Oc Ic port Ar number
  Set the listen address and port.
  This statement can be specified multiple times.
@@ -32,7 +32,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  In case of multiple location statements in the same context, the
  first matching location statement will be put into effect, while all
  later ones will be ignored.
-@@ -416,7 +421,7 @@
+@@ -420,7 +425,7 @@
  .Ic tcp
  and
  .Ic tls .
@@ -42,7 +42,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Ic location
  option,
 Index: usr.sbin/httpd/httpd.h
-@@ -394,13 +394,16 @@
+@@ -395,13 +395,16 @@
  #define SRVFLAG_DEFAULT_TYPE	0x00800000
  #define SRVFLAG_PATH_REWRITE	0x01000000
  #define SRVFLAG_NO_PATH_REWRITE	0x02000000
@@ -60,7 +60,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define TCPFLAG_NODELAY		0x01
  #define TCPFLAG_NNODELAY	0x02
-@@ -693,6 +696,7 @@
+@@ -695,6 +698,7 @@
  	 server_root_strip(const char *, int);
  struct server_config *
  	 server_getlocation(struct client *, const char *);
@@ -69,7 +69,7 @@ Index: usr.sbin/httpd/httpd.h
  	 server_http_host(struct sockaddr_storage *, char *, size_t);
  char	*server_http_parsehost(char *, char *, size_t, int *);
 Index: usr.sbin/httpd/parse.y
-@@ -141,11 +141,11 @@
+@@ -143,12 +143,12 @@
  %token	PROTOCOLS REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TICKET
  %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
  %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
@@ -78,12 +78,13 @@ Index: usr.sbin/httpd/parse.y
  %token	<v.string>	STRING
  %token  <v.number>	NUMBER
  %type	<v.port>	port
+ %type	<v.string>	fcgiport
 -%type	<v.number>	opttls optmatch
 +%type	<v.number>	opttls optmatch optfound
  %type	<v.tv>		timeout
  %type	<v.string>	numberstring optstring
  %type	<v.auth>	authopts
-@@ -497,38 +497,38 @@
+@@ -500,38 +500,38 @@
  		| fastcgi
  		| authenticate
  		| filter
@@ -130,7 +131,7 @@ Index: usr.sbin/httpd/parse.y
  
  			if (strlcpy(s->srv_conf.name, srv->srv_conf.name,
  			    sizeof(s->srv_conf.name)) >=
-@@ -542,7 +542,18 @@
+@@ -545,7 +545,18 @@
  			/* A location entry uses the parent id */
  			s->srv_conf.parent_id = srv->srv_conf.id;
  			s->srv_conf.flags = SRVFLAG_LOCATION;
@@ -150,7 +151,7 @@ Index: usr.sbin/httpd/parse.y
  				s->srv_conf.flags |= SRVFLAG_LOCATION_MATCH;
  			s->srv_s = -1;
  			memcpy(&s->srv_conf.ss, &srv->srv_conf.ss,
-@@ -562,11 +573,17 @@
+@@ -565,11 +576,17 @@
  			SPLAY_INIT(&srv->srv_clients);
  		} '{' optnl serveropts_l '}'	{
  			struct server	*s = NULL;
@@ -168,7 +169,7 @@ Index: usr.sbin/httpd/parse.y
  				    strcmp(s->srv_conf.location,
  				    srv_conf->location) == 0)
  					break;
-@@ -604,6 +621,11 @@
+@@ -607,6 +624,11 @@
  		}
  		;
  
@@ -180,7 +181,7 @@ Index: usr.sbin/httpd/parse.y
  hsts		: HSTS '{' optnl hstsflags_l '}'
  		| HSTS hstsflags
  		| HSTS
-@@ -1329,6 +1351,7 @@
+@@ -1369,6 +1391,7 @@
  		{ "error",		ERR },
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
@@ -188,7 +189,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "hsts",		HSTS },
  		{ "include",		INCLUDE },
  		{ "index",		INDEX },
-@@ -1344,6 +1367,7 @@
+@@ -1384,6 +1407,7 @@
  		{ "max-age",		MAXAGE },
  		{ "no",			NO },
  		{ "nodelay",		NODELAY },

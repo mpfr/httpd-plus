@@ -14,10 +14,10 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -303,6 +303,9 @@
- the FastCGI handler is listening on a TCP socket,
- .Ar socket
- starts with a colon followed by the TCP port number.
+@@ -307,6 +307,9 @@
+ If the
+ .Ar port
+ is not specified, it defaults to port 9000.
 +.It Ic script Ar path
 +Override the determined script with the one specified by the given
 +.Ar path .
@@ -25,7 +25,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  Strip
  .Ar number
 Index: usr.sbin/httpd/httpd.h
-@@ -479,6 +479,7 @@
+@@ -480,6 +480,7 @@
  	uint32_t		 parent_id;
  	char			 name[HOST_NAME_MAX+1];
  	char			 location[HTTPD_LOCATION_MAX];
@@ -34,7 +34,7 @@ Index: usr.sbin/httpd/httpd.h
  	char			 path[PATH_MAX];
  	char			 index[PATH_MAX];
 Index: usr.sbin/httpd/parse.y
-@@ -141,7 +141,7 @@
+@@ -143,7 +143,7 @@
  %token	PROTOCOLS REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TICKET
  %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
  %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
@@ -43,7 +43,7 @@ Index: usr.sbin/httpd/parse.y
  %token	<v.string>	STRING
  %token  <v.number>	NUMBER
  %type	<v.port>	port
-@@ -713,6 +713,16 @@
+@@ -740,6 +740,16 @@
  			    param->name, param->value);
  			TAILQ_INSERT_HEAD(&srv_conf->fcgiparams, param, entry);
  		}
@@ -60,7 +60,7 @@ Index: usr.sbin/httpd/parse.y
  		| STRIP NUMBER			{
  			if ($2 < 0 || $2 > INT_MAX) {
  				yyerror("invalid fastcgi strip number");
-@@ -1383,6 +1393,7 @@
+@@ -1423,6 +1433,7 @@
  		{ "rewrite",		REWRITE },
  		{ "root",		ROOT },
  		{ "sack",		SACK },
@@ -70,14 +70,14 @@ Index: usr.sbin/httpd/parse.y
  		{ "strip",		STRIP },
 Index: usr.sbin/httpd/server_fcgi.c
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: server_fcgi.c,v 1.82 2020/08/03 10:58:38 benno Exp $	*/
+ /*	$OpenBSD: server_fcgi.c,v 1.83 2020/08/24 15:49:11 tracey Exp $	*/
  
  /*
 + * Copyright (c) 2020 Matthias Pressfreund
   * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
   *
   * Permission to use, copy, modify, and distribute this software for any
-@@ -190,9 +191,12 @@
+@@ -161,9 +162,12 @@
  	h->type = FCGI_PARAMS;
  	h->content_len = param.total_len = 0;
  
