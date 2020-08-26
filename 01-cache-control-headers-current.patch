@@ -128,7 +128,7 @@ Index: usr.sbin/httpd/parse.y
  %token	<v.string>	STRING
  %token  <v.number>	NUMBER
  %type	<v.port>	port
-@@ -1186,7 +1186,7 @@
+@@ -1194,7 +1194,7 @@
  		| mediaoptsl nl
  		;
  
@@ -137,7 +137,7 @@ Index: usr.sbin/httpd/parse.y
  		| include
  		;
  
-@@ -1207,6 +1207,24 @@
+@@ -1215,6 +1215,24 @@
  		}
  		;
  
@@ -162,7 +162,7 @@ Index: usr.sbin/httpd/parse.y
  medianames_l	: medianames_l medianamesl
  		| medianamesl
  		;
-@@ -1334,6 +1352,7 @@
+@@ -1342,6 +1360,7 @@
  		{ "body",		BODY },
  		{ "buffer",		BUFFER },
  		{ "ca",			CA },
@@ -170,7 +170,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "certificate",	CERTIFICATE },
  		{ "chroot",		CHROOT },
  		{ "ciphers",		CIPHERS },
-@@ -1846,6 +1865,7 @@
+@@ -1854,6 +1873,7 @@
  			(void)strlcpy(m.media_subtype,
  			    mediatypes[i].media_subtype,
  			    sizeof(m.media_subtype));

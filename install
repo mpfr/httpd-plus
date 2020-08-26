@@ -34,7 +34,7 @@ fi
 chksum=$(find "${srcdir}" \( -name '*.[chy578]' -o -name 'Makefile' \) \
 	-type f -maxdepth 1 -exec sha256 {} \; | sort -k 2 | sha256)
 chksum_stab='7e383a5b1e09804f332ce25b2fe8d310d46127f23b05994e5bb9a7cb4db44ec2'
-chksum_curr='d0dc44f0b5df0c3ac9bdcdfb0cdda0618a0e5f76c5861ebdd3d0fe0e30d183af'
+chksum_curr='818ae252b3f70f3530ea25b4e4016743f01481e8956226388046fc1d3a68e9a6'
 if [[ "${chksum}" == "${chksum_stab}" ]]; then
 	branch='-stable'
 elif [[ "${chksum}" == "${chksum_curr}" ]]; then

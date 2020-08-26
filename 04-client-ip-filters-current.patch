@@ -275,7 +275,7 @@ Index: usr.sbin/httpd/parse.y
  hsts		: HSTS '{' optnl hstsflags_l '}'
  		| HSTS hstsflags
  		| HSTS
-@@ -1348,7 +1419,121 @@
+@@ -1356,7 +1427,121 @@
  	int		 k_val;
  };
  
@@ -397,7 +397,7 @@ Index: usr.sbin/httpd/parse.y
  yyerror(const char *fmt, ...)
  {
  	va_list		 ap;
-@@ -1402,6 +1587,7 @@
+@@ -1410,6 +1595,7 @@
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
  		{ "found",		FOUND },
