@@ -70,7 +70,7 @@ Index: usr.sbin/httpd/httpd.h
  #define HTTPD_DEFAULT_TYPE	{ \
  	"bin", "application", "octet-stream", "", NULL }
  #define HTTPD_LOGVIS		VIS_NL|VIS_TAB|VIS_CSTYLE
-@@ -395,6 +396,8 @@
+@@ -394,6 +395,8 @@
  #define SRVFLAG_DEFAULT_TYPE	0x00800000
  #define SRVFLAG_PATH_REWRITE	0x01000000
  #define SRVFLAG_NO_PATH_REWRITE	0x02000000
@@ -79,7 +79,7 @@ Index: usr.sbin/httpd/httpd.h
  #define SRVFLAG_LOCATION_FOUND	0x40000000
  #define SRVFLAG_LOCATION_NOT_FOUND 0x80000000
  
-@@ -404,7 +407,8 @@
+@@ -403,7 +406,8 @@
  	"\14SYSLOG\15NO_SYSLOG\16TLS\17ACCESS_LOG\20ERROR_LOG"		\
  	"\21AUTH\22NO_AUTH\23BLOCK\24NO_BLOCK\25LOCATION_MATCH"		\
  	"\26SERVER_MATCH\27SERVER_HSTS\30DEFAULT_TYPE\31PATH\32NO_PATH" \
@@ -89,7 +89,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define TCPFLAG_NODELAY		0x01
  #define TCPFLAG_NNODELAY	0x02
-@@ -475,6 +479,29 @@
+@@ -474,6 +478,29 @@
  };
  TAILQ_HEAD(server_fcgiparams, fastcgi_param);
  
@@ -119,7 +119,7 @@ Index: usr.sbin/httpd/httpd.h
  struct server_config {
  	uint32_t		 id;
  	uint32_t		 parent_id;
-@@ -547,6 +574,8 @@
+@@ -546,6 +573,8 @@
  	struct server_fcgiparams fcgiparams;
  	int			 fcgistrip;
  
@@ -128,7 +128,7 @@ Index: usr.sbin/httpd/httpd.h
  	TAILQ_ENTRY(server_config) entry;
  };
  TAILQ_HEAD(serverhosts, server_config);
-@@ -700,6 +729,8 @@
+@@ -699,6 +728,8 @@
  struct server_config *
  	 server_getlocation(struct client *, const char *);
  int	 server_locationaccesstest(struct server_config *, const char *);
@@ -148,7 +148,7 @@ Index: usr.sbin/httpd/parse.y
  int		 yyerror(const char *, ...)
      __attribute__((__format__ (printf, 1, 2)))
      __attribute__((__nonnull__ (1)));
-@@ -143,7 +146,7 @@
+@@ -143,14 +146,14 @@
  %token	PROTOCOLS REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TICKET
  %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
  %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
@@ -157,7 +157,6 @@ Index: usr.sbin/httpd/parse.y
  %token	<v.string>	STRING
  %token  <v.number>	NUMBER
  %type	<v.port>	port
-@@ -150,7 +153,7 @@
  %type	<v.string>	fcgiport
  %type	<v.number>	opttls optmatch optfound
  %type	<v.tv>		timeout
@@ -166,16 +165,16 @@ Index: usr.sbin/httpd/parse.y
  %type	<v.auth>	authopts
  
  %%
-@@ -500,7 +503,7 @@
+@@ -507,7 +510,7 @@
  		| fastcgi
  		| authenticate
  		| filter
 -		| LOCATION optfound optmatch STRING	{
 +		| LOCATION optfound optmatch STRING optclientfilter	{
- 			struct server	*s;
+ 			struct server		*s;
+ 			struct sockaddr_un	*sun;
  
- 			if (srv->srv_conf.ss.ss_family == AF_UNSPEC) {
-@@ -558,6 +561,25 @@
+@@ -572,6 +575,25 @@
  			}
  			if ($3)
  				s->srv_conf.flags |= SRVFLAG_LOCATION_MATCH;
@@ -201,7 +200,7 @@ Index: usr.sbin/httpd/parse.y
  			s->srv_s = -1;
  			memcpy(&s->srv_conf.ss, &srv->srv_conf.ss,
  			    sizeof(s->srv_conf.ss));
-@@ -578,7 +600,9 @@
+@@ -592,7 +614,9 @@
  			struct server	*s = NULL;
  			uint32_t	 f;
  
@@ -212,7 +211,7 @@ Index: usr.sbin/httpd/parse.y
  			    SRVFLAG_LOCATION_NOT_FOUND;
  
  			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
-@@ -588,7 +612,9 @@
+@@ -602,7 +626,9 @@
  				    (s->srv_conf.flags & f) ==
  				    (srv_conf->flags & f) &&
  				    strcmp(s->srv_conf.location,
@@ -223,7 +222,7 @@ Index: usr.sbin/httpd/parse.y
  					break;
  			}
  			if (s != NULL) {
-@@ -629,6 +655,51 @@
+@@ -643,6 +669,51 @@
  		| NOT FOUND	{ $$ = -1; }
  		;
  
@@ -275,7 +274,7 @@ Index: usr.sbin/httpd/parse.y
  hsts		: HSTS '{' optnl hstsflags_l '}'
  		| HSTS hstsflags
  		| HSTS
-@@ -1356,7 +1427,121 @@
+@@ -1367,7 +1438,121 @@
  	int		 k_val;
  };
  
@@ -397,7 +396,7 @@ Index: usr.sbin/httpd/parse.y
  yyerror(const char *fmt, ...)
  {
  	va_list		 ap;
-@@ -1410,6 +1595,7 @@
+@@ -1421,6 +1606,7 @@
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
  		{ "found",		FOUND },

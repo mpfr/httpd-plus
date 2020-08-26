@@ -89,93 +89,91 @@ server "www.example.com" {
 
 `httpd-plus` is a series of consecutive patch files applicable to the lastest `-stable` and `-current` branches. Just follow the steps below.
 
-1. Make sure the `/usr/src` tree is in place and up-to-date.
+Make sure your user has sufficient `doas` permissions. To start, `cd` into the user's home directory, here `/home/mpfr`.
 
-1. Make sure your user has sufficient `doas` permissions. To start, `cd` into the user's home directory, here `/home/mpfr`.
+```
+$ cat /etc/doas.conf
+permit nopass mpfr
+$ cd
+$ pwd
+/home/mpfr
+$
+```
 
-	```
-	$ cat /etc/doas.conf
-	permit nopass mpfr
-	$ cd
-	$ pwd
-	/home/mpfr
-	$
-	```
+Get patch files and installation script downloaded and extracted.
 
-1. Get patch files and installation script downloaded and extracted.
+```
+$ ftp -o - https://codeload.github.com/mpfr/httpd-plus/tar.gz/master | tar xzvf -
+httpd-plus-master
+httpd-plus-master/00-updates-current.patch
+httpd-plus-master/00-updates-stable.patch
+httpd-plus-master/01-cache-control-headers-current.patch
+httpd-plus-master/01-cache-control-headers-stable.patch
+httpd-plus-master/02-wordpress-pretty-permalinks-current.patch
+httpd-plus-master/02-wordpress-pretty-permalinks-stable.patch
+httpd-plus-master/03-fastcgi-script-overrides-current.patch
+httpd-plus-master/03-fastcgi-script-overrides-stable.patch
+httpd-plus-master/04-client-ip-filters-current.patch
+httpd-plus-master/04-client-ip-filters-stable.patch
+httpd-plus-master/README.md
+httpd-plus-master/install
+$
+```
 
-	```
-	$ ftp -o - https://codeload.github.com/mpfr/httpd-plus/tar.gz/master | tar xzvf -
-	httpd-plus-master
-	httpd-plus-master/00-updates-current.patch
-	httpd-plus-master/00-updates-stable.patch
-	httpd-plus-master/01-cache-control-headers-current.patch
-	httpd-plus-master/01-cache-control-headers-stable.patch
-	httpd-plus-master/02-wordpress-pretty-permalinks-current.patch
-	httpd-plus-master/02-wordpress-pretty-permalinks-stable.patch
-	httpd-plus-master/03-fastcgi-script-overrides-current.patch
-	httpd-plus-master/03-fastcgi-script-overrides-stable.patch
-	httpd-plus-master/04-client-ip-filters-current.patch
-	httpd-plus-master/04-client-ip-filters-stable.patch
-	httpd-plus-master/README.md
-	httpd-plus-master/install
-	$
-	```
+Apply the patch files by running the installation script which will build and install the `httpd-plus` binary (`-stable` or `-current` branch will be detected automatically). After that, the original source code will be restored.
 
-1. Apply the patch files by running the installation script which will build and install the `httpd-plus` binary (`-stable` or `-current` branch will be detected automatically). After that, the original source code will be restored.
+```
+$ doas chmod ugo+x httpd-plus-master/install
+$ doas httpd-plus-master/install 2>&1 | tee httpd-plus-install.log
+Identified -current branch.
+Backing up original sources ... Done.
+Applying patch files ...
+... 00-updates-current ...
+Hmm...  Looks like a unified diff to me...
+The text leading up to this was:
+--------------------------
+.
+.
+.
+|Index: usr.sbin/httpd/parse.y
+--------------------------
+Patching file usr.sbin/httpd/parse.y using Plan A...
+Hunk #1 succeeded at 1.
+Hunk #2 succeeded at 582.
+done
+... 01-cache-control-headers-current ...
+Hmm...  Looks like a unified diff to me...
+.
+.
+.
+done
+Building and installing httpd-plus binary and manpage ...
+.
+.
+.
+Restoring original sources ... Done.
 
-	```
-	$ doas chmod ugo+x httpd-plus-master/install
-	$ doas httpd-plus-master/install 2>&1 | tee httpd-plus-install.log
-	Identified -current branch.
-	Backing up original sources ... Done.
-	Applying patch files ...
-	... 00-updates-current ...
-	Hmm...  Looks like a unified diff to me...
-	The text leading up to this was:
-	--------------------------
-	.
-	.
-	.
-	|Index: usr.sbin/httpd/parse.y
-	--------------------------
-	Patching file usr.sbin/httpd/parse.y using Plan A...
-	Hunk #1 succeeded at 1.
-	Hunk #2 succeeded at 568.
-	done
-	... 01-cache-control-headers-current ...
-	Hmm...  Looks like a unified diff to me...
-	.
-	.
-	.
-	done
-	Building and installing httpd-plus binary and manpage ...
-	.
-	.
-	.
-	Restoring original sources ... Done.
+Installing httpd-plus binary and manpage completed successfully.
+Please consult 'man httpd.conf' for further information on new features.
+$
+```
 
-	Installing httpd-plus binary and manpage completed successfully.
-	Please consult 'man httpd.conf' for further information on new features.
-	$
-	```
+Adapt your `httpd.conf` to newly added features. For further information, just have a look at the updated `httpd.conf(5)` manpage via `man httpd.conf`. Make sure your new configuration is valid.
 
-1. Adapt your `httpd.conf` to newly added features. For further information, just have a look at the updated `httpd.conf(5)` manpage via `man httpd.conf`. Make sure your new configuration is valid.
+```
+$ doas httpd -n
+configuration OK
+$
+```
 
-	```
-	$ doas httpd -n
-	configuration OK
-	$
-	```
+Restart the `httpd` daemon.
 
-1. Restart the `httpd` daemon.
-
-	```
-	# doas rcctl restart httpd
-	httpd(ok)
-	httpd(ok)
-	#
-	```
+```
+$ doas rcctl restart httpd
+httpd(ok)
+httpd(ok)
+$
+```
 
 ## How to uninstall
 

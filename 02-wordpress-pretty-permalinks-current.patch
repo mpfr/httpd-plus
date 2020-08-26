@@ -42,7 +42,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Ic location
  option,
 Index: usr.sbin/httpd/httpd.h
-@@ -395,13 +395,16 @@
+@@ -394,13 +394,16 @@
  #define SRVFLAG_DEFAULT_TYPE	0x00800000
  #define SRVFLAG_PATH_REWRITE	0x01000000
  #define SRVFLAG_NO_PATH_REWRITE	0x02000000
@@ -51,7 +51,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define SRVFLAG_BITS							\
  	"\10\01INDEX\02NO_INDEX\03AUTO_INDEX\04NO_AUTO_INDEX"		\
- 	"\05ROOT\06LOCATION\07FCGI\10NO_FCGI\11LOG\12NO_LOG\13SOCKET"	\
+ 	"\05ROOT\06LOCATION\07FCGI\10NO_FCGI\11LOG\12NO_LOGT"		\
  	"\14SYSLOG\15NO_SYSLOG\16TLS\17ACCESS_LOG\20ERROR_LOG"		\
  	"\21AUTH\22NO_AUTH\23BLOCK\24NO_BLOCK\25LOCATION_MATCH"		\
 -	"\26SERVER_MATCH\27SERVER_HSTS\30DEFAULT_TYPE\31PATH\32NO_PATH"
@@ -60,7 +60,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define TCPFLAG_NODELAY		0x01
  #define TCPFLAG_NNODELAY	0x02
-@@ -695,6 +698,7 @@
+@@ -694,6 +697,7 @@
  	 server_root_strip(const char *, int);
  struct server_config *
  	 server_getlocation(struct client *, const char *);
@@ -84,13 +84,14 @@ Index: usr.sbin/httpd/parse.y
  %type	<v.tv>		timeout
  %type	<v.string>	numberstring optstring
  %type	<v.auth>	authopts
-@@ -500,38 +500,38 @@
+@@ -507,39 +507,39 @@
  		| fastcgi
  		| authenticate
  		| filter
 -		| LOCATION optmatch STRING	{
 +		| LOCATION optfound optmatch STRING	{
- 			struct server	*s;
+ 			struct server		*s;
+ 			struct sockaddr_un	*sun;
  
  			if (srv->srv_conf.ss.ss_family == AF_UNSPEC) {
  				yyerror("listen address not specified");
@@ -131,7 +132,7 @@ Index: usr.sbin/httpd/parse.y
  
  			if (strlcpy(s->srv_conf.name, srv->srv_conf.name,
  			    sizeof(s->srv_conf.name)) >=
-@@ -545,7 +545,18 @@
+@@ -559,7 +559,18 @@
  			/* A location entry uses the parent id */
  			s->srv_conf.parent_id = srv->srv_conf.id;
  			s->srv_conf.flags = SRVFLAG_LOCATION;
@@ -151,7 +152,7 @@ Index: usr.sbin/httpd/parse.y
  				s->srv_conf.flags |= SRVFLAG_LOCATION_MATCH;
  			s->srv_s = -1;
  			memcpy(&s->srv_conf.ss, &srv->srv_conf.ss,
-@@ -565,11 +576,17 @@
+@@ -579,11 +590,17 @@
  			SPLAY_INIT(&srv->srv_clients);
  		} '{' optnl serveropts_l '}'	{
  			struct server	*s = NULL;
@@ -169,7 +170,7 @@ Index: usr.sbin/httpd/parse.y
  				    strcmp(s->srv_conf.location,
  				    srv_conf->location) == 0)
  					break;
-@@ -607,6 +624,11 @@
+@@ -621,6 +638,11 @@
  		}
  		;
  
@@ -181,7 +182,7 @@ Index: usr.sbin/httpd/parse.y
  hsts		: HSTS '{' optnl hstsflags_l '}'
  		| HSTS hstsflags
  		| HSTS
-@@ -1377,6 +1399,7 @@
+@@ -1388,6 +1410,7 @@
  		{ "error",		ERR },
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
@@ -189,7 +190,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "hsts",		HSTS },
  		{ "include",		INCLUDE },
  		{ "index",		INDEX },
-@@ -1392,6 +1415,7 @@
+@@ -1403,6 +1426,7 @@
  		{ "max-age",		MAXAGE },
  		{ "no",			NO },
  		{ "nodelay",		NODELAY },

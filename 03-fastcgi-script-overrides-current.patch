@@ -25,7 +25,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  Strip
  .Ar number
 Index: usr.sbin/httpd/httpd.h
-@@ -480,6 +480,7 @@
+@@ -479,6 +479,7 @@
  	uint32_t		 parent_id;
  	char			 name[HOST_NAME_MAX+1];
  	char			 location[HTTPD_LOCATION_MAX];
@@ -43,7 +43,7 @@ Index: usr.sbin/httpd/parse.y
  %token	<v.string>	STRING
  %token  <v.number>	NUMBER
  %type	<v.port>	port
-@@ -740,6 +740,16 @@
+@@ -751,6 +751,16 @@
  			    param->name, param->value);
  			TAILQ_INSERT_HEAD(&srv_conf->fcgiparams, param, entry);
  		}
@@ -60,7 +60,7 @@ Index: usr.sbin/httpd/parse.y
  		| STRIP NUMBER			{
  			if ($2 < 0 || $2 > INT_MAX) {
  				yyerror("invalid fastcgi strip number");
-@@ -1431,6 +1441,7 @@
+@@ -1442,6 +1452,7 @@
  		{ "rewrite",		REWRITE },
  		{ "root",		ROOT },
  		{ "sack",		SACK },
