@@ -26,6 +26,10 @@ restore()
 	[[ $? -eq 0 ]] && echo 'Done.' || echo 'Failed.'
 }
 
+if [[ $(id -u) != 0 ]]; then
+	echo "need root privileges"
+	exit 1
+fi
 if [[ ! -d ${srcdir} ]]; then
 	echo "Missing source tree."
 	exit 1
