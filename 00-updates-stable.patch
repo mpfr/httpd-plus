@@ -14,12 +14,6 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/config.c
-@@ -1,4 +1,4 @@
--/*	$OpenBSD: config.c,v 1.57 2019/05/08 19:57:45 reyk Exp $	*/
-+/*	$OpenBSD: config.c,v 1.58 2020/08/03 10:55:58 benno Exp $	*/
- 
- /*
-  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
 @@ -135,9 +135,7 @@
  int
  config_getcfg(struct httpd *env, struct imsg *imsg)
@@ -48,12 +42,6 @@ Index: usr.sbin/httpd/config.c
  
  	return (0);
 Index: usr.sbin/httpd/httpd.c
-@@ -1,4 +1,4 @@
--/*	$OpenBSD: httpd.c,v 1.68 2018/09/09 21:06:51 bluhm Exp $	*/
-+/*	$OpenBSD: httpd.c,v 1.70 2020/08/03 11:05:24 Exp $	*/
- 
- /*
-  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 @@ -551,59 +551,6 @@
  	return (0);
  }
@@ -189,12 +177,6 @@ Index: usr.sbin/httpd/httpd.c
  printb_flags(const uint32_t v, const char *bits)
  {
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -1,4 +1,4 @@
--.\"	$OpenBSD: httpd.conf.5,v 1.110 2020/04/23 21:10:53 jmc Exp $
-+.\"	$OpenBSD: httpd.conf.5,v 1.111 2020/05/16 16:58:11 jmc Exp $
- .\"
- .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
- .\"
 @@ -14,7 +14,7 @@
  .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
@@ -217,12 +199,6 @@ Index: usr.sbin/httpd/httpd.conf.5
  Example configuration files for
  .Nm
 Index: usr.sbin/httpd/httpd.h
-@@ -1,4 +1,4 @@
--/*	$OpenBSD: httpd.h,v 1.146 2020/02/09 09:44:04 florian Exp $	*/
-+/*	$OpenBSD: httpd.h,v 1.149 2020/08/03 11:05:24 benno Exp $	*/
- 
- /*
-  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
 @@ -121,25 +121,13 @@
  	uint8_t		 cf_tls_sid[TLS_MAX_SESSION_ID_LENGTH];
  };
@@ -294,12 +270,6 @@ Index: usr.sbin/httpd/parse.y
  				    srv_conf->location) == 0)
  					break;
 Index: usr.sbin/httpd/proc.c
-@@ -1,4 +1,4 @@
--/*	$OpenBSD: proc.c,v 1.38 2018/09/09 21:06:51 bluhm Exp $	*/
-+/*	$OpenBSD: proc.c,v 1.39 2020/08/03 10:57:21 benno Exp $	*/
- 
- /*
-  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
 @@ -401,7 +401,7 @@
  			free(cause);
  		} else
@@ -310,12 +280,6 @@ Index: usr.sbin/httpd/proc.c
  
  void
 Index: usr.sbin/httpd/server_fcgi.c
-@@ -1,4 +1,4 @@
--/*	$OpenBSD: server_fcgi.c,v 1.81 2020/02/09 09:44:04 florian Exp $	*/
-+/*	$OpenBSD: server_fcgi.c,v 1.82 2020/08/03 10:58:38 benno Exp $	*/
- 
- /*
-  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
 @@ -684,7 +684,7 @@
  
  	/* Date header is mandatory and should be added as late as possible */
@@ -326,12 +290,6 @@ Index: usr.sbin/httpd/server_fcgi.c
  	    kv_add(&resp->http_headers, "Date", tmbuf) == NULL))
  		return (-1);
 Index: usr.sbin/httpd/server_file.c
-@@ -1,4 +1,4 @@
--/*	$OpenBSD: server_file.c,v 1.66 2018/06/15 12:36:05 reyk Exp $	*/
-+/*	$OpenBSD: server_file.c,v 1.68 2020/05/22 07:18:17 bentley Exp $	*/
- 
- /*
-  * Copyright (c) 2006 - 2017 Reyk Floeter <reyk@openbsd.org>
 @@ -477,14 +477,17 @@
  
  	/* A CSS stylesheet allows minimal customization by the user */
@@ -354,12 +312,6 @@ Index: usr.sbin/httpd/server_file.c
  	    "<style type=\"text/css\"><!--\n%s\n--></style>\n"
  	    "</head>\n"
 Index: usr.sbin/httpd/server_http.c
-@@ -1,4 +1,4 @@
--/*	$OpenBSD: server_http.c,v 1.137 2020/02/25 15:18:41 sthen Exp $	*/
-+/*	$OpenBSD: server_http.c,v 1.140 2020/08/03 10:59:53 benno Exp $	*/
- 
- /*
-  * Copyright (c) 2006 - 2018 Reyk Floeter <reyk@openbsd.org>
 @@ -921,15 +921,17 @@
  	/* A CSS stylesheet allows minimal customization by the user */
  	style = "body { background-color: white; color: black; font-family: "

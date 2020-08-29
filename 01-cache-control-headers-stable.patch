@@ -32,7 +32,7 @@ Index: usr.sbin/httpd/http.h
   * Some default media types based on (2014-08-04 version):
 Index: usr.sbin/httpd/httpd.conf.5
 @@ -1,5 +1,6 @@
- .\"	$OpenBSD: httpd.conf.5,v 1.111 2020/05/16 16:58:11 jmc Exp $
+ .\"	$OpenBSD: httpd.conf.5,v 1.110 2020/04/23 21:10:53 jmc Exp $
  .\"
 +.\" Copyright (c) 2020 Matthias Pressfreund
  .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
@@ -180,7 +180,7 @@ Index: usr.sbin/httpd/parse.y
  			if (media_add(conf->sc_mediatypes, &m) == NULL) {
 Index: usr.sbin/httpd/server_http.c
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: server_http.c,v 1.140 2020/08/03 10:59:53 benno Exp $	*/
+ /*	$OpenBSD: server_http.c,v 1.137 2020/02/25 15:18:41 sthen Exp $	*/
  
  /*
 + * Copyright (c) 2020 Matthias Pressfreund
