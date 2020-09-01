@@ -1,6 +1,9 @@
 # httpd-plus
 
-Add-ons for the [OpenBSD](https://www.openbsd.org) [`httpd(8)`](http://man.openbsd.org/httpd) web server, applicable to the lastest `-stable` and `-current` branches.
+Add-ons for the [OpenBSD](https://www.openbsd.org) [`httpd(8)`](http://man.openbsd.org/httpd) web server applicable to the lastest `current` branch.
+
+Other branches available:
+* [6.7-stable](https://github.com/mpfr/httpd-plus/tree/6.7-stable)
 
 ## List of add-ons
 
@@ -8,14 +11,6 @@ Add-ons for the [OpenBSD](https://www.openbsd.org) [`httpd(8)`](http://man.openb
 
 Bug fixes:
 * Failing detection of `location` duplicates (see on [tech@](https://marc.info/?l=openbsd-tech&m=157313087000813))
-
-[Commits](https://github.com/openbsd/src/commits/master/usr.sbin/httpd) to `-current` merged into `-stable`:
-* May 16, 2020
-* May 18, 2020
-* May 22, 2020
-* July 25, 2020
-* July 30, 2020
-* August 3, 2020
 
 ### cache-control-headers
 
@@ -105,16 +100,11 @@ Get patch files and installation script downloaded and extracted.
 ```
 $ ftp -o - https://codeload.github.com/mpfr/httpd-plus/tar.gz/current | tar xzvf -
 httpd-plus-current
-httpd-plus-current/00-updates-current.patch
-httpd-plus-current/00-updates-stable.patch
-httpd-plus-current/01-cache-control-headers-current.patch
-httpd-plus-current/01-cache-control-headers-stable.patch
-httpd-plus-current/02-wordpress-pretty-permalinks-current.patch
-httpd-plus-current/02-wordpress-pretty-permalinks-stable.patch
-httpd-plus-current/03-fastcgi-script-overrides-current.patch
-httpd-plus-current/03-fastcgi-script-overrides-stable.patch
-httpd-plus-current/04-client-ip-filters-current.patch
-httpd-plus-current/04-client-ip-filters-stable.patch
+httpd-plus-current/00-updates.patch
+httpd-plus-current/01-cache-control-headers.patch
+httpd-plus-current/02-wordpress-pretty-permalinks.patch
+httpd-plus-current/03-fastcgi-script-overrides.patch
+httpd-plus-current/04-client-ip-filters.patch
 httpd-plus-current/README.md
 httpd-plus-current/install
 $
@@ -125,10 +115,9 @@ Apply the patch files by running the installation script which will build and in
 ```
 $ doas chmod ugo+x httpd-plus-current/install
 $ doas httpd-plus-current/install 2>&1 | tee httpd-plus-install.log
-Identified -current branch.
 Backing up original sources ... Done.
 Applying patch files ...
-... 00-updates-current ...
+... 00-updates ...
 Hmm...  Looks like a unified diff to me...
 The text leading up to this was:
 --------------------------
@@ -141,7 +130,7 @@ Patching file usr.sbin/httpd/parse.y using Plan A...
 Hunk #1 succeeded at 1.
 Hunk #2 succeeded at 582.
 done
-... 01-cache-control-headers-current ...
+... 01-cache-control-headers ...
 Hmm...  Looks like a unified diff to me...
 .
 .
