@@ -1,6 +1,9 @@
 # httpd-plus
 
-Add-ons for the [OpenBSD](https://www.openbsd.org) [`httpd(8)`](http://man.openbsd.org/httpd) web server, applicable to the lastest `-stable` and `-current` branches.
+Add-ons for the [OpenBSD](https://www.openbsd.org) [`httpd(8)`](http://man.openbsd.org/httpd) web server applicable to the lastest `6.7-stable` branch.
+
+Other branches available:
+* [current](https://github.com/mpfr/httpd-plus/tree/current)
 
 ## List of add-ons
 
@@ -103,32 +106,26 @@ $
 Get patch files and installation script downloaded and extracted.
 
 ```
-$ ftp -o - https://codeload.github.com/mpfr/httpd-plus/tar.gz/current | tar xzvf -
-httpd-plus-current
-httpd-plus-current/00-updates-current.patch
-httpd-plus-current/00-updates-stable.patch
-httpd-plus-current/01-cache-control-headers-current.patch
-httpd-plus-current/01-cache-control-headers-stable.patch
-httpd-plus-current/02-wordpress-pretty-permalinks-current.patch
-httpd-plus-current/02-wordpress-pretty-permalinks-stable.patch
-httpd-plus-current/03-fastcgi-script-overrides-current.patch
-httpd-plus-current/03-fastcgi-script-overrides-stable.patch
-httpd-plus-current/04-client-ip-filters-current.patch
-httpd-plus-current/04-client-ip-filters-stable.patch
-httpd-plus-current/README.md
-httpd-plus-current/install
+$ ftp -o - https://codeload.github.com/mpfr/httpd-plus/tar.gz/6.7-stable | tar xzvf -
+httpd-plus-6.7-stable
+httpd-plus-6.7-stable/00-updates.patch
+httpd-plus-6.7-stable/01-cache-control-headers.patch
+httpd-plus-6.7-stable/02-wordpress-pretty-permalinks.patch
+httpd-plus-6.7-stable/03-fastcgi-script-overrides.patch
+httpd-plus-6.7-stable/04-client-ip-filters.patch
+httpd-plus-6.7-stable/README.md
+httpd-plus-6.7-stable/install
 $
 ```
 
-Apply the patch files by running the installation script which will build and install the `httpd-plus` binary (`-stable` or `-current` branch will be detected automatically). After that, the original source code will be restored.
+Apply the patch files by running the installation script which will build and install the `httpd-plus` binary. After that, the original source code will be restored.
 
 ```
-$ doas chmod ugo+x httpd-plus-current/install
-$ doas httpd-plus-current/install 2>&1 | tee httpd-plus-install.log
-Identified -current branch.
+$ doas chmod ugo+x httpd-plus-6.7-stable/install
+$ doas httpd-plus-6.7-stable/install 2>&1 | tee httpd-plus-install.log
 Backing up original sources ... Done.
 Applying patch files ...
-... 00-updates-current ...
+... 00-updates ...
 Hmm...  Looks like a unified diff to me...
 The text leading up to this was:
 --------------------------
@@ -139,9 +136,9 @@ The text leading up to this was:
 --------------------------
 Patching file usr.sbin/httpd/parse.y using Plan A...
 Hunk #1 succeeded at 1.
-Hunk #2 succeeded at 582.
+Hunk #2 succeeded at 565.
 done
-... 01-cache-control-headers-current ...
+... 01-cache-control-headers ...
 Hmm...  Looks like a unified diff to me...
 .
 .
