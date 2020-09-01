@@ -27,21 +27,21 @@ restore()
 }
 
 if [[ $(id -u) != 0 ]]; then
-	echo "need root privileges"
+	echo 'need root privileges'
 	exit 1
 fi
 if [[ ! -d ${srcdir} ]]; then
-	echo "Missing source tree."
+	echo 'missing source tree'
 	exit 1
 fi
 
-chksum=$(find "${srcdir}" \( -name '*.[chy578]' -o -name 'Makefile' \) \
+chksum=$(find ${srcdir} \( -name '*.[chy578]' -o -name 'Makefile' \) \
 	-type f -maxdepth 1 -exec sha256 {} \; | sort -k 2 | sha256)
 chksum_stab='7e383a5b1e09804f332ce25b2fe8d310d46127f23b05994e5bb9a7cb4db44ec2'
 chksum_curr='20eca3723840edaf89a483d32130f0dfd0714ba7a1c213e5f20b6fc3f37e5073'
-if [[ "${chksum}" == "${chksum_stab}" ]]; then
+if [[ ${chksum} = ${chksum_stab} ]]; then
 	branch='-stable'
-elif [[ "${chksum}" == "${chksum_curr}" ]]; then
+elif [[ ${chksum} = ${chksum_curr} ]]; then
 	branch='-current'
 else
 	echo 'Sources and patches do not match. Make sure both are up-to-date.'
@@ -64,11 +64,11 @@ else
 fi
 
 echo 'Applying patch files ...'
-for f in $(find "${patchdir}" -type f -name "*${branch}.patch" | sort); do
+for f in $(find ${patchdir} -type f -name "*${branch}.patch" | sort); do
 	echo "... $(basename ${f} .patch) ..."
 	cat ${f} | (cd /usr/src && patch -p0)
 	if [[ $? -ne 0 ]]; then
-		restore "${bakdir}"
+		restore ${bakdir}
 		exit 1
 	fi
 done
@@ -77,8 +77,13 @@ cd ${srcdir}
 
 echo 'Building and installing httpd-plus binary and manpage ...'
 make obj && make && make install
+ret=$?
 
-restore "${bakdir}"
+restore ${bakdir}
 
+if [[ ${ret} -ne 0 ]]; then
+	echo "\nInstalling httpd-plus failed (exitcode: ${ret})."
+	exit 1
+fi
 echo '\nInstalling httpd-plus binary and manpage completed successfully.'
 echo "Please consult 'man httpd.conf' for further information on new features."

@@ -1,6 +1,6 @@
 # httpd-plus
 
-Add-ons for the [OpenBSD](https://www.openbsd.org) [`httpd(8)`](http://man.openbsd.org/httpd) web server, always applicable to the lastest `-stable` and `-current` branches.
+Add-ons for the [OpenBSD](https://www.openbsd.org) [`httpd(8)`](http://man.openbsd.org/httpd) web server, applicable to the lastest `-stable` and `-current` branches.
 
 ## List of add-ons
 
@@ -87,7 +87,7 @@ server "www.example.com" {
 
 ## How to install
 
-`httpd-plus` is a series of consecutive patch files applicable to the lastest `-stable` and `-current` branches. Just follow the steps below.
+`httpd-plus` is a series of consecutive patch files which may be applied easily just by following the steps below.
 
 Make sure your user has sufficient `doas` permissions. To start, `cd` into the user's home directory, here `/home/mpfr`.
 
@@ -103,28 +103,28 @@ $
 Get patch files and installation script downloaded and extracted.
 
 ```
-$ ftp -o - https://codeload.github.com/mpfr/httpd-plus/tar.gz/master | tar xzvf -
-httpd-plus-master
-httpd-plus-master/00-updates-current.patch
-httpd-plus-master/00-updates-stable.patch
-httpd-plus-master/01-cache-control-headers-current.patch
-httpd-plus-master/01-cache-control-headers-stable.patch
-httpd-plus-master/02-wordpress-pretty-permalinks-current.patch
-httpd-plus-master/02-wordpress-pretty-permalinks-stable.patch
-httpd-plus-master/03-fastcgi-script-overrides-current.patch
-httpd-plus-master/03-fastcgi-script-overrides-stable.patch
-httpd-plus-master/04-client-ip-filters-current.patch
-httpd-plus-master/04-client-ip-filters-stable.patch
-httpd-plus-master/README.md
-httpd-plus-master/install
+$ ftp -o - https://codeload.github.com/mpfr/httpd-plus/tar.gz/current | tar xzvf -
+httpd-plus-current
+httpd-plus-current/00-updates-current.patch
+httpd-plus-current/00-updates-stable.patch
+httpd-plus-current/01-cache-control-headers-current.patch
+httpd-plus-current/01-cache-control-headers-stable.patch
+httpd-plus-current/02-wordpress-pretty-permalinks-current.patch
+httpd-plus-current/02-wordpress-pretty-permalinks-stable.patch
+httpd-plus-current/03-fastcgi-script-overrides-current.patch
+httpd-plus-current/03-fastcgi-script-overrides-stable.patch
+httpd-plus-current/04-client-ip-filters-current.patch
+httpd-plus-current/04-client-ip-filters-stable.patch
+httpd-plus-current/README.md
+httpd-plus-current/install
 $
 ```
 
 Apply the patch files by running the installation script which will build and install the `httpd-plus` binary (`-stable` or `-current` branch will be detected automatically). After that, the original source code will be restored.
 
 ```
-$ doas chmod ugo+x httpd-plus-master/install
-$ doas httpd-plus-master/install 2>&1 | tee httpd-plus-install.log
+$ doas chmod ugo+x httpd-plus-current/install
+$ doas httpd-plus-current/install 2>&1 | tee httpd-plus-install.log
 Identified -current branch.
 Backing up original sources ... Done.
 Applying patch files ...
@@ -186,4 +186,5 @@ $ doas make clean
 $ doas make
 $ doas make install
 $ doas rcctl restart httpd
+$
 ```
