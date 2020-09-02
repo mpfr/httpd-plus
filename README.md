@@ -1,6 +1,6 @@
 # httpd-plus
 
-Add-ons for the [OpenBSD](https://www.openbsd.org) [`httpd(8)`](http://man.openbsd.org/httpd) web server applicable to the lastest `current` branch.
+Add-ons for the [OpenBSD](https://www.openbsd.org) [`httpd(8)`](http://man.openbsd.org/httpd) web server applicable to the lastest `-current` branch.
 
 Other branches available:
 * [6.7-stable](https://github.com/mpfr/httpd-plus/tree/6.7-stable)
@@ -110,7 +110,7 @@ httpd-plus-current/install
 $
 ```
 
-Apply the patch files by running the installation script which will build and install the `httpd-plus` binary (`-stable` or `-current` branch will be detected automatically). After that, the original source code will be restored.
+Apply the patch files by running the installation script which will build and install the `httpd-plus` binary. After that, the original source code will be restored.
 
 ```
 $ doas chmod ugo+x httpd-plus-current/install
