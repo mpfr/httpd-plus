@@ -16,7 +16,7 @@
 #
 
 srcdir='/usr/src/usr.sbin/httpd'
-patchdir="$(pwd)/$(dirname $0)"
+chksum='7e383a5b1e09804f332ce25b2fe8d310d46127f23b05994e5bb9a7cb4db44ec2'
 
 restore()
 {
@@ -37,10 +37,19 @@ fi
 
 chksum0=$(find ${srcdir} \( -name '*.[chy578]' -o -name 'Makefile' \) \
 	-type f -maxdepth 1 -exec sha256 {} \; | sort -k 2 | sha256)
-chksum1='7e383a5b1e09804f332ce25b2fe8d310d46127f23b05994e5bb9a7cb4db44ec2'
-if [[ ${chksum0} != ${chksum1} ]]; then
-	echo 'Sources and patches do not match. Make sure both are up-to-date.'
-	exit 1
+if [[ ${chksum0} != ${chksum} ]]; then
+	echo 'Sources and patches do not match. Make sure ...'
+	echo '  ... the 6.7-stable branch is in use.'
+	echo '  ... both are up-to-date.'
+	while :
+	do
+		echo -n 'Continue anyway (Not recommended!)? [y/N] '
+		read yn
+		case ${yn} in
+			y)	break;;
+			*)	echo 'Exiting.'; exit 1;;
+		esac
+	done
 fi
 
 echo -n 'Backing up original sources ... '
@@ -58,7 +67,7 @@ else
 fi
 
 echo 'Applying patch files ...'
-for f in $(find ${patchdir} -type f -name '*.patch' | sort); do
+for f in $(find $(pwd)/$(dirname $0) -type f -name '*.patch' | sort); do
 	echo "... $(basename ${f} .patch) ..."
 	cat ${f} | (cd /usr/src && patch -p0)
 	if [[ $? -ne 0 ]]; then
