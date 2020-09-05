@@ -32,13 +32,13 @@ Index: usr.sbin/httpd/http.h
   * Some default media types based on (2014-08-04 version):
 Index: usr.sbin/httpd/httpd.conf.5
 @@ -1,5 +1,6 @@
- .\"	$OpenBSD: httpd.conf.5,v 1.112 2020/08/24 15:49:10 tracey Exp $
+ .\"	$OpenBSD: httpd.conf.5,v 1.113 2020/09/05 11:49:38 tb Exp $
  .\"
 +.\" Copyright (c) 2020 Matthias Pressfreund
  .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
  .\"
  .\" Permission to use, copy, modify, and distribute this software for any
-@@ -690,15 +691,18 @@
+@@ -688,15 +689,18 @@
  section must include one or more lines of the following syntax,
  enclosed in curly braces:
  .Bl -tag -width Ds
@@ -60,7 +60,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .It Ic include Ar file
  Include types definitions from an external file, for example
  .Pa /usr/share/misc/mime.types .
-@@ -729,14 +733,14 @@
+@@ -727,14 +731,14 @@
  }
  
  types {
