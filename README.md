@@ -106,7 +106,7 @@ $
 Get patch files and installation script downloaded and extracted.
 
 ```
-$ ftp -o - https://codeload.github.com/mpfr/httpd-plus/tar.gz/6.7-stable | tar xzvf -
+$ ftp -Vo - https://codeload.github.com/mpfr/httpd-plus/tar.gz/6.7-stable | tar xzvf -
 httpd-plus-6.7-stable
 httpd-plus-6.7-stable/00-updates.patch
 httpd-plus-6.7-stable/01-cache-control-headers.patch
@@ -174,7 +174,7 @@ $
 
 ## How to uninstall
 
-As patching the source code will be undone automatically right after building and installing the `httpd-plus` daemon, the original version may be easily recovered by performing a de novo rebuild and reinstall.
+As patching the source code will be undone automatically right after building and installing the `httpd-plus` daemon, the original version may be easily recovered by performing a de novo rebuild and reinstall. After that, remove `httpd-plus` related features from your configuration file and make sure it is valid. Don't forget to restart the server in the end.
 
 ```
 $ cd /usr/src/usr.sbin/httpd
@@ -182,6 +182,12 @@ $ doas make obj
 $ doas make clean
 $ doas make
 $ doas make install
+$ doas vi /etc/httpd.conf
+...
+$ doas httpd -n
+configuration OK
 $ doas rcctl restart httpd
+httpd(ok)
+httpd(ok)
 $
 ```
