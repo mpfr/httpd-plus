@@ -15,8 +15,9 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
-srcdir='/usr/src/usr.sbin/httpd'
-chksum='392b0a17d4706bd66eaaddbd9d2918c67e220d1705c485a9a039cdb865e8903b'
+srcroot='/usr/src'
+srcdir="${srcroot}/usr.sbin/httpd"
+chksum='a177167fff2f4946ad4da973f9ac8e55de5d2b716c3804b7f7781de83c25e6fc'
 
 restore()
 {
@@ -69,7 +70,7 @@ fi
 echo 'Applying patch files ...'
 for f in $(find $(pwd)/$(dirname $0) -type f -name '*.patch' | sort); do
 	echo "... $(basename ${f} .patch) ..."
-	cat ${f} | (cd /usr/src && patch -p0)
+	cat ${f} | (cd ${srcroot} && patch -p0)
 	if [[ $? -ne 0 ]]; then
 		restore ${bakdir}
 		exit 1

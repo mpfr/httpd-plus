@@ -15,7 +15,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/http.h
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: http.h,v 1.15 2019/05/08 21:41:06 tb Exp $	*/
+ /*	$OpenBSD: http.h,v 1.16 2020/09/12 07:34:17 yasuoka Exp $	*/
  
  /*
 + * Copyright (c) 2020 Matthias Pressfreund
@@ -180,14 +180,14 @@ Index: usr.sbin/httpd/parse.y
  			if (media_add(conf->sc_mediatypes, &m) == NULL) {
 Index: usr.sbin/httpd/server_http.c
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: server_http.c,v 1.140 2020/08/03 10:59:53 benno Exp $	*/
+ /*	$OpenBSD: server_http.c,v 1.141 2020/09/12 07:34:17 yasuoka Exp $	*/
  
  /*
 + * Copyright (c) 2020 Matthias Pressfreund
   * Copyright (c) 2006 - 2018 Reyk Floeter <reyk@openbsd.org>
   *
   * Permission to use, copy, modify, and distribute this software for any
-@@ -1431,7 +1432,7 @@
+@@ -1437,7 +1438,7 @@
  	struct http_descriptor	*desc = clt->clt_descreq;
  	struct http_descriptor	*resp = clt->clt_descresp;
  	const char		*error;
@@ -196,7 +196,7 @@ Index: usr.sbin/httpd/server_http.c
  	char			 tmbuf[32];
  
  	if (desc == NULL || media == NULL ||
-@@ -1467,6 +1468,12 @@
+@@ -1473,6 +1474,12 @@
  	if (size >= 0 && ((cl =
  	    kv_add(&resp->http_headers, "Content-Length", NULL)) == NULL ||
  	    kv_set(cl, "%lld", (long long)size) == -1))

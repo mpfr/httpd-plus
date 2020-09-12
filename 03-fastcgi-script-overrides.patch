@@ -70,7 +70,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "strip",		STRIP },
 Index: usr.sbin/httpd/server_fcgi.c
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: server_fcgi.c,v 1.83 2020/08/24 15:49:11 tracey Exp $	*/
+ /*	$OpenBSD: server_fcgi.c,v 1.84 2020/09/12 07:34:17 yasuoka Exp $	*/
  
  /*
 + * Copyright (c) 2020 Matthias Pressfreund
