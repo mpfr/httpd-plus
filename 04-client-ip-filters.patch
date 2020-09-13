@@ -404,7 +404,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "include",		INCLUDE },
  		{ "index",		INDEX },
 Index: usr.sbin/httpd/server_http.c
-@@ -1400,11 +1400,47 @@
+@@ -1406,11 +1406,47 @@
  struct server_config *
  server_getlocation(struct client *clt, const char *path)
  {
@@ -452,7 +452,7 @@ Index: usr.sbin/httpd/server_http.c
  	/* Now search for the location */
  	TAILQ_FOREACH(location, &srv->srv_hosts, entry) {
  #ifdef DEBUG
-@@ -1428,7 +1464,8 @@
+@@ -1434,7 +1470,8 @@
  				    path)) == -1)
  					return (NULL);
  
@@ -462,7 +462,7 @@ Index: usr.sbin/httpd/server_http.c
  					continue;
  				/* Replace host configuration */
  				clt->clt_srv_conf = srv_conf = location;
-@@ -1459,6 +1496,66 @@
+@@ -1465,6 +1502,66 @@
  	close(rootfd);
  	return ((ret == -1 && SRVFLAG_LOCATION_FOUND & srv_conf->flags) ||
  	    (ret == 0 && SRVFLAG_LOCATION_NOT_FOUND & srv_conf->flags));

@@ -41,6 +41,15 @@ Index: usr.sbin/httpd/config.c
  	}
  
  	return (0);
+Index: usr.sbin/httpd/http.h
+@@ -246,6 +246,7 @@
+ 	/* Rewritten path and query remain NULL if not used */
+ 	char			*http_path_alias;
+ 	char			*http_query_alias;
++	char			*http_path_orig;
+ 
+ 	/* A tree of headers and attached lists for repeated headers. */
+ 	struct kv		*http_lastheader;
 Index: usr.sbin/httpd/httpd.c
 @@ -551,59 +551,6 @@
  	return (0);
@@ -280,6 +289,22 @@ Index: usr.sbin/httpd/proc.c
  
  void
 Index: usr.sbin/httpd/server_fcgi.c
+@@ -328,13 +328,13 @@
+ 	}
+ 
+ 	if (!desc->http_query) {
+-		if (fcgi_add_param(&param, "REQUEST_URI", desc->http_path,
++		if (fcgi_add_param(&param, "REQUEST_URI", desc->http_path_orig,
+ 		    clt) == -1) {
+ 			errstr = "failed to encode param";
+ 			goto fail;
+ 		}
+ 	} else {
+-		if (asprintf(&str, "%s?%s", desc->http_path,
++		if (asprintf(&str, "%s?%s", desc->http_path_orig,
+ 		    desc->http_query) == -1) {
+ 			errstr = "failed to encode param";
+ 			goto fail;
 @@ -684,7 +684,7 @@
  
  	/* Date header is mandatory and should be added as late as possible */
@@ -312,7 +337,16 @@ Index: usr.sbin/httpd/server_file.c
  	    "<style type=\"text/css\"><!--\n%s\n--></style>\n"
  	    "</head>\n"
 Index: usr.sbin/httpd/server_http.c
-@@ -921,15 +921,17 @@
+@@ -100,6 +100,8 @@
+ 
+ 	free(desc->http_path);
+ 	desc->http_path = NULL;
++	free(desc->http_path_orig);
++	desc->http_path_orig = NULL;
+ 	free(desc->http_path_alias);
+ 	desc->http_path_alias = NULL;
+ 	free(desc->http_query);
+@@ -921,15 +923,17 @@
  	/* A CSS stylesheet allows minimal customization by the user */
  	style = "body { background-color: white; color: black; font-family: "
  	    "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif; }\n"
@@ -333,7 +367,23 @@ Index: usr.sbin/httpd/server_http.c
  	    "<title>%03d %s</title>\n"
  	    "<style type=\"text/css\"><!--\n%s\n--></style>\n"
  	    "</head>\n"
-@@ -1271,8 +1273,7 @@
+@@ -1202,9 +1206,13 @@
+ 	char			*hostval, *query;
+ 	const char		*errstr = NULL;
+ 
+-	/* Decode the URL */
++	/* Preserve original path */
+ 	if (desc->http_path == NULL ||
+-	    url_decode(desc->http_path) == NULL)
++	    (desc->http_path_orig = strdup(desc->http_path)) == NULL)
++		goto fail;
++
++	/* Decode the URL */
++	if (url_decode(desc->http_path) == NULL)
+ 		goto fail;
+ 
+ 	/* Canonicalize the request path */
+@@ -1271,8 +1279,7 @@
  				    hostname, FNM_CASEFOLD);
  			}
  			if (ret == 0 &&

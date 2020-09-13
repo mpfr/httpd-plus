@@ -13,12 +13,8 @@ Bug fixes:
 * Failing detection of `location` duplicates (see on [tech@](https://marc.info/?l=openbsd-tech&m=157313087000813))
 
 [Commits](https://github.com/openbsd/src/commits/master/usr.sbin/httpd) to `-current` merged into `-stable`:
-* May 16, 2020
-* May 18, 2020
-* May 22, 2020
-* July 25, 2020
-* July 30, 2020
-* August 3, 2020
+* May 16, 2020 until August 3, 2020
+* September 12, 2020
 
 ### cache-control-headers
 
