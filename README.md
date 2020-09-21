@@ -113,8 +113,7 @@ $
 Apply the patch files by running the installation script which will build and install the `httpd-plus` binary. After that, the original source code will be restored.
 
 ```
-$ doas chmod ugo+x httpd-plus-current/install
-$ doas httpd-plus-current/install 2>&1 | tee httpd-plus-install.log
+$ doas ksh httpd-plus-current/install 2>&1 | tee httpd-plus-install.log
 Backing up original sources ... Done.
 Applying patch files ...
 ... 00-updates ...
@@ -150,6 +149,8 @@ $
 Adapt your `httpd.conf` to newly added features. For further information, just have a look at the updated `httpd.conf(5)` manpage via `man httpd.conf`. Make sure your new configuration is valid.
 
 ```
+$ doas vi /etc/httpd.conf
+...
 $ doas httpd -n
 configuration OK
 $
@@ -166,7 +167,7 @@ $
 
 ## How to uninstall
 
-As patching the source code will be undone automatically right after building and installing the `httpd-plus` daemon, the original version may be easily recovered by performing a de novo rebuild and reinstall. After that, remove `httpd-plus` related features from your configuration file and make sure it is valid. Don't forget to restart the server in the end.
+As patching the source code will be undone automatically right after building and installing the `httpd-plus` daemon, the original version may be easily recovered by performing a de novo rebuild and reinstall.
 
 ```
 $ cd /usr/src/usr.sbin/httpd
@@ -174,6 +175,12 @@ $ doas make obj
 $ doas make clean
 $ doas make
 $ doas make install
+$
+```
+
+Remove `httpd-plus` related features from your configuration file and make sure it is valid. Don't forget to restart the server in the end.
+
+```
 $ doas vi /etc/httpd.conf
 ...
 $ doas httpd -n
