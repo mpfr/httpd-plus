@@ -44,7 +44,7 @@ server "www.example.com" {
 }
 ```
 
-> NOTE: Even with this add-on installed, WordPress is unable to discover that the OpenBSD web server is now capable to perform required URL rewrites. This will make the [Permalink Settings Screen](https://wordpress.org/support/article/settings-permalinks-screen/) not behave as expected. Luckily, and for this case exactly, the [got_url_rewrite hook](https://developer.wordpress.org/reference/hooks/got_url_rewrite/) exists. Adding the following line of code into the current theme's `functions.php` file will straighten things out.
+> NOTE: Even with this add-on installed, WordPress is unable to discover that the OpenBSD web server is now capable to perform required URL rewrites. This will make the [Permalink Settings Screen](https://wordpress.org/support/article/settings-permalinks-screen/) not behave as expected. Luckily, and for this case exactly, the [got_url_rewrite hook](https://developer.wordpress.o/rg/reference/hooks/got_url_rewrite/) exists. Adding the following line of code into the current theme's `functions.php` file will straighten things out.
 >
 > ```
 > add_filter('got_url_rewrite', '__return_true');
@@ -82,9 +82,9 @@ server "www.example.com" {
 
 ## How to install
 
-`httpd-plus` is a series of consecutive patch files which may be applied easily just by following the steps below.
+`httpd-plus` is a series of consecutive patch files which may be applied easily by following the steps below.
 
-Make sure your user has sufficient `doas` permissions. To start, `cd` into the user's home directory, here `/home/mpfr`.
+Make sure your user has sufficient `doas` permissions. To start, `cd` into the user's home directory, for example `/home/mpfr`.
 
 ```
 $ cat /etc/doas.conf
@@ -95,7 +95,7 @@ $ pwd
 $
 ```
 
-Get patch files and installation script downloaded and extracted.
+Download and extract patch files and installation script.
 
 ```
 $ ftp -Vo - https://codeload.github.com/mpfr/httpd-plus/tar.gz/current | tar xzvf -
@@ -110,7 +110,7 @@ httpd-plus-current/install
 $
 ```
 
-Apply the patch files by running the installation script which will build and install the `httpd-plus` binary. After that, the original source code will be restored.
+Apply the patch files by running the installation script. This will build and install the `httpd-plus` binary. After the build process, the original source is restored.
 
 ```
 $ doas ksh httpd-plus-current/install 2>&1 | tee httpd-plus-install.log
@@ -146,7 +146,7 @@ Please consult 'man httpd.conf' for further information on new features.
 $
 ```
 
-Adapt your `httpd.conf` to newly added features. For further information, just have a look at the updated `httpd.conf(5)` manpage via `man httpd.conf`. Make sure your new configuration is valid.
+Adapt your `httpd.conf` for the newly added features. For further information, have a look at the updated `httpd.conf(5)` manpage via `man httpd.conf`. Make sure your new configuration is valid.
 
 ```
 $ doas vi /etc/httpd.conf
@@ -167,7 +167,7 @@ $
 
 ## How to uninstall
 
-As patching the source code will be undone automatically right after building and installing the `httpd-plus` daemon, the original version may be easily recovered by performing a de novo rebuild and reinstall.
+The unpatched version of httpd can easily be restored by performing a fresh rebuild and reinstall.
 
 ```
 $ cd /usr/src/usr.sbin/httpd
@@ -178,7 +178,7 @@ $ doas make install
 $
 ```
 
-Remove `httpd-plus` related features from your configuration file and make sure it is valid. Don't forget to restart the server in the end.
+Remove `httpd-plus` related features from your configuration file and make sure it is valid. Don't forget to restart the httpd daemon.
 
 ```
 $ doas vi /etc/httpd.conf
