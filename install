@@ -16,7 +16,7 @@
 #
 
 srcroot='/usr/src'
-srcdir="${srcroot}/usr.sbin/httpd"
+srcdir=${srcroot}/usr.sbin/httpd
 chksum='7e383a5b1e09804f332ce25b2fe8d310d46127f23b05994e5bb9a7cb4db44ec2'
 
 restore()
@@ -56,7 +56,7 @@ fi
 echo -n 'Backing up original sources ... '
 while :
 do
-	bakdir="${srcdir}~$RANDOM"
+	bakdir=${srcdir}~$RANDOM
 	[[ -d ${bakdir} ]] || break
 done
 cp -a ${srcdir} ${bakdir}
@@ -70,7 +70,7 @@ fi
 echo 'Applying patch files ...'
 for f in $(find $(pwd)/$(dirname $0) -type f -name '*.patch' | sort); do
 	echo "... $(basename ${f} .patch) ..."
-	patch -d ${srcroot} -i ${f} -p0
+	patch -d ${srcroot} -f -i ${f} -p0
 	if [[ $? -ne 0 ]]; then
 		restore ${bakdir}
 		exit 1

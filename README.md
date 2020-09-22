@@ -14,7 +14,7 @@ Bug fixes:
 
 [Commits](https://github.com/openbsd/src/commits/master/usr.sbin/httpd) to `-current` merged into `-stable`:
 * May 16, 2020 until August 3, 2020
-* September 12, 2020
+* September 12, 2020 until now
 
 ### cache-control-headers
 
@@ -86,9 +86,9 @@ server "www.example.com" {
 
 ## How to install
 
-`httpd-plus` is a series of consecutive patch files which may be applied easily just by following the steps below.
+`httpd-plus` is a series of consecutive patch files which may be applied easily by following the steps below.
 
-Make sure your user has sufficient `doas` permissions. To start, `cd` into the user's home directory, here `/home/mpfr`.
+Make sure your user has sufficient `doas` permissions. To start, `cd` into the user's home directory, for example `/home/mpfr`.
 
 ```
 $ cat /etc/doas.conf
@@ -99,7 +99,7 @@ $ pwd
 $
 ```
 
-Get patch files and installation script downloaded and extracted.
+Download and extract patch files and installation script.
 
 ```
 $ ftp -Vo - https://codeload.github.com/mpfr/httpd-plus/tar.gz/6.7-stable | tar xzvf -
@@ -114,11 +114,10 @@ httpd-plus-6.7-stable/install
 $
 ```
 
-Apply the patch files by running the installation script which will build and install the `httpd-plus` binary. After that, the original source code will be restored.
+Apply the patch files by running the installation script. This will build and install the `httpd-plus` binary. After the build process, the original source is restored.
 
 ```
-$ doas chmod ugo+x httpd-plus-6.7-stable/install
-$ doas httpd-plus-6.7-stable/install 2>&1 | tee httpd-plus-install.log
+$ doas ksh httpd-plus-6.7-stable/install 2>&1 | tee httpd-plus-install.log
 Backing up original sources ... Done.
 Applying patch files ...
 ... 00-updates ...
@@ -151,9 +150,11 @@ Please consult 'man httpd.conf' for further information on new features.
 $
 ```
 
-Adapt your `httpd.conf` to newly added features. For further information, just have a look at the updated `httpd.conf(5)` manpage via `man httpd.conf`. Make sure your new configuration is valid.
+Adapt your `httpd.conf` for the newly added features. For further information, have a look at the updated `httpd.conf(5)` manpage via `man httpd.conf`. Make sure your new configuration is valid.
 
 ```
+$ doas vi /etc/httpd.conf
+...
 $ doas httpd -n
 configuration OK
 $
@@ -170,7 +171,7 @@ $
 
 ## How to uninstall
 
-As patching the source code will be undone automatically right after building and installing the `httpd-plus` daemon, the original version may be easily recovered by performing a de novo rebuild and reinstall. After that, remove `httpd-plus` related features from your configuration file and make sure it is valid. Don't forget to restart the server in the end.
+The unpatched version of httpd can easily be restored by performing a fresh rebuild and reinstall.
 
 ```
 $ cd /usr/src/usr.sbin/httpd
@@ -178,6 +179,12 @@ $ doas make obj
 $ doas make clean
 $ doas make
 $ doas make install
+$
+```
+
+Remove `httpd-plus` related features from your configuration file and make sure it is valid. Don't forget to restart the httpd daemon.
+ 
+```
 $ doas vi /etc/httpd.conf
 ...
 $ doas httpd -n

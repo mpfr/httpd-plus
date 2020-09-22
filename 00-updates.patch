@@ -33,7 +33,18 @@ Index: usr.sbin/httpd/config.c
  	if (privsep_process != PROC_PARENT)
  		proc_compose(env->sc_ps, PROC_PARENT,
  		    IMSG_CFG_DONE, NULL, 0);
-@@ -683,7 +679,6 @@
+@@ -387,8 +383,10 @@
+ 	if (proc_composev(ps, PROC_SERVER, IMSG_CFG_FCGI, iov, c) != 0) {
+ 		log_warn("%s: failed to compose IMSG_CFG_FCGI imsg for "
+ 		    "`%s'", __func__, srv_conf->name);
++		free(iov);
+ 		return (-1);
+ 	}
++	free(iov);
+ 
+ 	return (0);
+ }
+@@ -683,7 +681,6 @@
  		if ((srv->srv_conf.return_uri = get_data(p + s,
  		    srv->srv_conf.return_uri_len)) == NULL)
  			goto fail;
