@@ -26,7 +26,7 @@ types {
 }
 ```
 
-### wordpress-pretty-permalinks
+### location-access-tests
 
 Access tests (`found` or `not found`) for `location` resource paths via `httpd.conf(5)`. This enables [WordPress](https://wordpress.org) [Pretty Permalinks](https://wordpress.org/support/article/using-permalinks/) just like on an Apache web server with `mod_rewrite` installed.
 
@@ -102,9 +102,10 @@ $ ftp -Vo - https://codeload.github.com/mpfr/httpd-plus/tar.gz/current | tar xzv
 httpd-plus-current
 httpd-plus-current/00-updates.patch
 httpd-plus-current/01-cache-control-headers.patch
-httpd-plus-current/02-wordpress-pretty-permalinks.patch
+httpd-plus-current/02-location-access-tests.patch
 httpd-plus-current/03-fastcgi-script-overrides.patch
 httpd-plus-current/04-client-ip-filters.patch
+httpd-plus-current/LICENSE
 httpd-plus-current/README.md
 httpd-plus-current/install
 $
@@ -167,7 +168,7 @@ $
 
 ## How to uninstall
 
-The unpatched version of httpd can easily be restored by performing a fresh rebuild and reinstall.
+The original version of `httpd` can easily be restored by performing a fresh rebuild and reinstall.
 
 ```
 $ cd /usr/src/usr.sbin/httpd
@@ -178,7 +179,7 @@ $ doas make install
 $
 ```
 
-Remove `httpd-plus` related features from your configuration file and make sure it is valid. Don't forget to restart the httpd daemon.
+Remove `httpd-plus` related features from your configuration file and make sure it is valid. Don't forget to restart the `httpd` daemon.
 
 ```
 $ doas vi /etc/httpd.conf
