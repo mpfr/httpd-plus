@@ -14,7 +14,7 @@ Bug fixes:
 
 [Commits](https://github.com/openbsd/src/commits/master/usr.sbin/httpd) to `-current` merged into `-stable`:
 * May 16, 2020 until August 3, 2020
-* September 12, 2020 until now
+* September 12, 2020 until September 21, 2020
 
 ### cache-control-headers
 
@@ -30,7 +30,7 @@ types {
 }
 ```
 
-### wordpress-pretty-permalinks
+### location-access-tests
 
 Access tests (`found` or `not found`) for `location` resource paths via `httpd.conf(5)`. This enables [WordPress](https://wordpress.org) [Pretty Permalinks](https://wordpress.org/support/article/using-permalinks/) just like on an Apache web server with `mod_rewrite` installed.
 
@@ -106,9 +106,10 @@ $ ftp -Vo - https://codeload.github.com/mpfr/httpd-plus/tar.gz/6.7-stable | tar 
 httpd-plus-6.7-stable
 httpd-plus-6.7-stable/00-updates.patch
 httpd-plus-6.7-stable/01-cache-control-headers.patch
-httpd-plus-6.7-stable/02-wordpress-pretty-permalinks.patch
+httpd-plus-6.7-stable/02-location-access-tests.patch
 httpd-plus-6.7-stable/03-fastcgi-script-overrides.patch
 httpd-plus-6.7-stable/04-client-ip-filters.patch
+httpd-plus-6.7-stable/LICENSE
 httpd-plus-6.7-stable/README.md
 httpd-plus-6.7-stable/install
 $
@@ -171,7 +172,7 @@ $
 
 ## How to uninstall
 
-The unpatched version of httpd can easily be restored by performing a fresh rebuild and reinstall.
+The original version of `httpd` can easily be restored by performing a fresh rebuild and reinstall.
 
 ```
 $ cd /usr/src/usr.sbin/httpd
@@ -182,7 +183,7 @@ $ doas make install
 $
 ```
 
-Remove `httpd-plus` related features from your configuration file and make sure it is valid. Don't forget to restart the httpd daemon.
+Remove `httpd-plus` related features from your configuration file and make sure it is valid. Don't forget to restart the `httpd` daemon.
  
 ```
 $ doas vi /etc/httpd.conf
