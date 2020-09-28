@@ -14,7 +14,16 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/config.c
-@@ -135,9 +135,7 @@
+@@ -18,6 +18,8 @@
+ 
+ #include <sys/types.h>
+ #include <sys/queue.h>
++#include <sys/socket.h>
++#include <sys/un.h>
+ #include <sys/tree.h>
+ #include <sys/time.h>
+ #include <sys/uio.h>
+@@ -135,9 +137,7 @@
  int
  config_getcfg(struct httpd *env, struct imsg *imsg)
  {
@@ -24,7 +33,7 @@ Index: usr.sbin/httpd/config.c
  
  	if (IMSG_DATA_SIZE(imsg) != sizeof(cf))
  		return (0); /* ignore */
-@@ -148,8 +146,6 @@
+@@ -148,8 +148,6 @@
  	env->sc_flags = cf.cf_flags;
  	memcpy(env->sc_tls_sid, cf.cf_tls_sid, sizeof(env->sc_tls_sid));
  
@@ -33,7 +42,7 @@ Index: usr.sbin/httpd/config.c
  	if (privsep_process != PROC_PARENT)
  		proc_compose(env->sc_ps, PROC_PARENT,
  		    IMSG_CFG_DONE, NULL, 0);
-@@ -387,8 +383,10 @@
+@@ -387,8 +385,10 @@
  	if (proc_composev(ps, PROC_SERVER, IMSG_CFG_FCGI, iov, c) != 0) {
  		log_warn("%s: failed to compose IMSG_CFG_FCGI imsg for "
  		    "`%s'", __func__, srv_conf->name);
@@ -44,7 +53,21 @@ Index: usr.sbin/httpd/config.c
  
  	return (0);
  }
-@@ -683,7 +681,6 @@
+@@ -498,13 +498,6 @@
+ 		if ((srv_conf->flags & f) == 0)
+ 			srv_conf->flags |= parent->flags & f;
+ 
+-		f = SRVFLAG_SOCKET|SRVFLAG_FCGI;
+-		if ((srv_conf->flags & f) == SRVFLAG_FCGI) {
+-			srv_conf->flags |= f;
+-			(void)strlcpy(srv_conf->socket, HTTPD_FCGI_SOCKET,
+-			    sizeof(srv_conf->socket));
+-		}
+-
+ 		f = SRVFLAG_ROOT;
+ 		if ((srv_conf->flags & f) == 0) {
+ 			srv_conf->flags |= parent->flags & f;
+@@ -683,7 +676,6 @@
  		if ((srv->srv_conf.return_uri = get_data(p + s,
  		    srv->srv_conf.return_uri_len)) == NULL)
  			goto fail;
@@ -202,11 +225,40 @@ Index: usr.sbin/httpd/httpd.conf.5
  .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  .\"
 -.Dd $Mdocdate: April 23 2020 $
-+.Dd $Mdocdate: May 16 2020 $
++.Dd $Mdocdate: August 24 2020 $
  .Dt HTTPD.CONF 5
  .Os
  .Sh NAME
-@@ -699,6 +699,11 @@
+@@ -284,12 +284,13 @@
+ Enable FastCGI instead of serving files.
+ Valid options are:
+ .Bl -tag -width Ds
+-.It Ic socket Ar socket
++.It Ic socket Oo Cm tcp Oc Ar socket Oo Ar port Oc
+ .Nm httpd
+ passes HTTP requests to a FastCGI handler listening on the socket
+ .Ar socket .
+-The socket can either be a UNIX domain socket or a TCP socket listening
+-on localhost (127.0.0.1).
++The
++.Ar socket
++can either be a UNIX domain socket or a TCP socket.
+ If the FastCGI handler is listening on a UNIX domain socket,
+ .Ar socket
+ is a local path name within the
+@@ -301,7 +302,10 @@
+ Alternatively if
+ the FastCGI handler is listening on a TCP socket,
+ .Ar socket
+-starts with a colon followed by the TCP port number.
++is a hostname or an IP address.
++If the
++.Ar port
++is not specified, it defaults to port 9000.
+ .It Ic strip Ar number
+ Strip
+ .Ar number
+@@ -699,6 +703,11 @@
  Include types definitions from an external file, for example
  .Pa /usr/share/misc/mime.types .
  .El
@@ -219,7 +271,15 @@ Index: usr.sbin/httpd/httpd.conf.5
  Example configuration files for
  .Nm
 Index: usr.sbin/httpd/httpd.h
-@@ -121,25 +121,13 @@
+@@ -96,6 +96,7 @@
+ #define CONFIG_ALL		0xff
+ 
+ #define FCGI_CONTENT_SIZE	65535
++#define FCGI_DEFAULT_PORT	"9000"
+ 
+ #define PROC_PARENT_SOCK_FILENO	3
+ #define PROC_MAX_INSTANCES	32
+@@ -121,25 +122,13 @@
  	uint8_t		 cf_tls_sid[TLS_MAX_SESSION_ID_LENGTH];
  };
  
@@ -245,7 +305,38 @@ Index: usr.sbin/httpd/httpd.h
  #define KV_FLAG_INVALID		 0x01
  #define KV_FLAG_GLOBBING	 0x02
  	uint8_t			 kv_flags;
-@@ -722,7 +710,6 @@
+@@ -387,7 +376,6 @@
+ #define SRVFLAG_NO_FCGI		0x00000080
+ #define SRVFLAG_LOG		0x00000100
+ #define SRVFLAG_NO_LOG		0x00000200
+-#define SRVFLAG_SOCKET		0x00000400
+ #define SRVFLAG_SYSLOG		0x00000800
+ #define SRVFLAG_NO_SYSLOG	0x00001000
+ #define SRVFLAG_TLS		0x00002000
+@@ -406,7 +392,7 @@
+ 
+ #define SRVFLAG_BITS							\
+ 	"\10\01INDEX\02NO_INDEX\03AUTO_INDEX\04NO_AUTO_INDEX"		\
+-	"\05ROOT\06LOCATION\07FCGI\10NO_FCGI\11LOG\12NO_LOG\13SOCKET"	\
++	"\05ROOT\06LOCATION\07FCGI\10NO_FCGI\11LOG\12NO_LOG"		\
+ 	"\14SYSLOG\15NO_SYSLOG\16TLS\17ACCESS_LOG\20ERROR_LOG"		\
+ 	"\21AUTH\22NO_AUTH\23BLOCK\24NO_BLOCK\25LOCATION_MATCH"		\
+ 	"\26SERVER_MATCH\27SERVER_HSTS\30DEFAULT_TYPE\31PATH\32NO_PATH"
+@@ -487,11 +475,12 @@
+ 	char			 root[PATH_MAX];
+ 	char			 path[PATH_MAX];
+ 	char			 index[PATH_MAX];
+-	char			 socket[PATH_MAX];
+ 	char			 accesslog[PATH_MAX];
+ 	char			 errorlog[PATH_MAX];
+ 	struct media_type	 default_type;
+ 
++	struct sockaddr_storage	 fastcgi_ss;
++
+ 	in_port_t		 port;
+ 	struct sockaddr_storage	 ss;
+ 	int			 prefixlen;
+@@ -722,7 +713,6 @@
  int		 expand_string(char *, size_t, const char *, const char *);
  const char	*url_decode(char *);
  char		*url_encode(const char *);
@@ -253,7 +344,7 @@ Index: usr.sbin/httpd/httpd.h
  const char	*canonicalize_path(const char *, char *, size_t);
  size_t		 path_info(char *);
  char		*escape_html(const char *);
-@@ -744,8 +731,6 @@
+@@ -744,8 +734,6 @@
  struct kv	*kv_extend(struct kvtree *, struct kv *, char *);
  void		 kv_purge(struct kvtree *);
  void		 kv_free(struct kv *);
@@ -262,7 +353,7 @@ Index: usr.sbin/httpd/httpd.h
  struct kv	*kv_find(struct kvtree *, struct kv *);
  int		 kv_cmp(struct kv *, struct kv *);
  struct media_type
-@@ -764,7 +747,6 @@
+@@ -764,7 +750,6 @@
  struct auth	*auth_byid(struct serverauth *, uint32_t);
  void		 auth_free(struct serverauth *, struct auth *);
  const char	*print_host(struct sockaddr_storage *, char *, size_t);
@@ -279,7 +370,77 @@ Index: usr.sbin/httpd/parse.y
   * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
   * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
   * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
-@@ -564,7 +565,8 @@
+@@ -27,6 +28,7 @@
+ %{
+ #include <sys/types.h>
+ #include <sys/socket.h>
++#include <sys/un.h>
+ #include <sys/stat.h>
+ #include <sys/queue.h>
+ #include <sys/tree.h>
+@@ -116,6 +118,7 @@
+ int		 listen_on(const char *, int, struct portrange *);
+ int		 getservice(char *);
+ int		 is_if_in_group(const char *, const char *);
++int		 get_fastcgi_dest(struct server_config *, const char *, char *);
+ 
+ typedef struct {
+ 	union {
+@@ -144,6 +147,7 @@
+ %token	<v.string>	STRING
+ %token  <v.number>	NUMBER
+ %type	<v.port>	port
++%type	<v.string>	fcgiport
+ %type	<v.number>	opttls optmatch
+ %type	<v.tv>		timeout
+ %type	<v.string>	numberstring optstring
+@@ -221,7 +225,8 @@
+ 		;
+ 
+ server		: SERVER optmatch STRING	{
+-			struct server	*s;
++			struct server		*s;
++			struct sockaddr_un	*sun;
+ 
+ 			if (!loadcfg) {
+ 				free($3);
+@@ -278,6 +284,12 @@
+ 			    HTTPD_TLS_ECDHE_CURVES,
+ 			    sizeof(s->srv_conf.tls_ecdhe_curves));
+ 
++			sun = (struct sockaddr_un *)&s->srv_conf.fastcgi_ss;
++			sun->sun_family = AF_UNIX;
++			(void)strlcpy(sun->sun_path, HTTPD_FCGI_SOCKET,
++			    sizeof(sun->sun_path));
++			sun->sun_len = sizeof(struct sockaddr_un);
++
+ 			s->srv_conf.hsts_max_age = SERVER_HSTS_DEFAULT_AGE;
+ 
+ 			if (last_server_id == INT_MAX) {
+@@ -497,7 +508,8 @@
+ 		| authenticate
+ 		| filter
+ 		| LOCATION optmatch STRING	{
+-			struct server	*s;
++			struct server		*s;
++			struct sockaddr_un	*sun;
+ 
+ 			if (srv->srv_conf.ss.ss_family == AF_UNSPEC) {
+ 				yyerror("listen address not specified");
+@@ -537,6 +549,12 @@
+ 				YYERROR;
+ 			}
+ 
++			sun = (struct sockaddr_un *)&s->srv_conf.fastcgi_ss;
++			sun->sun_family = AF_UNIX;
++			(void)strlcpy(sun->sun_path, HTTPD_FCGI_SOCKET,
++			    sizeof(sun->sun_path));
++			sun->sun_len = sizeof(struct sockaddr_un);
++
+ 			s->srv_conf.id = ++last_server_id;
+ 			/* A location entry uses the parent id */
+ 			s->srv_conf.parent_id = srv->srv_conf.id;
+@@ -564,7 +582,8 @@
  
  			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
  				if ((s->srv_conf.flags & SRVFLAG_LOCATION) &&
@@ -289,6 +450,118 @@ Index: usr.sbin/httpd/parse.y
  				    strcmp(s->srv_conf.location,
  				    srv_conf->location) == 0)
  					break;
+@@ -648,17 +667,38 @@
+ 		| fcgiflags optnl
+ 		;
+ 
+-fcgiflags	: SOCKET STRING		{
+-			if (strlcpy(srv_conf->socket, $2,
+-			    sizeof(srv_conf->socket)) >=
+-			    sizeof(srv_conf->socket)) {
+-				yyerror("fastcgi socket too long");
++fcgiflags	: SOCKET STRING {
++			struct sockaddr_un *sun;
++			sun = (struct sockaddr_un *)&srv_conf->fastcgi_ss;
++			memset(sun, 0, sizeof(*sun));
++			sun->sun_family = AF_UNIX;
++			if (strlcpy(sun->sun_path, $2, sizeof(sun->sun_path))
++			    >= sizeof(sun->sun_path)) {
++				yyerror("socket path too long");
+ 				free($2);
+ 				YYERROR;
+ 			}
++			srv_conf->fastcgi_ss.ss_len =
++			    sizeof(struct sockaddr_un);
+ 			free($2);
+-			srv_conf->flags |= SRVFLAG_SOCKET;
+ 		}
++		| SOCKET TCP STRING {
++			if (get_fastcgi_dest(srv_conf, $3, FCGI_DEFAULT_PORT)
++			    == -1) {
++				free($3);
++				YYERROR;
++			}
++			free($3);
++		}
++		| SOCKET TCP STRING fcgiport {
++			if (get_fastcgi_dest(srv_conf, $3, $4) == -1) {
++				free($3);
++				free($4);
++				YYERROR;
++			}
++			free($3);
++			free($4);
++		}
+ 		| PARAM STRING STRING	{
+ 			struct fastcgi_param	*param;
+ 
+@@ -1086,6 +1123,27 @@
+ 		| STRING		{ $$ = $1; }
+ 		;
+ 
++fcgiport	: NUMBER		{
++			if ($1 <= 0 || $1 > (int)USHRT_MAX) {
++				yyerror("invalid port: %lld", $1);
++				YYERROR;
++			}
++			if (asprintf(&$$, "%lld", $1) == -1) {
++				yyerror("out of memory");
++				YYERROR;
++			}
++		}
++		| STRING		{
++			if (getservice($1) <= 0) {
++				yyerror("invalid port: %s", $1);
++				free($1);
++				YYERROR;
++			}
++
++			$$ = $1;
++		}
++		;
++
+ tcpip		: TCP '{' optnl tcpflags_l '}'
+ 		| TCP tcpflags
+ 		;
+@@ -2326,10 +2374,8 @@
+ 		s = getservbyname(n, "tcp");
+ 		if (s == NULL)
+ 			s = getservbyname(n, "udp");
+-		if (s == NULL) {
+-			yyerror("unknown port %s", n);
++		if (s == NULL)
+ 			return (-1);
+-		}
+ 		return (s->s_port);
+ 	}
+ 
+@@ -2379,3 +2425,26 @@
+ 	close(s);
+ 	return (ret);
+ }
++
++int
++get_fastcgi_dest(struct server_config *xsrv_conf, const char *node, char *port)
++{
++	struct addrinfo		 hints, *res;
++	int			 s;
++
++	memset(&hints, 0, sizeof(hints));
++	hints.ai_family = AF_UNSPEC;
++	hints.ai_socktype = SOCK_STREAM;
++
++	if ((s = getaddrinfo(node, port, &hints, &res)) != 0) {
++		yyerror("getaddrinfo: %s\n", gai_strerror(s));
++		return -1;
++	}
++
++	memset(&(xsrv_conf)->fastcgi_ss, 0, sizeof(xsrv_conf->fastcgi_ss));
++	memcpy(&(xsrv_conf)->fastcgi_ss, res->ai_addr, res->ai_addrlen);
++
++	freeaddrinfo(res);
++
++	return (0);
++}
 Index: usr.sbin/httpd/proc.c
 @@ -401,7 +401,7 @@
  			free(cause);
@@ -300,7 +573,59 @@ Index: usr.sbin/httpd/proc.c
  
  void
 Index: usr.sbin/httpd/server_fcgi.c
-@@ -328,13 +328,13 @@
+@@ -97,44 +97,15 @@
+ 	size_t				 scriptlen;
+ 	int				 pathlen;
+ 	int				 fd = -1, ret;
+-	const char			*stripped, *p, *alias, *errstr = NULL;
++	const char			*stripped, *alias, *errstr = NULL;
+ 	char				*query_alias, *str, *script = NULL;
+ 
+-	if (srv_conf->socket[0] == ':') {
+-		struct sockaddr_storage	 ss;
+-		in_port_t		 port;
+-
+-		p = srv_conf->socket + 1;
+-
+-		port = strtonum(p, 0, 0xffff, &errstr);
+-		if (errstr != NULL) {
+-			log_warn("%s: strtonum %s, %s", __func__, p, errstr);
+-			goto fail;
+-		}
+-		memset(&ss, 0, sizeof(ss));
+-		ss.ss_family = AF_INET;
+-		((struct sockaddr_in *)
+-		    &ss)->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+-		port = htons(port);
+-
+-		if ((fd = server_socket_connect(&ss, port, srv_conf)) == -1)
+-			goto fail;
+-	} else {
+-		struct sockaddr_un	 sun;
+-
+-		if ((fd = socket(AF_UNIX,
+-		    SOCK_STREAM | SOCK_NONBLOCK, 0)) == -1)
+-			goto fail;
+-
+-		memset(&sun, 0, sizeof(sun));
+-		sun.sun_family = AF_UNIX;
+-		if (strlcpy(sun.sun_path, srv_conf->socket,
+-		    sizeof(sun.sun_path)) >= sizeof(sun.sun_path)) {
+-			errstr = "socket path to long";
+-			goto fail;
+-		}
+-
+-		if (connect(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1)
++	if ((fd = socket(srv_conf->fastcgi_ss.ss_family,
++	    SOCK_STREAM | SOCK_NONBLOCK, 0)) == -1)
++		goto fail;
++	if ((connect(fd, (struct sockaddr *) &srv_conf->fastcgi_ss,
++	    srv_conf->fastcgi_ss.ss_len)) == -1) {
++		if (errno != EINPROGRESS)
+ 			goto fail;
+ 	}
+ 
+@@ -328,13 +299,13 @@
  	}
  
  	if (!desc->http_query) {
@@ -316,7 +641,7 @@ Index: usr.sbin/httpd/server_fcgi.c
  		    desc->http_query) == -1) {
  			errstr = "failed to encode param";
  			goto fail;
-@@ -684,7 +684,7 @@
+@@ -684,7 +655,7 @@
  
  	/* Date header is mandatory and should be added as late as possible */
  	key.kv_key = "Date";

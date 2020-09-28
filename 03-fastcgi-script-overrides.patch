@@ -14,10 +14,10 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -303,6 +303,9 @@
- the FastCGI handler is listening on a TCP socket,
- .Ar socket
- starts with a colon followed by the TCP port number.
+@@ -307,6 +307,9 @@
+ If the
+ .Ar port
+ is not specified, it defaults to port 9000.
 +.It Ic script Ar path
 +Override the determined script with the one specified by the given
 +.Ar path .
@@ -34,7 +34,7 @@ Index: usr.sbin/httpd/httpd.h
  	char			 path[PATH_MAX];
  	char			 index[PATH_MAX];
 Index: usr.sbin/httpd/parse.y
-@@ -141,7 +141,7 @@
+@@ -143,7 +143,7 @@
  %token	PROTOCOLS REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TICKET
  %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
  %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
@@ -43,7 +43,7 @@ Index: usr.sbin/httpd/parse.y
  %token	<v.string>	STRING
  %token  <v.number>	NUMBER
  %type	<v.port>	port
-@@ -713,6 +713,16 @@
+@@ -751,6 +751,16 @@
  			    param->name, param->value);
  			TAILQ_INSERT_HEAD(&srv_conf->fcgiparams, param, entry);
  		}
@@ -60,7 +60,7 @@ Index: usr.sbin/httpd/parse.y
  		| STRIP NUMBER			{
  			if ($2 < 0 || $2 > INT_MAX) {
  				yyerror("invalid fastcgi strip number");
-@@ -1383,6 +1393,7 @@
+@@ -1442,6 +1452,7 @@
  		{ "rewrite",		REWRITE },
  		{ "root",		ROOT },
  		{ "sack",		SACK },
@@ -77,7 +77,7 @@ Index: usr.sbin/httpd/server_fcgi.c
   * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
   *
   * Permission to use, copy, modify, and distribute this software for any
-@@ -190,9 +191,12 @@
+@@ -161,9 +162,12 @@
  	h->type = FCGI_PARAMS;
  	h->content_len = param.total_len = 0;
  

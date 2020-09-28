@@ -14,7 +14,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -399,7 +399,8 @@
+@@ -403,7 +403,8 @@
  .It Ic listen on Ar address Oo Ic tls Oc Ic port Ar number
  Set the listen address and port.
  This statement can be specified multiple times.
@@ -24,7 +24,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  Specify server configuration rules for a specific location.
  The
  .Ar path
-@@ -408,7 +409,25 @@
+@@ -412,7 +413,25 @@
  .Ar found
  (i.e. accessible) or
  .Ar not found
@@ -51,7 +51,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  In case of multiple location statements in the same context, the
  first matching location statement will be put into effect, while all
  later ones will be ignored.
-@@ -424,7 +443,8 @@
+@@ -428,7 +447,8 @@
  .Ic tcp
  and
  .Ic tls .
@@ -119,7 +119,7 @@ Index: usr.sbin/httpd/httpd.h
  struct server_config {
  	uint32_t		 id;
  	uint32_t		 parent_id;
-@@ -545,6 +572,8 @@
+@@ -546,6 +576,8 @@
  	struct server_fcgiparams fcgiparams;
  	int			 fcgistrip;
  
@@ -128,7 +128,7 @@ Index: usr.sbin/httpd/httpd.h
  	TAILQ_ENTRY(server_config) entry;
  };
  TAILQ_HEAD(serverhosts, server_config);
-@@ -698,6 +727,8 @@
+@@ -699,6 +728,8 @@
  struct server_config *
  	 server_getlocation(struct client *, const char *);
  int	 server_locationaccesstest(struct server_config *, const char *);
@@ -138,7 +138,7 @@ Index: usr.sbin/httpd/httpd.h
  	 server_http_host(struct sockaddr_storage *, char *, size_t);
  char	*server_http_parsehost(char *, char *, size_t, int *);
 Index: usr.sbin/httpd/parse.y
-@@ -72,6 +72,9 @@
+@@ -73,6 +73,9 @@
  int		 check_file_secrecy(int, const char *);
  int		 yyparse(void);
  int		 yylex(void);
@@ -148,7 +148,7 @@ Index: usr.sbin/httpd/parse.y
  int		 yyerror(const char *, ...)
      __attribute__((__format__ (printf, 1, 2)))
      __attribute__((__nonnull__ (1)));
-@@ -141,13 +144,13 @@
+@@ -143,14 +146,14 @@
  %token	PROTOCOLS REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TICKET
  %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
  %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
@@ -157,6 +157,7 @@ Index: usr.sbin/httpd/parse.y
  %token	<v.string>	STRING
  %token  <v.number>	NUMBER
  %type	<v.port>	port
+ %type	<v.string>	fcgiport
  %type	<v.number>	opttls optmatch optfound
  %type	<v.tv>		timeout
 -%type	<v.string>	numberstring optstring
@@ -164,16 +165,17 @@ Index: usr.sbin/httpd/parse.y
  %type	<v.auth>	authopts
  
  %%
-@@ -497,7 +500,7 @@
+@@ -507,8 +510,8 @@
  		| fastcgi
  		| authenticate
  		| filter
 -		| LOCATION optfound optmatch STRING	{
 +		| LOCATION optfound optmatch STRING optclientfilter	{
- 			struct server	*s;
+ 			struct server		*s;
+ 			struct sockaddr_un	*sun;
  
  			if (srv->srv_conf.ss.ss_family == AF_UNSPEC) {
-@@ -555,6 +558,25 @@
+@@ -572,6 +575,25 @@
  			}
  			if ($3)
  				s->srv_conf.flags |= SRVFLAG_LOCATION_MATCH;
@@ -199,7 +201,7 @@ Index: usr.sbin/httpd/parse.y
  			s->srv_s = -1;
  			memcpy(&s->srv_conf.ss, &srv->srv_conf.ss,
  			    sizeof(s->srv_conf.ss));
-@@ -575,7 +597,9 @@
+@@ -592,7 +614,9 @@
  			struct server	*s = NULL;
  			uint32_t	 f;
  
@@ -210,7 +212,7 @@ Index: usr.sbin/httpd/parse.y
  			    SRVFLAG_LOCATION_NOT_FOUND;
  
  			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
-@@ -585,7 +609,9 @@
+@@ -602,7 +626,9 @@
  				    (s->srv_conf.flags & f) ==
  				    (srv_conf->flags & f) &&
  				    strcmp(s->srv_conf.location,
@@ -221,7 +223,7 @@ Index: usr.sbin/httpd/parse.y
  					break;
  			}
  			if (s != NULL) {
-@@ -626,6 +652,51 @@
+@@ -643,6 +669,51 @@
  		| NOT FOUND	{ $$ = -1; }
  		;
  
@@ -273,7 +275,7 @@ Index: usr.sbin/httpd/parse.y
  hsts		: HSTS '{' optnl hstsflags_l '}'
  		| HSTS hstsflags
  		| HSTS
-@@ -1308,7 +1379,121 @@
+@@ -1367,7 +1438,121 @@
  	int		 k_val;
  };
  
@@ -395,7 +397,7 @@ Index: usr.sbin/httpd/parse.y
  yyerror(const char *fmt, ...)
  {
  	va_list		 ap;
-@@ -1362,6 +1547,7 @@
+@@ -1421,6 +1606,7 @@
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
  		{ "found",		FOUND },
