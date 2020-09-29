@@ -10,7 +10,7 @@ Other branches available:
 ### updates
 
 Bug fixes:
-* Failing detection of `location` duplicates (see on [tech@](https://marc.info/?l=openbsd-tech&m=157313087000813))
+* Failing detection of `location` duplicates (see on [tech@](https://marc.info/?l=openbsd-tech&m=160110369620211&w=2))
 
 ### cache-control-headers
 

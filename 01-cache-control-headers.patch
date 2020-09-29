@@ -43,7 +43,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  enclosed in curly braces:
  .Bl -tag -width Ds
 -.It Ar type/subtype Ar name Op Ar name ...
-+.It Ar type/subtype Oo Bro Ic cache Ar string Brc Oc Ar name Oo Ar name ... Oc
++.It Ar type/subtype Oo Bro Ic cache Ar string Brc Oc Ar name ...
  Set the media
  .Ar type
  and

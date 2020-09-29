@@ -20,7 +20,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  This statement can be specified multiple times.
 -.It Ic location Oo Oo Ic not Oc Ic found Oc Ar path Brq ...
 +.It Ic location Oo Oo Ic not Oc Ic found Oc Ar path Oo Oo Ic not Oc Ic from
-+.Ar network Oo Ar network ... Oc Oc Brq ...
++.Ar network ... Oc Brq ...
  Specify server configuration rules for a specific location.
  The
  .Ar path
@@ -57,7 +57,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Ic tls .
 -.It Ic location Oo Oo Ic not Oc Ic found Oc Ic match Ar path Brq ...
 +.It Ic location Oo Oo Ic not Oc Ic found Oc Ic match Ar path Oo Oo Ic not Oc
-+.Ic from Ar network Oo Ar network ... Oc Oc Brq ...
++.Ic from Ar network ... Oc Brq ...
  Like the
  .Ic location
  option,
@@ -306,7 +306,7 @@ Index: usr.sbin/httpd/parse.y
 +		memset(&rbuf, 0, sizeof(rbuf));
 +		if (*cstr == '>') {
 +			rbuf.xff = 1;
-+			cstr += 1;
++			cstr++;
 +		} else
 +			rbuf.xff = 0;
 +		if ((span = strcspn(cstr, " ,\t\n\\")) >= sizeof(buf)) {
@@ -376,7 +376,7 @@ Index: usr.sbin/httpd/parse.y
 +{
 +	int	 i, j, c;
 +
-+	for (i = 0; i < HTTPD_CLIENT_FILTER_MAX; i += 1) {
++	for (i = 0; i < HTTPD_CLIENT_FILTER_MAX; i++) {
 +		if (!a[i].type)
 +			return (memcmp(&a[i], &b[i], sizeof(struct ip_range)));
 +
@@ -482,7 +482,7 @@ Index: usr.sbin/httpd/server_http.c
 +		return (0);
 +
 +	for (clt_fltr = srv_conf->clientfilter, i = 0;
-+	    i < HTTPD_CLIENT_FILTER_MAX && clt_fltr[i].type; i += 1) {
++	    i < HTTPD_CLIENT_FILTER_MAX && clt_fltr[i].type; i++) {
 +		caddr = clt_fltr[i].xff ? &clt_addr->xff : &clt_addr->srv;
 +		if (clt_fltr[i].type != caddr->type) {
 +			DPRINTF("%s: type-mismatch: client:%d <-> range:%d",
