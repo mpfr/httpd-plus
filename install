@@ -70,7 +70,7 @@ fi
 echo 'Applying patch files ...'
 for f in $(find $(pwd)/$(dirname $0) -type f -name '*.patch' | sort); do
 	echo "... $(basename ${f} .patch) ..."
-	patch -d ${srcroot} -f -i ${f} -p0
+	patch -d ${srcroot} -f -i ${f} -p0 --posix
 	if [[ $? -ne 0 ]]; then
 		restore ${bakdir}
 		exit 1

@@ -46,11 +46,11 @@ server "www.example.com" {
 }
 ```
 
-> NOTE: Even with this add-on installed, WordPress is unable to discover that the OpenBSD web server is now capable to perform required URL rewrites. This will make the [Permalink Settings Screen](https://wordpress.org/support/article/settings-permalinks-screen/) not behave as expected. Luckily, and for this case exactly, the [got_url_rewrite hook](https://developer.wordpress.org/reference/hooks/got_url_rewrite/) exists. Adding the following line of code into the current theme's `functions.php` file will straighten things out.
->
-> ```
-> add_filter('got_url_rewrite', '__return_true');
-> ```
+__NOTE:__ Even with this add-on installed, WordPress is unable to discover that the OpenBSD web server is now capable to perform required URL rewrites. This will make the [Permalink Settings Screen](https://wordpress.org/support/article/settings-permalinks-screen/) not behave as expected. Luckily, and for this case exactly, the [got_url_rewrite hook](https://developer.wordpress.org/reference/hooks/got_url_rewrite/) exists. Adding the following line of code into the current theme's `functions.php` file will straighten things out.
+
+```
+add_filter('got_url_rewrite', '__return_true');
+```
 
 ### fastcgi-script-overrides
 
@@ -94,12 +94,12 @@ permit nopass mpfr
 $ cd
 $ pwd
 /home/mpfr
-$
 ```
 
 Download and extract patch files and installation script.
 
 ```
+$ rm -rf httpd-plus-6.7-stable/
 $ ftp -Vo - https://codeload.github.com/mpfr/httpd-plus/tar.gz/6.7-stable | tar xzvf -
 httpd-plus-6.7-stable
 httpd-plus-6.7-stable/00-updates.patch
@@ -110,7 +110,6 @@ httpd-plus-6.7-stable/04-client-ip-filters.patch
 httpd-plus-6.7-stable/LICENSE
 httpd-plus-6.7-stable/README.md
 httpd-plus-6.7-stable/install
-$
 ```
 
 Apply the patch files by running the installation script. This will build and install the `httpd-plus` binary. After the build process, the original source is restored.
@@ -146,7 +145,6 @@ Restoring original sources ... Done.
 
 Installing httpd-plus binary and manpage completed successfully.
 Please consult 'man httpd.conf' for further information on new features.
-$
 ```
 
 Adapt your `httpd.conf` for the newly added features. For further information, have a look at the updated `httpd.conf(5)` manpage via `man httpd.conf`. Make sure your new configuration is valid.
@@ -156,7 +154,6 @@ $ doas vi /etc/httpd.conf
 ...
 $ doas httpd -n
 configuration OK
-$
 ```
 
 Restart the `httpd` daemon.
@@ -165,7 +162,6 @@ Restart the `httpd` daemon.
 $ doas rcctl restart httpd
 httpd(ok)
 httpd(ok)
-$
 ```
 
 ## How to uninstall
@@ -178,7 +174,6 @@ $ doas make obj
 $ doas make clean
 $ doas make
 $ doas make install
-$
 ```
 
 Remove `httpd-plus` related features from your configuration file and make sure it is valid. Don't forget to restart the `httpd` daemon.
@@ -191,5 +186,4 @@ configuration OK
 $ doas rcctl restart httpd
 httpd(ok)
 httpd(ok)
-$
 ```
