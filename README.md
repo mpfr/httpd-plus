@@ -125,8 +125,7 @@ The text leading up to this was:
 |Index: usr.sbin/httpd/parse.y
 --------------------------
 Patching file usr.sbin/httpd/parse.y using Plan A...
-Hunk #1 succeeded at 1.
-Hunk #2 succeeded at 582.
+Hunk #1 succeeded at 588.
 done
 ... 01-cache-control-headers ...
 Hmm...  Looks like a unified diff to me...

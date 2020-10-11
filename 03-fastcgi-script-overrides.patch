@@ -43,7 +43,7 @@ Index: usr.sbin/httpd/parse.y
  %token	<v.string>	STRING
  %token  <v.number>	NUMBER
  %type	<v.port>	port
-@@ -751,6 +751,16 @@
+@@ -758,6 +758,16 @@
  			    param->name, param->value);
  			TAILQ_INSERT_HEAD(&srv_conf->fcgiparams, param, entry);
  		}
@@ -60,7 +60,7 @@ Index: usr.sbin/httpd/parse.y
  		| STRIP NUMBER			{
  			if ($2 < 0 || $2 > INT_MAX) {
  				yyerror("invalid fastcgi strip number");
-@@ -1442,6 +1452,7 @@
+@@ -1449,6 +1459,7 @@
  		{ "rewrite",		REWRITE },
  		{ "root",		ROOT },
  		{ "sack",		SACK },
