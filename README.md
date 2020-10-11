@@ -11,7 +11,7 @@ Other branches available:
 
 * Bug fix: Failing detection of `location` duplicates (see on [tech@](https://marc.info/?l=openbsd-tech&m=160110369620211&w=2))
 
-* [Commits](https://github.com/openbsd/src/commits/master/usr.sbin/httpd) to `-current` merged into `6.7-stable` until September 21, 2020 except:
+* [Commits](https://github.com/openbsd/src/commits/master/usr.sbin/httpd) to `-current` merged into `6.7-stable` until October 11, 2020 except:
 	* [September 5, 2020](https://github.com/openbsd/src/commit/55dad5c962e18c2367bb7d531b63e6ad450f1658#diff-affb1ed63d8977918a8cfe61b9f2c71a) (does not apply)
 
 ### cache-control-headers
@@ -125,11 +125,6 @@ The text leading up to this was:
 .
 .
 .
-|Index: usr.sbin/httpd/parse.y
---------------------------
-Patching file usr.sbin/httpd/parse.y using Plan A...
-Hunk #1 succeeded at 1.
-Hunk #2 succeeded at 565.
 done
 ... 01-cache-control-headers ...
 Hmm...  Looks like a unified diff to me...

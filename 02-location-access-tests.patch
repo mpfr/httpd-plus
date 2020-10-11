@@ -84,7 +84,7 @@ Index: usr.sbin/httpd/parse.y
  %type	<v.tv>		timeout
  %type	<v.string>	numberstring optstring
  %type	<v.auth>	authopts
-@@ -507,39 +507,39 @@
+@@ -514,39 +514,39 @@
  		| fastcgi
  		| authenticate
  		| filter
@@ -132,7 +132,7 @@ Index: usr.sbin/httpd/parse.y
  
  			if (strlcpy(s->srv_conf.name, srv->srv_conf.name,
  			    sizeof(s->srv_conf.name)) >=
-@@ -559,7 +559,18 @@
+@@ -566,7 +566,18 @@
  			/* A location entry uses the parent id */
  			s->srv_conf.parent_id = srv->srv_conf.id;
  			s->srv_conf.flags = SRVFLAG_LOCATION;
@@ -152,7 +152,7 @@ Index: usr.sbin/httpd/parse.y
  				s->srv_conf.flags |= SRVFLAG_LOCATION_MATCH;
  			s->srv_s = -1;
  			memcpy(&s->srv_conf.ss, &srv->srv_conf.ss,
-@@ -579,11 +590,17 @@
+@@ -586,11 +597,17 @@
  			SPLAY_INIT(&srv->srv_clients);
  		} '{' optnl serveropts_l '}'	{
  			struct server	*s = NULL;
@@ -170,7 +170,7 @@ Index: usr.sbin/httpd/parse.y
  				    strcmp(s->srv_conf.location,
  				    srv_conf->location) == 0)
  					break;
-@@ -621,6 +638,11 @@
+@@ -628,6 +645,11 @@
  		}
  		;
  
@@ -182,7 +182,7 @@ Index: usr.sbin/httpd/parse.y
  hsts		: HSTS '{' optnl hstsflags_l '}'
  		| HSTS hstsflags
  		| HSTS
-@@ -1388,6 +1410,7 @@
+@@ -1395,6 +1417,7 @@
  		{ "error",		ERR },
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
@@ -190,7 +190,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "hsts",		HSTS },
  		{ "include",		INCLUDE },
  		{ "index",		INDEX },
-@@ -1403,6 +1426,7 @@
+@@ -1410,6 +1433,7 @@
  		{ "max-age",		MAXAGE },
  		{ "no",			NO },
  		{ "nodelay",		NODELAY },
