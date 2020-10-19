@@ -3,6 +3,7 @@
 Add-ons for the [OpenBSD](https://www.openbsd.org) [`httpd(8)`](http://man.openbsd.org/httpd) web server applicable to the lastest `-current` branch.
 
 Other branches available:
+* [6.8-stable](https://github.com/mpfr/httpd-plus/tree/6.8-stable)
 * [6.7-stable](https://github.com/mpfr/httpd-plus/tree/6.7-stable)
 
 ## List of add-ons
