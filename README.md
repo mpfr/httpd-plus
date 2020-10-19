@@ -1,15 +1,18 @@
 # httpd-plus
 
-Add-ons for the [OpenBSD](https://www.openbsd.org) [`httpd(8)`](http://man.openbsd.org/httpd) web server applicable to the lastest `-current` branch.
+Add-ons for the [OpenBSD](https://www.openbsd.org) [`httpd(8)`](http://man.openbsd.org/httpd) web server applicable to the lastest `6.8-stable` branch.
 
 Other branches available:
+* [current](https://github.com/mpfr/httpd-plus)
 * [6.7-stable](https://github.com/mpfr/httpd-plus/tree/6.7-stable)
 
 ## List of add-ons
 
 ### updates
 
-Bug fix: Failing detection of `location` duplicates (see on [tech@](https://marc.info/?l=openbsd-tech&m=160110369620211&w=2))
+* Bug fix: Failing detection of `location` duplicates (see on [tech@](https://marc.info/?l=openbsd-tech&m=160110369620211&w=2))
+
+* [Commits](https://github.com/openbsd/src/commits/master/usr.sbin/httpd) to `-current` merged into `6.8-stable` until October 11, 2020
 
 ### cache-control-headers
 
@@ -96,23 +99,23 @@ $ pwd
 Download and extract patch files and installation script.
 
 ```
-$ rm -rf httpd-plus-current/
-$ ftp -Vo - https://codeload.github.com/mpfr/httpd-plus/tar.gz/current | tar xzvf -
-httpd-plus-current
-httpd-plus-current/00-updates.patch
-httpd-plus-current/01-cache-control-headers.patch
-httpd-plus-current/02-location-access-tests.patch
-httpd-plus-current/03-fastcgi-script-overrides.patch
-httpd-plus-current/04-client-ip-filters.patch
-httpd-plus-current/LICENSE
-httpd-plus-current/README.md
-httpd-plus-current/install
+$ rm -rf httpd-plus-6.8-stable/
+$ ftp -Vo - https://codeload.github.com/mpfr/httpd-plus/tar.gz/6.8-stable | tar xzvf -
+httpd-plus-6.8-stable
+httpd-plus-6.8-stable/00-updates.patch
+httpd-plus-6.8-stable/01-cache-control-headers.patch
+httpd-plus-6.8-stable/02-location-access-tests.patch
+httpd-plus-6.8-stable/03-fastcgi-script-overrides.patch
+httpd-plus-6.8-stable/04-client-ip-filters.patch
+httpd-plus-6.8-stable/LICENSE
+httpd-plus-6.8-stable/README.md
+httpd-plus-6.8-stable/install
 ```
 
 Apply the patch files by running the installation script. This will build and install the `httpd-plus` binary. After the build process, the original source is restored.
 
 ```
-$ doas ksh httpd-plus-current/install 2>&1 | tee httpd-plus-install.log
+$ doas ksh httpd-plus-6.8-stable/install 2>&1 | tee httpd-plus-install.log
 Backing up original sources ... Done.
 Applying patch files ...
 ... 00-updates ...
@@ -122,10 +125,6 @@ The text leading up to this was:
 .
 .
 .
-|Index: usr.sbin/httpd/parse.y
---------------------------
-Patching file usr.sbin/httpd/parse.y using Plan A...
-Hunk #1 succeeded at 588.
 done
 ... 01-cache-control-headers ...
 Hmm...  Looks like a unified diff to me...

@@ -120,7 +120,7 @@ Index: usr.sbin/httpd/httpd.h
  };
 Index: usr.sbin/httpd/parse.y
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: parse.y,v 1.118 2020/10/11 03:21:44 tb Exp $	*/
+ /*	$OpenBSD: parse.y,v 1.117 2020/08/26 06:50:20 florian Exp $	*/
  
  /*
 + * Copyright (c) 2020 Matthias Pressfreund
