@@ -53,7 +53,21 @@ Index: usr.sbin/httpd/config.c
  
  	return (0);
  }
-@@ -498,13 +498,6 @@
+@@ -489,7 +489,12 @@
+ 		/* Inherit configuration from the parent */
+ 		f = SRVFLAG_INDEX|SRVFLAG_NO_INDEX;
+ 		if ((srv_conf->flags & f) == 0) {
+-			srv_conf->flags |= parent->flags & f;
++			/*
++			 * Inherit index flags from parent server only if
++			 * auto-index flag of location is not set
++			 */
++			if ((srv_conf->flags & SRVFLAG_AUTO_INDEX) == 0)
++				srv_conf->flags |= parent->flags & f;
+ 			(void)strlcpy(srv_conf->index, parent->index,
+ 			    sizeof(srv_conf->index));
+ 		}
+@@ -498,13 +503,6 @@
  		if ((srv_conf->flags & f) == 0)
  			srv_conf->flags |= parent->flags & f;
  
@@ -67,7 +81,7 @@ Index: usr.sbin/httpd/config.c
  		f = SRVFLAG_ROOT;
  		if ((srv_conf->flags & f) == 0) {
  			srv_conf->flags |= parent->flags & f;
-@@ -683,7 +676,6 @@
+@@ -683,7 +681,6 @@
  		if ((srv->srv_conf.return_uri = get_data(p + s,
  		    srv->srv_conf.return_uri_len)) == NULL)
  			goto fail;
@@ -451,9 +465,11 @@ Index: usr.sbin/httpd/parse.y
  			s->srv_conf.id = ++last_server_id;
  			/* A location entry uses the parent id */
  			s->srv_conf.parent_id = srv->srv_conf.id;
-@@ -564,7 +588,8 @@
+@@ -563,8 +587,10 @@
+ 			struct server	*s = NULL;
  
  			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
++				/* Compare locations of same parent server */
  				if ((s->srv_conf.flags & SRVFLAG_LOCATION) &&
 -				    s->srv_conf.id == srv_conf->id &&
 +				    s->srv_conf.parent_id ==
@@ -461,7 +477,7 @@ Index: usr.sbin/httpd/parse.y
  				    strcmp(s->srv_conf.location,
  				    srv_conf->location) == 0)
  					break;
-@@ -648,17 +673,38 @@
+@@ -648,17 +674,38 @@
  		| fcgiflags optnl
  		;
  
@@ -506,7 +522,7 @@ Index: usr.sbin/httpd/parse.y
  		| PARAM STRING STRING	{
  			struct fastcgi_param	*param;
  
-@@ -1086,6 +1129,27 @@
+@@ -1086,6 +1130,27 @@
  		| STRING		{ $$ = $1; }
  		;
  
@@ -534,7 +550,7 @@ Index: usr.sbin/httpd/parse.y
  tcpip		: TCP '{' optnl tcpflags_l '}'
  		| TCP tcpflags
  		;
-@@ -2326,10 +2380,8 @@
+@@ -2326,10 +2381,8 @@
  		s = getservbyname(n, "tcp");
  		if (s == NULL)
  			s = getservbyname(n, "udp");
@@ -546,7 +562,7 @@ Index: usr.sbin/httpd/parse.y
  		return (s->s_port);
  	}
  
-@@ -2379,3 +2431,26 @@
+@@ -2379,3 +2432,26 @@
  	close(s);
  	return (ret);
  }

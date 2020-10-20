@@ -212,7 +212,7 @@ Index: usr.sbin/httpd/parse.y
  			    SRVFLAG_LOCATION_NOT_FOUND;
  
  			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
-@@ -609,7 +634,9 @@
+@@ -610,7 +635,9 @@
  				    (s->srv_conf.flags & f) ==
  				    (srv_conf->flags & f) &&
  				    strcmp(s->srv_conf.location,
@@ -223,7 +223,7 @@ Index: usr.sbin/httpd/parse.y
  					break;
  			}
  			if (s != NULL) {
-@@ -650,6 +677,51 @@
+@@ -651,6 +678,51 @@
  		| NOT FOUND	{ $$ = -1; }
  		;
  
@@ -275,7 +275,7 @@ Index: usr.sbin/httpd/parse.y
  hsts		: HSTS '{' optnl hstsflags_l '}'
  		| HSTS hstsflags
  		| HSTS
-@@ -1374,7 +1446,121 @@
+@@ -1375,7 +1447,121 @@
  	int		 k_val;
  };
  
@@ -397,7 +397,7 @@ Index: usr.sbin/httpd/parse.y
  yyerror(const char *fmt, ...)
  {
  	va_list		 ap;
-@@ -1428,6 +1614,7 @@
+@@ -1429,6 +1615,7 @@
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
  		{ "found",		FOUND },
