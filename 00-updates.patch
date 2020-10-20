@@ -13,6 +13,21 @@ WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+Index: usr.sbin/httpd/config.c
+@@ -489,7 +489,12 @@
+ 		/* Inherit configuration from the parent */
+ 		f = SRVFLAG_INDEX|SRVFLAG_NO_INDEX;
+ 		if ((srv_conf->flags & f) == 0) {
+-			srv_conf->flags |= parent->flags & f;
++			/*
++			 * Inherit index flags from parent server only if
++			 * auto-index flag of location is not set
++			 */
++			if ((srv_conf->flags & SRVFLAG_AUTO_INDEX) == 0)
++				srv_conf->flags |= parent->flags & f;
+ 			(void)strlcpy(srv_conf->index, parent->index,
+ 			    sizeof(srv_conf->index));
+ 		}
 Index: usr.sbin/httpd/parse.y
 @@ -355,10 +355,17 @@
  				YYERROR;
@@ -33,9 +48,11 @@ Index: usr.sbin/httpd/parse.y
  
  			if (server_tls_load_ca(srv) == -1) {
  				yyerror("server \"%s\": failed to load "
-@@ -581,7 +588,8 @@
+@@ -580,8 +587,10 @@
+ 			struct server	*s = NULL;
  
  			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
++				/* Compare locations of same parent server */
  				if ((s->srv_conf.flags & SRVFLAG_LOCATION) &&
 -				    s->srv_conf.id == srv_conf->id &&
 +				    s->srv_conf.parent_id ==

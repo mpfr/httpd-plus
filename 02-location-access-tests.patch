@@ -152,7 +152,7 @@ Index: usr.sbin/httpd/parse.y
  				s->srv_conf.flags |= SRVFLAG_LOCATION_MATCH;
  			s->srv_s = -1;
  			memcpy(&s->srv_conf.ss, &srv->srv_conf.ss,
-@@ -586,11 +597,17 @@
+@@ -586,12 +597,18 @@
  			SPLAY_INIT(&srv->srv_clients);
  		} '{' optnl serveropts_l '}'	{
  			struct server	*s = NULL;
@@ -162,6 +162,7 @@ Index: usr.sbin/httpd/parse.y
 +			    SRVFLAG_LOCATION_NOT_FOUND;
 +
  			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
+ 				/* Compare locations of same parent server */
  				if ((s->srv_conf.flags & SRVFLAG_LOCATION) &&
  				    s->srv_conf.parent_id ==
  				    srv_conf->parent_id &&
@@ -170,7 +171,7 @@ Index: usr.sbin/httpd/parse.y
  				    strcmp(s->srv_conf.location,
  				    srv_conf->location) == 0)
  					break;
-@@ -628,6 +645,11 @@
+@@ -629,6 +646,11 @@
  		}
  		;
  
@@ -182,7 +183,7 @@ Index: usr.sbin/httpd/parse.y
  hsts		: HSTS '{' optnl hstsflags_l '}'
  		| HSTS hstsflags
  		| HSTS
-@@ -1395,6 +1417,7 @@
+@@ -1396,6 +1418,7 @@
  		{ "error",		ERR },
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
@@ -190,7 +191,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "hsts",		HSTS },
  		{ "include",		INCLUDE },
  		{ "index",		INDEX },
-@@ -1410,6 +1433,7 @@
+@@ -1411,6 +1434,7 @@
  		{ "max-age",		MAXAGE },
  		{ "no",			NO },
  		{ "nodelay",		NODELAY },
