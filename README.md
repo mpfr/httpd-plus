@@ -11,10 +11,9 @@ Other branches available:
 ### updates
 
 * Bug fixes:
-	* Failing detection of `location` duplicates (see on [tech@](https://marc.info/?l=openbsd-tech&m=160110369620211&w=2))
 	* Failing `directory auto index` of `location` in case enclosing `server` specifies `directory no index` (see on [tech@](https://marc.info/?l=openbsd-tech&m=160293921708844&w=2))
 
-* [Commits](https://github.com/openbsd/src/commits/master/usr.sbin/httpd) to `-current` merged into `6.7-stable` until October 11, 2020 except:
+* [Commits](https://github.com/openbsd/src/commits/master/usr.sbin/httpd) to `-current` merged into `6.7-stable` until October 26, 2020 except:
 	* [September 5, 2020](https://github.com/openbsd/src/commit/55dad5c962e18c2367bb7d531b63e6ad450f1658#diff-affb1ed63d8977918a8cfe61b9f2c71a) (does not apply)
 
 ### cache-control-headers
