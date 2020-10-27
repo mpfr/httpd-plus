@@ -119,15 +119,7 @@ Index: usr.sbin/httpd/httpd.h
  	RB_ENTRY(media_type)	 media_entry;
  };
 Index: usr.sbin/httpd/parse.y
-@@ -1,6 +1,7 @@
- /*	$OpenBSD: parse.y,v 1.118 2020/10/11 03:21:44 tb Exp $	*/
- 
- /*
-+ * Copyright (c) 2020 Matthias Pressfreund
-  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
-  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
-  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
-@@ -142,7 +143,7 @@
+@@ -143,7 +143,7 @@
  %token	PROTOCOLS REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TICKET
  %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
  %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
@@ -136,7 +128,7 @@ Index: usr.sbin/httpd/parse.y
  %token	<v.string>	STRING
  %token  <v.number>	NUMBER
  %type	<v.port>	port
-@@ -1212,7 +1213,7 @@
+@@ -1213,7 +1213,7 @@
  		| mediaoptsl nl
  		;
  
@@ -145,7 +137,7 @@ Index: usr.sbin/httpd/parse.y
  		| include
  		;
  
-@@ -1233,6 +1234,24 @@
+@@ -1234,6 +1234,24 @@
  		}
  		;
  
@@ -170,7 +162,7 @@ Index: usr.sbin/httpd/parse.y
  medianames_l	: medianames_l medianamesl
  		| medianamesl
  		;
-@@ -1360,6 +1379,7 @@
+@@ -1361,6 +1379,7 @@
  		{ "body",		BODY },
  		{ "buffer",		BUFFER },
  		{ "ca",			CA },
@@ -178,7 +170,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "certificate",	CERTIFICATE },
  		{ "chroot",		CHROOT },
  		{ "ciphers",		CIPHERS },
-@@ -1872,6 +1892,7 @@
+@@ -1873,6 +1892,7 @@
  			(void)strlcpy(m.media_subtype,
  			    mediatypes[i].media_subtype,
  			    sizeof(m.media_subtype));

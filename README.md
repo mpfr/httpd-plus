@@ -11,7 +11,6 @@ Other branches available:
 ### updates
 
 Bug fixes:
-* Failing detection of `location` duplicates (see on [tech@](https://marc.info/?l=openbsd-tech&m=160110369620211&w=2))
 * Failing `directory auto index` of `location` in case enclosing `server` specifies `directory no index` (see on [tech@](https://marc.info/?l=openbsd-tech&m=160293921708844&w=2))
 
 ### cache-control-headers
@@ -125,10 +124,6 @@ The text leading up to this was:
 .
 .
 .
-|Index: usr.sbin/httpd/parse.y
---------------------------
-Patching file usr.sbin/httpd/parse.y using Plan A...
-Hunk #1 succeeded at 588.
 done
 ... 01-cache-control-headers ...
 Hmm...  Looks like a unified diff to me...
