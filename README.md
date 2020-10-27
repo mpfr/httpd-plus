@@ -53,15 +53,15 @@ add_filter('got_url_rewrite', '__return_true');
 
 ### fastcgi-script-overrides
 
-Definition of `script` overrides for `location` specific `fastcgi` environments via `httpd.conf(5)`.
+Definition of `script` overrides for `fastcgi` environments via `httpd.conf(5)`. This is mainly intended to be used as a shortcut avoiding unnecessary evaluation rounds for the server.
 
 ```
 server "www.example.com" {
 	...
-	location "/foobar/*" {
+	location not found "/*" {
 		fastcgi {
 			socket "/run/php-fpm.sock"
-			script "/override.php"
+			script "/index.php"
 		}
 	}
 	...
