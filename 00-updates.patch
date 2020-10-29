@@ -234,16 +234,23 @@ Index: usr.sbin/httpd/httpd.c
  printb_flags(const uint32_t v, const char *bits)
  {
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -14,7 +14,7 @@
+@@ -1,5 +1,6 @@
+ .\"	$OpenBSD: httpd.conf.5,v 1.110 2020/04/23 21:10:53 jmc Exp $
+ .\"
++.\" Copyright (c) 2020 Matthias Pressfreund
+ .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
+ .\"
+ .\" Permission to use, copy, modify, and distribute this software for any
+@@ -14,7 +15,7 @@
  .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  .\"
 -.Dd $Mdocdate: April 23 2020 $
-+.Dd $Mdocdate: August 24 2020 $
++.Dd $Mdocdate: October 29 2020 $
  .Dt HTTPD.CONF 5
  .Os
  .Sh NAME
-@@ -284,12 +284,13 @@
+@@ -284,12 +285,13 @@
  Enable FastCGI instead of serving files.
  Valid options are:
  .Bl -tag -width Ds
@@ -260,7 +267,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  If the FastCGI handler is listening on a UNIX domain socket,
  .Ar socket
  is a local path name within the
-@@ -301,7 +302,10 @@
+@@ -301,7 +303,10 @@
  Alternatively if
  the FastCGI handler is listening on a TCP socket,
  .Ar socket
@@ -272,7 +279,34 @@ Index: usr.sbin/httpd/httpd.conf.5
  .It Ic strip Ar number
  Strip
  .Ar number
-@@ -699,6 +703,11 @@
+@@ -395,11 +400,16 @@
+ .It Ic listen on Ar address Oo Ic tls Oc Ic port Ar number
+ Set the listen address and port.
+ This statement can be specified multiple times.
+-.It Ic location Ar path Brq ...
++.It Ic location Oo Oo Ic not Oc Ic found Oc Ar path Brq ...
+ Specify server configuration rules for a specific location.
+ The
+ .Ar path
+ argument will be matched against the request path with shell globbing rules.
++Optionally, it is also possible to match for
++.Ic found
++(i.e. accessible) or
++.Ic not found
++request paths only.
+ In case of multiple location statements in the same context, the
+ first matching location statement will be put into effect, while all
+ later ones will be ignored.
+@@ -415,7 +425,7 @@
+ .Ic tcp
+ and
+ .Ic tls .
+-.It Ic location match Ar path Brq ...
++.It Ic location Oo Oo Ic not Oc Ic found Oc Ic match Ar path Brq ...
+ Like the
+ .Ic location
+ option,
+@@ -699,6 +714,11 @@
  Include types definitions from an external file, for example
  .Pa /usr/share/misc/mime.types .
  .El
@@ -285,7 +319,15 @@ Index: usr.sbin/httpd/httpd.conf.5
  Example configuration files for
  .Nm
 Index: usr.sbin/httpd/httpd.h
-@@ -96,6 +96,7 @@
+@@ -1,6 +1,7 @@
+ /*	$OpenBSD: httpd.h,v 1.146 2020/02/09 09:44:04 florian Exp $	*/
+ 
+ /*
++ * Copyright (c) 2020 Matthias Pressfreund
+  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
+  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
+  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
+@@ -96,6 +97,7 @@
  #define CONFIG_ALL		0xff
  
  #define FCGI_CONTENT_SIZE	65535
@@ -293,7 +335,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define PROC_PARENT_SOCK_FILENO	3
  #define PROC_MAX_INSTANCES	32
-@@ -121,25 +122,13 @@
+@@ -121,25 +123,13 @@
  	uint8_t		 cf_tls_sid[TLS_MAX_SESSION_ID_LENGTH];
  };
  
@@ -319,7 +361,7 @@ Index: usr.sbin/httpd/httpd.h
  #define KV_FLAG_INVALID		 0x01
  #define KV_FLAG_GLOBBING	 0x02
  	uint8_t			 kv_flags;
-@@ -387,7 +376,6 @@
+@@ -387,7 +377,6 @@
  #define SRVFLAG_NO_FCGI		0x00000080
  #define SRVFLAG_LOG		0x00000100
  #define SRVFLAG_NO_LOG		0x00000200
@@ -327,7 +369,12 @@ Index: usr.sbin/httpd/httpd.h
  #define SRVFLAG_SYSLOG		0x00000800
  #define SRVFLAG_NO_SYSLOG	0x00001000
  #define SRVFLAG_TLS		0x00002000
-@@ -406,7 +392,7 @@
+@@ -403,13 +392,16 @@
+ #define SRVFLAG_DEFAULT_TYPE	0x00800000
+ #define SRVFLAG_PATH_REWRITE	0x01000000
+ #define SRVFLAG_NO_PATH_REWRITE	0x02000000
++#define SRVFLAG_LOCATION_FOUND	0x40000000
++#define SRVFLAG_LOCATION_NOT_FOUND 0x80000000
  
  #define SRVFLAG_BITS							\
  	"\10\01INDEX\02NO_INDEX\03AUTO_INDEX\04NO_AUTO_INDEX"		\
@@ -335,8 +382,13 @@ Index: usr.sbin/httpd/httpd.h
 +	"\05ROOT\06LOCATION\07FCGI\10NO_FCGI\11LOG\12NO_LOG"		\
  	"\14SYSLOG\15NO_SYSLOG\16TLS\17ACCESS_LOG\20ERROR_LOG"		\
  	"\21AUTH\22NO_AUTH\23BLOCK\24NO_BLOCK\25LOCATION_MATCH"		\
- 	"\26SERVER_MATCH\27SERVER_HSTS\30DEFAULT_TYPE\31PATH\32NO_PATH"
-@@ -487,11 +475,12 @@
+-	"\26SERVER_MATCH\27SERVER_HSTS\30DEFAULT_TYPE\31PATH\32NO_PATH"
++	"\26SERVER_MATCH\27SERVER_HSTS\30DEFAULT_TYPE\31PATH\32NO_PATH" \
++	"\37LOCATION_FOUND\40LOCATION_NOT_FOUND"
+ 
+ #define TCPFLAG_NODELAY		0x01
+ #define TCPFLAG_NNODELAY	0x02
+@@ -487,11 +479,12 @@
  	char			 root[PATH_MAX];
  	char			 path[PATH_MAX];
  	char			 index[PATH_MAX];
@@ -350,7 +402,15 @@ Index: usr.sbin/httpd/httpd.h
  	in_port_t		 port;
  	struct sockaddr_storage	 ss;
  	int			 prefixlen;
-@@ -722,7 +713,6 @@
+@@ -701,6 +694,7 @@
+ 	 server_root_strip(const char *, int);
+ struct server_config *
+ 	 server_getlocation(struct client *, const char *);
++int	 server_locationaccesstest(struct server_config *, const char *);
+ const char *
+ 	 server_http_host(struct sockaddr_storage *, char *, size_t);
+ char	*server_http_parsehost(char *, char *, size_t, int *);
+@@ -722,7 +716,6 @@
  int		 expand_string(char *, size_t, const char *, const char *);
  const char	*url_decode(char *);
  char		*url_encode(const char *);
@@ -358,7 +418,7 @@ Index: usr.sbin/httpd/httpd.h
  const char	*canonicalize_path(const char *, char *, size_t);
  size_t		 path_info(char *);
  char		*escape_html(const char *);
-@@ -744,8 +734,6 @@
+@@ -744,8 +737,6 @@
  struct kv	*kv_extend(struct kvtree *, struct kv *, char *);
  void		 kv_purge(struct kvtree *);
  void		 kv_free(struct kv *);
@@ -367,7 +427,7 @@ Index: usr.sbin/httpd/httpd.h
  struct kv	*kv_find(struct kvtree *, struct kv *);
  int		 kv_cmp(struct kv *, struct kv *);
  struct media_type
-@@ -764,7 +750,6 @@
+@@ -764,7 +755,6 @@
  struct auth	*auth_byid(struct serverauth *, uint32_t);
  void		 auth_free(struct serverauth *, struct auth *);
  const char	*print_host(struct sockaddr_storage *, char *, size_t);
@@ -376,7 +436,15 @@ Index: usr.sbin/httpd/httpd.h
  void		 getmonotime(struct timeval *);
  
 Index: usr.sbin/httpd/parse.y
-@@ -27,6 +27,7 @@
+@@ -1,6 +1,7 @@
+ /*	$OpenBSD: parse.y,v 1.114 2020/02/09 09:44:04 florian Exp $	*/
+ 
+ /*
++ * Copyright (c) 2020 Matthias Pressfreund
+  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
+  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
+  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
+@@ -27,6 +28,7 @@
  %{
  #include <sys/types.h>
  #include <sys/socket.h>
@@ -384,7 +452,7 @@ Index: usr.sbin/httpd/parse.y
  #include <sys/stat.h>
  #include <sys/queue.h>
  #include <sys/tree.h>
-@@ -116,6 +117,7 @@
+@@ -116,6 +118,7 @@
  int		 listen_on(const char *, int, struct portrange *);
  int		 getservice(char *);
  int		 is_if_in_group(const char *, const char *);
@@ -392,15 +460,22 @@ Index: usr.sbin/httpd/parse.y
  
  typedef struct {
  	union {
-@@ -144,6 +146,7 @@
+@@ -140,11 +143,12 @@
+ %token	PROTOCOLS REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TICKET
+ %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
+ %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
+-%token	CA CLIENT CRL OPTIONAL PARAM FORWARDED
++%token	CA CLIENT CRL OPTIONAL PARAM FORWARDED FOUND NOT
  %token	<v.string>	STRING
  %token  <v.number>	NUMBER
  %type	<v.port>	port
 +%type	<v.string>	fcgiport
- %type	<v.number>	opttls optmatch
+-%type	<v.number>	opttls optmatch
++%type	<v.number>	opttls optmatch optfound
  %type	<v.tv>		timeout
  %type	<v.string>	numberstring optstring
-@@ -221,7 +224,8 @@
+ %type	<v.auth>	authopts
+@@ -221,7 +225,8 @@
  		;
  
  server		: SERVER optmatch STRING	{
@@ -442,17 +517,56 @@ Index: usr.sbin/httpd/parse.y
  
  			if (server_tls_load_ca(srv) == -1) {
  				yyerror("server \"%s\": failed to load "
-@@ -497,7 +514,8 @@
+@@ -496,38 +513,39 @@
+ 		| fastcgi
  		| authenticate
  		| filter
- 		| LOCATION optmatch STRING	{
+-		| LOCATION optmatch STRING	{
 -			struct server	*s;
++		| LOCATION optfound optmatch STRING	{
 +			struct server		*s;
 +			struct sockaddr_un	*sun;
  
  			if (srv->srv_conf.ss.ss_family == AF_UNSPEC) {
  				yyerror("listen address not specified");
-@@ -537,6 +555,12 @@
+-				free($3);
++				free($4);
+ 				YYERROR;
+ 			}
+ 
+ 			if (parentsrv != NULL) {
+-				yyerror("location %s inside location", $3);
+-				free($3);
++				yyerror("location %s inside location", $4);
++				free($4);
+ 				YYERROR;
+ 			}
+ 
+ 			if (!loadcfg) {
+-				free($3);
++				free($4);
+ 				YYACCEPT;
+ 			}
+ 
+ 			if ((s = calloc(1, sizeof (*s))) == NULL)
+ 				fatal("out of memory");
+ 
+-			if (strlcpy(s->srv_conf.location, $3,
++			if (strlcpy(s->srv_conf.location, $4,
+ 			    sizeof(s->srv_conf.location)) >=
+ 			    sizeof(s->srv_conf.location)) {
+ 				yyerror("server location truncated");
+-				free($3);
++				free($4);
+ 				free(s);
+ 				YYERROR;
+ 			}
+-			free($3);
++			free($4);
+ 
+ 			if (strlcpy(s->srv_conf.name, srv->srv_conf.name,
+ 			    sizeof(s->srv_conf.name)) >=
+@@ -537,11 +555,28 @@
  				YYERROR;
  			}
  
@@ -465,8 +579,31 @@ Index: usr.sbin/httpd/parse.y
  			s->srv_conf.id = ++last_server_id;
  			/* A location entry uses the parent id */
  			s->srv_conf.parent_id = srv->srv_conf.id;
-@@ -563,8 +587,10 @@
+ 			s->srv_conf.flags = SRVFLAG_LOCATION;
+-			if ($2)
++			if ($2 == 1) {
++				s->srv_conf.flags &=
++				    ~SRVFLAG_LOCATION_NOT_FOUND;
++				s->srv_conf.flags |=
++				    SRVFLAG_LOCATION_FOUND;
++			} else if ($2 == -1) {
++				s->srv_conf.flags &=
++				    ~SRVFLAG_LOCATION_FOUND;
++				s->srv_conf.flags |=
++				    SRVFLAG_LOCATION_NOT_FOUND;
++			}
++			if ($3)
+ 				s->srv_conf.flags |= SRVFLAG_LOCATION_MATCH;
+ 			s->srv_s = -1;
+ 			memcpy(&s->srv_conf.ss, &srv->srv_conf.ss,
+@@ -561,10 +596,18 @@
+ 			SPLAY_INIT(&srv->srv_clients);
+ 		} '{' optnl serveropts_l '}'	{
  			struct server	*s = NULL;
++			uint32_t	 f;
++
++			f = SRVFLAG_LOCATION_FOUND |
++			    SRVFLAG_LOCATION_NOT_FOUND;
  
  			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
 +				/* Compare locations of same parent server */
@@ -474,10 +611,24 @@ Index: usr.sbin/httpd/parse.y
 -				    s->srv_conf.id == srv_conf->id &&
 +				    s->srv_conf.parent_id ==
 +				    srv_conf->parent_id &&
++				    (s->srv_conf.flags & f) ==
++				    (srv_conf->flags & f) &&
  				    strcmp(s->srv_conf.location,
  				    srv_conf->location) == 0)
  					break;
-@@ -648,17 +674,38 @@
+@@ -602,6 +619,11 @@
+ 		}
+ 		;
+ 
++optfound	: /* empty */	{ $$ = 0; }
++		| FOUND		{ $$ = 1; }
++		| NOT FOUND	{ $$ = -1; }
++		;
++
+ hsts		: HSTS '{' optnl hstsflags_l '}'
+ 		| HSTS hstsflags
+ 		| HSTS
+@@ -648,17 +696,38 @@
  		| fcgiflags optnl
  		;
  
@@ -522,7 +673,7 @@ Index: usr.sbin/httpd/parse.y
  		| PARAM STRING STRING	{
  			struct fastcgi_param	*param;
  
-@@ -1086,6 +1130,27 @@
+@@ -1086,6 +1152,27 @@
  		| STRING		{ $$ = $1; }
  		;
  
@@ -550,7 +701,23 @@ Index: usr.sbin/httpd/parse.y
  tcpip		: TCP '{' optnl tcpflags_l '}'
  		| TCP tcpflags
  		;
-@@ -2326,10 +2381,8 @@
+@@ -1308,6 +1395,7 @@
+ 		{ "error",		ERR },
+ 		{ "fastcgi",		FCGI },
+ 		{ "forwarded",		FORWARDED },
++		{ "found",		FOUND },
+ 		{ "hsts",		HSTS },
+ 		{ "include",		INCLUDE },
+ 		{ "index",		INDEX },
+@@ -1323,6 +1411,7 @@
+ 		{ "max-age",		MAXAGE },
+ 		{ "no",			NO },
+ 		{ "nodelay",		NODELAY },
++		{ "not",		NOT },
+ 		{ "ocsp",		OCSP },
+ 		{ "on",			ON },
+ 		{ "optional",		OPTIONAL },
+@@ -2326,10 +2405,8 @@
  		s = getservbyname(n, "tcp");
  		if (s == NULL)
  			s = getservbyname(n, "udp");
@@ -562,7 +729,7 @@ Index: usr.sbin/httpd/parse.y
  		return (s->s_port);
  	}
  
-@@ -2379,3 +2432,26 @@
+@@ -2379,3 +2456,26 @@
  	close(s);
  	return (ret);
  }
@@ -735,7 +902,31 @@ Index: usr.sbin/httpd/server_file.c
  	    "<style type=\"text/css\"><!--\n%s\n--></style>\n"
  	    "</head>\n"
 Index: usr.sbin/httpd/server_http.c
-@@ -100,6 +100,8 @@
+@@ -1,6 +1,7 @@
+ /*	$OpenBSD: server_http.c,v 1.137 2020/02/25 15:18:41 sthen Exp $	*/
+ 
+ /*
++ * Copyright (c) 2020 Matthias Pressfreund
+  * Copyright (c) 2006 - 2018 Reyk Floeter <reyk@openbsd.org>
+  *
+  * Permission to use, copy, modify, and distribute this software for any
+@@ -20,6 +21,7 @@
+ #include <sys/queue.h>
+ #include <sys/socket.h>
+ #include <sys/tree.h>
++#include <sys/stat.h>
+ 
+ #include <netinet/in.h>
+ #include <arpa/inet.h>
+@@ -36,6 +38,7 @@
+ #include <event.h>
+ #include <ctype.h>
+ #include <vis.h>
++#include <fcntl.h>
+ 
+ #include "httpd.h"
+ #include "http.h"
+@@ -100,6 +103,8 @@
  
  	free(desc->http_path);
  	desc->http_path = NULL;
@@ -744,7 +935,7 @@ Index: usr.sbin/httpd/server_http.c
  	free(desc->http_path_alias);
  	desc->http_path_alias = NULL;
  	free(desc->http_query);
-@@ -921,15 +923,17 @@
+@@ -921,15 +926,17 @@
  	/* A CSS stylesheet allows minimal customization by the user */
  	style = "body { background-color: white; color: black; font-family: "
  	    "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif; }\n"
@@ -765,7 +956,7 @@ Index: usr.sbin/httpd/server_http.c
  	    "<title>%03d %s</title>\n"
  	    "<style type=\"text/css\"><!--\n%s\n--></style>\n"
  	    "</head>\n"
-@@ -1202,9 +1206,13 @@
+@@ -1202,9 +1209,13 @@
  	char			*hostval, *query;
  	const char		*errstr = NULL;
  
@@ -781,7 +972,7 @@ Index: usr.sbin/httpd/server_http.c
  		goto fail;
  
  	/* Canonicalize the request path */
-@@ -1271,8 +1279,7 @@
+@@ -1271,8 +1282,7 @@
  				    hostname, FNM_CASEFOLD);
  			}
  			if (ret == 0 &&
@@ -791,3 +982,70 @@ Index: usr.sbin/httpd/server_http.c
  				/* Replace host configuration */
  				clt->clt_srv_conf = srv_conf;
  				srv_conf = NULL;
+@@ -1310,7 +1320,11 @@
+ 		goto fail;
+ 
+ 	/* Now search for the location */
+-	srv_conf = server_getlocation(clt, desc->http_path);
++	if ((srv_conf = server_getlocation(clt,
++	    desc->http_path)) == NULL) {
++		server_abort_http(clt, 500, desc->http_path);
++		return (-1);
++	}
+ 
+ 	/* Optional rewrite */
+ 	if (srv_conf->flags & SRVFLAG_PATH_REWRITE) {
+@@ -1346,7 +1360,11 @@
+ 			goto fail;
+ 
+ 		/* Now search for the updated location */
+-		srv_conf = server_getlocation(clt, desc->http_path_alias);
++		if ((srv_conf = server_getlocation(clt,
++		    desc->http_path_alias)) == NULL) {
++			server_abort_http(clt, 500, desc->http_path_alias);
++			return (-1);
++		}
+ 	}
+ 
+ 	if (clt->clt_toread > 0 && (size_t)clt->clt_toread >
+@@ -1412,6 +1430,12 @@
+ 				    path, FNM_CASEFOLD);
+ 			}
+ 			if (ret == 0 && errstr == NULL) {
++				if ((ret = server_locationaccesstest(location,
++				    path)) == -1)
++					return (NULL);
++
++				if (ret)
++					continue;
+ 				/* Replace host configuration */
+ 				clt->clt_srv_conf = srv_conf = location;
+ 				break;
+@@ -1420,6 +1444,27 @@
+ 	}
+ 
+ 	return (srv_conf);
++}
++
++int
++server_locationaccesstest(struct server_config *srv_conf, const char *path)
++{
++	int		 rootfd, ret;
++	struct stat	 sb;
++
++	if (((SRVFLAG_LOCATION_FOUND | SRVFLAG_LOCATION_NOT_FOUND) &
++	    srv_conf->flags) == 0)
++		return (0);
++
++	if ((rootfd = open(srv_conf->root, O_RDONLY)) == -1)
++		return (-1);
++
++	path = server_root_strip(path, srv_conf->strip) + 1;
++	if ((ret = faccessat(rootfd, path, R_OK, 0)) != -1)
++		ret = fstatat(rootfd, path, &sb, 0);
++	close(rootfd);
++	return ((ret == -1 && SRVFLAG_LOCATION_FOUND & srv_conf->flags) ||
++	    (ret == 0 && SRVFLAG_LOCATION_NOT_FOUND & srv_conf->flags));
+ }
+ 
+ int
