@@ -31,14 +31,7 @@ Index: usr.sbin/httpd/http.h
  /*
   * Some default media types based on (2014-08-04 version):
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -1,5 +1,6 @@
- .\"	$OpenBSD: httpd.conf.5,v 1.113 2020/09/05 11:49:38 tb Exp $
- .\"
-+.\" Copyright (c) 2020 Matthias Pressfreund
- .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
- .\"
- .\" Permission to use, copy, modify, and distribute this software for any
-@@ -688,15 +689,18 @@
+@@ -694,15 +694,18 @@
  section must include one or more lines of the following syntax,
  enclosed in curly braces:
  .Bl -tag -width Ds
@@ -60,7 +53,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .It Ic include Ar file
  Include types definitions from an external file, for example
  .Pa /usr/share/misc/mime.types .
-@@ -727,14 +731,14 @@
+@@ -733,14 +736,14 @@
  }
  
  types {
@@ -84,15 +77,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Ed
  .Pp
 Index: usr.sbin/httpd/httpd.h
-@@ -1,6 +1,7 @@
- /*	$OpenBSD: httpd.h,v 1.152 2020/08/29 07:53:48 florian Exp $	*/
- 
- /*
-+ * Copyright (c) 2020 Matthias Pressfreund
-  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
-  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
-  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
-@@ -56,7 +57,8 @@
+@@ -57,7 +57,8 @@
  #define HTTPD_MAX_ALIAS_IP	16
  #define HTTPD_REALM_MAX		255
  #define HTTPD_LOCATION_MAX	255
@@ -102,7 +87,7 @@ Index: usr.sbin/httpd/httpd.h
  #define HTTPD_LOGVIS		VIS_NL|VIS_TAB|VIS_CSTYLE
  #define HTTPD_TLS_CERT		"/etc/ssl/server.crt"
  #define HTTPD_TLS_KEY		"/etc/ssl/private/server.key"
-@@ -88,6 +90,7 @@
+@@ -89,6 +90,7 @@
  
  #define MEDIATYPE_NAMEMAX	128	/* file name extension */
  #define MEDIATYPE_TYPEMAX	64	/* length of type/subtype */
@@ -110,7 +95,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define CONFIG_RELOAD		0x00
  #define CONFIG_MEDIA		0x01
-@@ -441,6 +444,7 @@
+@@ -445,6 +447,7 @@
  	char			 media_name[MEDIATYPE_NAMEMAX];
  	char			 media_type[MEDIATYPE_TYPEMAX];
  	char			 media_subtype[MEDIATYPE_TYPEMAX];
@@ -119,24 +104,16 @@ Index: usr.sbin/httpd/httpd.h
  	RB_ENTRY(media_type)	 media_entry;
  };
 Index: usr.sbin/httpd/parse.y
-@@ -1,6 +1,7 @@
- /*	$OpenBSD: parse.y,v 1.117 2020/08/26 06:50:20 florian Exp $	*/
- 
- /*
-+ * Copyright (c) 2020 Matthias Pressfreund
-  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
-  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
-  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
-@@ -142,7 +143,7 @@
+@@ -143,7 +143,7 @@
  %token	PROTOCOLS REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TICKET
  %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
  %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
--%token	CA CLIENT CRL OPTIONAL PARAM FORWARDED
-+%token	CA CLIENT CRL OPTIONAL PARAM FORWARDED CACHE
+-%token	CA CLIENT CRL OPTIONAL PARAM FORWARDED FOUND NOT
++%token	CA CLIENT CRL OPTIONAL PARAM FORWARDED FOUND NOT CACHE
  %token	<v.string>	STRING
  %token  <v.number>	NUMBER
  %type	<v.port>	port
-@@ -1212,7 +1213,7 @@
+@@ -1235,7 +1235,7 @@
  		| mediaoptsl nl
  		;
  
@@ -145,7 +122,7 @@ Index: usr.sbin/httpd/parse.y
  		| include
  		;
  
-@@ -1233,6 +1234,24 @@
+@@ -1256,6 +1256,24 @@
  		}
  		;
  
@@ -170,7 +147,7 @@ Index: usr.sbin/httpd/parse.y
  medianames_l	: medianames_l medianamesl
  		| medianamesl
  		;
-@@ -1360,6 +1379,7 @@
+@@ -1383,6 +1401,7 @@
  		{ "body",		BODY },
  		{ "buffer",		BUFFER },
  		{ "ca",			CA },
@@ -178,7 +155,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "certificate",	CERTIFICATE },
  		{ "chroot",		CHROOT },
  		{ "ciphers",		CIPHERS },
-@@ -1872,6 +1892,7 @@
+@@ -1897,6 +1916,7 @@
  			(void)strlcpy(m.media_subtype,
  			    mediatypes[i].media_subtype,
  			    sizeof(m.media_subtype));
@@ -187,15 +164,7 @@ Index: usr.sbin/httpd/parse.y
  
  			if (media_add(conf->sc_mediatypes, &m) == NULL) {
 Index: usr.sbin/httpd/server_http.c
-@@ -1,6 +1,7 @@
- /*	$OpenBSD: server_http.c,v 1.141 2020/09/12 07:34:17 yasuoka Exp $	*/
- 
- /*
-+ * Copyright (c) 2020 Matthias Pressfreund
-  * Copyright (c) 2006 - 2018 Reyk Floeter <reyk@openbsd.org>
-  *
-  * Permission to use, copy, modify, and distribute this software for any
-@@ -1437,7 +1438,7 @@
+@@ -1475,7 +1475,7 @@
  	struct http_descriptor	*desc = clt->clt_descreq;
  	struct http_descriptor	*resp = clt->clt_descresp;
  	const char		*error;
@@ -204,7 +173,7 @@ Index: usr.sbin/httpd/server_http.c
  	char			 tmbuf[32];
  
  	if (desc == NULL || media == NULL ||
-@@ -1473,6 +1474,12 @@
+@@ -1511,6 +1511,12 @@
  	if (size >= 0 && ((cl =
  	    kv_add(&resp->http_headers, "Content-Length", NULL)) == NULL ||
  	    kv_set(cl, "%lld", (long long)size) == -1))

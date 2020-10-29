@@ -13,7 +13,7 @@ Other branches available:
 * Bug fixes:
 	* Failing `directory auto index` of `location` in case enclosing `server` specifies `directory no index` (see on [tech@](https://marc.info/?l=openbsd-tech&m=160293921708844&w=2))
 
-* [Commits](https://github.com/openbsd/src/commits/master/usr.sbin/httpd) to `-current` merged into `6.8-stable` until October 26, 2020
+* [Commits](https://github.com/openbsd/src/commits/master/usr.sbin/httpd) to `-current` merged into `6.8-stable` until October 29, 2020
 
 ### cache-control-headers
 
@@ -27,30 +27,6 @@ types {
 	text/html   { cache "no-store, no-cache, must-revalidate" } html
 	...
 }
-```
-
-### location-access-tests
-
-Access tests (`found` or `not found`) for `location` resource paths via `httpd.conf(5)`. This enables [WordPress](https://wordpress.org) [Pretty Permalinks](https://wordpress.org/support/article/using-permalinks/) just like on an Apache web server with `mod_rewrite` installed.
-
-```
-server "www.example.com" {
-	listen on * port www
-	directory index "index.php"
-
-	location not found "/*" {
-		request rewrite "/index.php"
-	}
-	location "/*.php" {
-		fastcgi socket "/run/php-fpm.sock"
-	}
-}
-```
-
-__NOTE:__ Even with this add-on installed, WordPress is unable to discover that the OpenBSD web server is now capable to perform required URL rewrites. This will make the [Permalink Settings Screen](https://wordpress.org/support/article/settings-permalinks-screen/) not behave as expected. Luckily, and for this case exactly, the [got_url_rewrite hook](https://developer.wordpress.org/reference/hooks/got_url_rewrite/) exists. Adding the following line of code into the current theme's `functions.php` file will straighten things out.
-
-```
-add_filter('got_url_rewrite', '__return_true');
 ```
 
 ### fastcgi-script-overrides
@@ -105,9 +81,8 @@ $ ftp -Vo - https://codeload.github.com/mpfr/httpd-plus/tar.gz/6.8-stable | tar 
 httpd-plus-6.8-stable
 httpd-plus-6.8-stable/00-updates.patch
 httpd-plus-6.8-stable/01-cache-control-headers.patch
-httpd-plus-6.8-stable/02-location-access-tests.patch
-httpd-plus-6.8-stable/03-fastcgi-script-overrides.patch
-httpd-plus-6.8-stable/04-client-ip-filters.patch
+httpd-plus-6.8-stable/02-fastcgi-script-overrides.patch
+httpd-plus-6.8-stable/03-client-ip-filters.patch
 httpd-plus-6.8-stable/LICENSE
 httpd-plus-6.8-stable/README.md
 httpd-plus-6.8-stable/install
