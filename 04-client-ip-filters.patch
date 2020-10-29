@@ -25,15 +25,15 @@ Index: usr.sbin/httpd/httpd.conf.5
  The
  .Ar path
 @@ -412,7 +413,25 @@
- .Ar found
+ .Ic found
  (i.e. accessible) or
- .Ar not found
+ .Ic not found
 -request paths only.
 +request paths.
 +Specifying
-+.Ar from
++.Ic from
 +or
-+.Ar not from
++.Ic not from
 +enables client IP filtering accepting or refusing connections from
 +the specified list of up to 16
 +.Ar network
