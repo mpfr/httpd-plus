@@ -54,7 +54,7 @@ Index: usr.sbin/httpd/httpd.conf.5
 -Each line may end with an optional semicolon.
 +One or more names can be specified per entry.
 +If required, a
-+.Ar cache
++.Ic cache
 +control header string may be specified.
 +Each entry may end with an optional semicolon.
  .It Ic include Ar file

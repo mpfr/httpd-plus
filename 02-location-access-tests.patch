@@ -25,9 +25,9 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Ar path
  argument will be matched against the request path with shell globbing rules.
 +Optionally, it is also possible to match for
-+.Ar found
++.Ic found
 +(i.e. accessible) or
-+.Ar not found
++.Ic not found
 +request paths only.
  In case of multiple location statements in the same context, the
  first matching location statement will be put into effect, while all
