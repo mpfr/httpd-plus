@@ -27,30 +27,6 @@ types {
 }
 ```
 
-### location-access-tests
-
-Access tests (`found` or `not found`) for `location` resource paths via `httpd.conf(5)`. This enables [WordPress](https://wordpress.org) [Pretty Permalinks](https://wordpress.org/support/article/using-permalinks/) just like on an Apache web server with `mod_rewrite` installed.
-
-```
-server "www.example.com" {
-	listen on * port www
-	directory index "index.php"
-
-	location not found "/*" {
-		request rewrite "/index.php"
-	}
-	location "/*.php" {
-		fastcgi socket "/run/php-fpm.sock"
-	}
-}
-```
-
-__NOTE:__ Even with this add-on installed, WordPress is unable to discover that the OpenBSD web server is now capable to perform required URL rewrites. This will make the [Permalink Settings Screen](https://wordpress.org/support/article/settings-permalinks-screen/) not behave as expected. Luckily, and for this case exactly, the [got_url_rewrite hook](https://developer.wordpress.org/reference/hooks/got_url_rewrite/) exists. Adding the following line of code into the current theme's `functions.php` file will straighten things out.
-
-```
-add_filter('got_url_rewrite', '__return_true');
-```
-
 ### fastcgi-script-overrides
 
 Definition of `script` overrides for `fastcgi` environments via `httpd.conf(5)`. This is mainly intended to be used as a shortcut avoiding unnecessary evaluation rounds for the server.
@@ -103,9 +79,8 @@ $ ftp -Vo - https://codeload.github.com/mpfr/httpd-plus/tar.gz/current | tar xzv
 httpd-plus-current
 httpd-plus-current/00-updates.patch
 httpd-plus-current/01-cache-control-headers.patch
-httpd-plus-current/02-location-access-tests.patch
-httpd-plus-current/03-fastcgi-script-overrides.patch
-httpd-plus-current/04-client-ip-filters.patch
+httpd-plus-current/02-fastcgi-script-overrides.patch
+httpd-plus-current/03-client-ip-filters.patch
 httpd-plus-current/LICENSE
 httpd-plus-current/README.md
 httpd-plus-current/install
