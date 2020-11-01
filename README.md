@@ -35,12 +35,21 @@ types {
 
 ### fastcgi-script-overrides
 
-Definition of `script` overrides for `fastcgi` environments via `httpd.conf(5)`. This is mainly intended to be used as a shortcut avoiding unnecessary evaluation rounds for the server.
+Definition of `script` overrides for `fastcgi` environments via `httpd.conf(5)`. This may be used either to run a dedicated `script` in its specific `param` environment for a certain `location`, or simply as a shortcut avoiding unnecessary evaluation rounds for the server (as required when using `request rewrite`).
 
 ```
 server "www.example.com" {
 	...
+	location "/foobar/*" {
+		fastcgi {
+			socket "/run/php-fpm.sock"
+			param "PARAM_1" "value_1"
+			param "PARAM_2" "value_2"
+			script "/index.php"
+		}
+	}
 	location not found "/*" {
+		# request rewrite "/index.php"
 		fastcgi {
 			socket "/run/php-fpm.sock"
 			script "/index.php"
