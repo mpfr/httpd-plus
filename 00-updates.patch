@@ -99,11 +99,10 @@ Index: usr.sbin/httpd/http.h
  	/* A tree of headers and attached lists for repeated headers. */
  	struct kv		*http_lastheader;
 Index: usr.sbin/httpd/httpd.c
-@@ -551,59 +551,6 @@
- 	return (0);
+@@ -552,59 +552,6 @@
  }
  
--const char *
+ const char *
 -canonicalize_host(const char *host, char *name, size_t len)
 -{
 -	struct sockaddr_in	 sin4;
@@ -156,14 +155,14 @@ Index: usr.sbin/httpd/httpd.c
 -	return (NULL);
 -}
 -
- const char *
+-const char *
  url_decode(char *url)
  {
-@@ -1111,50 +1058,6 @@
- 	memset(kv, 0, sizeof(*kv));
+ 	char		*p, *q;
+@@ -1112,50 +1059,6 @@
  }
  
--struct kv *
+ struct kv *
 -kv_inherit(struct kv *dst, struct kv *src)
 -{
 -	memset(dst, 0, sizeof(*dst));
@@ -207,13 +206,17 @@ Index: usr.sbin/httpd/httpd.c
 -	return (0);
 -}
 -
- struct kv *
+-struct kv *
  kv_find(struct kvtree *keys, struct kv *kv)
  {
-@@ -1326,22 +1282,6 @@
- 	return (buf);
- }
- 
+ 	struct kv	*match;
+@@ -1323,22 +1226,6 @@
+ 		buf[0] = '\0';
+ 		return (NULL);
+ 	}
+-	return (buf);
+-}
+-
 -const char *
 -print_time(struct timeval *a, struct timeval *b, char *buf, size_t len)
 -{
@@ -227,12 +230,9 @@ Index: usr.sbin/httpd/httpd.c
 -	h = tv.tv_sec / 60 / 60;
 -
 -	snprintf(buf, len, "%.2lu:%.2lu:%.2lu", h, min, sec);
--	return (buf);
--}
--
- const char *
- printb_flags(const uint32_t v, const char *bits)
- {
+ 	return (buf);
+ }
+ 
 Index: usr.sbin/httpd/httpd.conf.5
 @@ -1,5 +1,6 @@
  .\"	$OpenBSD: httpd.conf.5,v 1.110 2020/04/23 21:10:53 jmc Exp $
@@ -306,18 +306,18 @@ Index: usr.sbin/httpd/httpd.conf.5
  Like the
  .Ic location
  option,
-@@ -699,6 +714,11 @@
+@@ -698,6 +708,11 @@
+ .It Ic include Ar file
  Include types definitions from an external file, for example
  .Pa /usr/share/misc/mime.types .
- .El
++.El
 +.Sh FILES
 +.Bl -tag -width /etc/examples/httpd.conf -compact
 +.It Pa /etc/examples/httpd.conf
 +Example configuration file.
-+.El
+ .El
  .Sh EXAMPLES
  Example configuration files for
- .Nm
 Index: usr.sbin/httpd/httpd.h
 @@ -1,6 +1,7 @@
  /*	$OpenBSD: httpd.h,v 1.146 2020/02/09 09:44:04 florian Exp $	*/
@@ -335,7 +335,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define PROC_PARENT_SOCK_FILENO	3
  #define PROC_MAX_INSTANCES	32
-@@ -121,25 +123,13 @@
+@@ -121,16 +123,6 @@
  	uint8_t		 cf_tls_sid[TLS_MAX_SESSION_ID_LENGTH];
  };
  
@@ -352,7 +352,7 @@ Index: usr.sbin/httpd/httpd.h
  TAILQ_HEAD(kvlist, kv);
  RB_HEAD(kvtree, kv);
  
- struct kv {
+@@ -138,8 +130,6 @@
  	char			*kv_key;
  	char			*kv_value;
  
@@ -469,8 +469,8 @@ Index: usr.sbin/httpd/parse.y
  %token	<v.string>	STRING
  %token  <v.number>	NUMBER
  %type	<v.port>	port
-+%type	<v.string>	fcgiport
 -%type	<v.number>	opttls optmatch
++%type	<v.string>	fcgiport
 +%type	<v.number>	opttls optmatch optfound
  %type	<v.tv>		timeout
  %type	<v.string>	numberstring optstring
@@ -517,7 +517,7 @@ Index: usr.sbin/httpd/parse.y
  
  			if (server_tls_load_ca(srv) == -1) {
  				yyerror("server \"%s\": failed to load "
-@@ -496,38 +513,39 @@
+@@ -496,38 +514,39 @@
  		| fastcgi
  		| authenticate
  		| filter
@@ -566,7 +566,7 @@ Index: usr.sbin/httpd/parse.y
  
  			if (strlcpy(s->srv_conf.name, srv->srv_conf.name,
  			    sizeof(s->srv_conf.name)) >=
-@@ -537,11 +555,28 @@
+@@ -537,11 +556,28 @@
  				YYERROR;
  			}
  
@@ -596,15 +596,15 @@ Index: usr.sbin/httpd/parse.y
  				s->srv_conf.flags |= SRVFLAG_LOCATION_MATCH;
  			s->srv_s = -1;
  			memcpy(&s->srv_conf.ss, &srv->srv_conf.ss,
-@@ -561,10 +596,18 @@
+@@ -561,10 +597,18 @@
  			SPLAY_INIT(&srv->srv_clients);
  		} '{' optnl serveropts_l '}'	{
  			struct server	*s = NULL;
 +			uint32_t	 f;
-+
+ 
 +			f = SRVFLAG_LOCATION_FOUND |
 +			    SRVFLAG_LOCATION_NOT_FOUND;
- 
++
  			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
 +				/* Compare locations of same parent server */
  				if ((s->srv_conf.flags & SRVFLAG_LOCATION) &&
@@ -616,7 +616,7 @@ Index: usr.sbin/httpd/parse.y
  				    strcmp(s->srv_conf.location,
  				    srv_conf->location) == 0)
  					break;
-@@ -602,6 +619,11 @@
+@@ -602,6 +646,11 @@
  		}
  		;
  
@@ -628,7 +628,7 @@ Index: usr.sbin/httpd/parse.y
  hsts		: HSTS '{' optnl hstsflags_l '}'
  		| HSTS hstsflags
  		| HSTS
-@@ -648,17 +696,38 @@
+@@ -648,17 +697,38 @@
  		| fcgiflags optnl
  		;
  
@@ -673,7 +673,7 @@ Index: usr.sbin/httpd/parse.y
  		| PARAM STRING STRING	{
  			struct fastcgi_param	*param;
  
-@@ -1086,6 +1152,27 @@
+@@ -1086,6 +1156,27 @@
  		| STRING		{ $$ = $1; }
  		;
  
@@ -701,7 +701,7 @@ Index: usr.sbin/httpd/parse.y
  tcpip		: TCP '{' optnl tcpflags_l '}'
  		| TCP tcpflags
  		;
-@@ -1308,6 +1395,7 @@
+@@ -1308,6 +1399,7 @@
  		{ "error",		ERR },
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
@@ -709,7 +709,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "hsts",		HSTS },
  		{ "include",		INCLUDE },
  		{ "index",		INDEX },
-@@ -1323,6 +1411,7 @@
+@@ -1323,6 +1415,7 @@
  		{ "max-age",		MAXAGE },
  		{ "no",			NO },
  		{ "nodelay",		NODELAY },
@@ -717,7 +717,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "ocsp",		OCSP },
  		{ "on",			ON },
  		{ "optional",		OPTIONAL },
-@@ -2326,10 +2405,8 @@
+@@ -2326,10 +2419,8 @@
  		s = getservbyname(n, "tcp");
  		if (s == NULL)
  			s = getservbyname(n, "udp");
@@ -729,10 +729,11 @@ Index: usr.sbin/httpd/parse.y
  		return (s->s_port);
  	}
  
-@@ -2379,3 +2456,26 @@
+@@ -2378,4 +2469,27 @@
+ end:
  	close(s);
  	return (ret);
- }
++}
 +
 +int
 +get_fastcgi_dest(struct server_config *xsrv_conf, const char *node, char *port)
@@ -755,7 +756,7 @@ Index: usr.sbin/httpd/parse.y
 +	freeaddrinfo(res);
 +
 +	return (0);
-+}
+ }
 Index: usr.sbin/httpd/proc.c
 @@ -401,7 +401,7 @@
  			free(cause);
@@ -802,7 +803,7 @@ Index: usr.sbin/httpd/server.c
  		}
  		event_again(&clt->clt_ev, clt->clt_s, EV_TIMEOUT|EV_READ,
 Index: usr.sbin/httpd/server_fcgi.c
-@@ -97,44 +97,15 @@
+@@ -97,45 +97,16 @@
  	size_t				 scriptlen;
  	int				 pathlen;
  	int				 fd = -1, ret;
@@ -819,7 +820,13 @@ Index: usr.sbin/httpd/server_fcgi.c
 -		port = strtonum(p, 0, 0xffff, &errstr);
 -		if (errstr != NULL) {
 -			log_warn("%s: strtonum %s, %s", __func__, p, errstr);
--			goto fail;
++	if ((fd = socket(srv_conf->fastcgi_ss.ss_family,
++	    SOCK_STREAM | SOCK_NONBLOCK, 0)) == -1)
++		goto fail;
++	if ((connect(fd, (struct sockaddr *) &srv_conf->fastcgi_ss,
++	    srv_conf->fastcgi_ss.ss_len)) == -1) {
++		if (errno != EINPROGRESS)
+ 			goto fail;
 -		}
 -		memset(&ss, 0, sizeof(ss));
 -		ss.ss_family = AF_INET;
@@ -845,15 +852,10 @@ Index: usr.sbin/httpd/server_fcgi.c
 -		}
 -
 -		if (connect(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1)
-+	if ((fd = socket(srv_conf->fastcgi_ss.ss_family,
-+	    SOCK_STREAM | SOCK_NONBLOCK, 0)) == -1)
-+		goto fail;
-+	if ((connect(fd, (struct sockaddr *) &srv_conf->fastcgi_ss,
-+	    srv_conf->fastcgi_ss.ss_len)) == -1) {
-+		if (errno != EINPROGRESS)
- 			goto fail;
+-			goto fail;
  	}
  
+ 	memset(hbuf, 0, sizeof(hbuf));
 @@ -328,13 +299,13 @@
  	}
  
@@ -956,7 +958,7 @@ Index: usr.sbin/httpd/server_http.c
  	    "<title>%03d %s</title>\n"
  	    "<style type=\"text/css\"><!--\n%s\n--></style>\n"
  	    "</head>\n"
-@@ -1202,9 +1209,13 @@
+@@ -1202,11 +1209,15 @@
  	char			*hostval, *query;
  	const char		*errstr = NULL;
  
@@ -965,13 +967,15 @@ Index: usr.sbin/httpd/server_http.c
  	if (desc->http_path == NULL ||
 -	    url_decode(desc->http_path) == NULL)
 +	    (desc->http_path_orig = strdup(desc->http_path)) == NULL)
-+		goto fail;
-+
-+	/* Decode the URL */
-+	if (url_decode(desc->http_path) == NULL)
  		goto fail;
  
++	/* Decode the URL */
++	if (url_decode(desc->http_path) == NULL)
++		goto fail;
++
  	/* Canonicalize the request path */
+ 	if (canonicalize_path(desc->http_path, path, sizeof(path)) == NULL)
+ 		goto fail;
 @@ -1271,8 +1282,7 @@
  				    hostname, FNM_CASEFOLD);
  			}

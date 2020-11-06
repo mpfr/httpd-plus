@@ -119,7 +119,7 @@ Index: usr.sbin/httpd/httpd.h
  struct server_config {
  	uint32_t		 id;
  	uint32_t		 parent_id;
-@@ -546,6 +576,8 @@
+@@ -546,6 +573,8 @@
  	struct server_fcgiparams fcgiparams;
  	int			 fcgistrip;
  
@@ -165,7 +165,7 @@ Index: usr.sbin/httpd/parse.y
  %type	<v.auth>	authopts
  
  %%
-@@ -514,8 +518,8 @@
+@@ -514,7 +518,7 @@
  		| fastcgi
  		| authenticate
  		| filter
@@ -174,7 +174,6 @@ Index: usr.sbin/httpd/parse.y
  			struct server		*s;
  			struct sockaddr_un	*sun;
  
- 			if (srv->srv_conf.ss.ss_family == AF_UNSPEC) {
 @@ -579,6 +583,25 @@
  			}
  			if ($3)
