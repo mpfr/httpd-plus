@@ -223,10 +223,10 @@ Index: usr.sbin/httpd/parse.y
  		} '{' optnl serveropts_l '}'	{
  			struct server	*s = NULL;
 +			uint32_t	 f;
-+
+ 
 +			f = SRVFLAG_LOCATION_FOUND |
 +			    SRVFLAG_LOCATION_NOT_FOUND;
- 
++
  			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
 +				/* Compare locations of same parent server */
  				if ((s->srv_conf.flags & SRVFLAG_LOCATION) &&
