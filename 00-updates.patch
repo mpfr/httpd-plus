@@ -402,15 +402,17 @@ Index: usr.sbin/httpd/httpd.h
  	in_port_t		 port;
  	struct sockaddr_storage	 ss;
  	int			 prefixlen;
-@@ -701,6 +694,7 @@
- 	 server_root_strip(const char *, int);
- struct server_config *
- 	 server_getlocation(struct client *, const char *);
-+int	 server_locationaccesstest(struct server_config *, const char *);
- const char *
- 	 server_http_host(struct sockaddr_storage *, char *, size_t);
- char	*server_http_parsehost(char *, char *, size_t, int *);
-@@ -722,7 +716,6 @@
+@@ -673,6 +666,9 @@
+ 
+ SPLAY_PROTOTYPE(client_tree, client, clt_nodes, server_client_cmp);
+ 
++#define open_server_root(srv_conf, mode)				\
++	open(*(srv_conf)->root != '\0' ? (srv_conf)->root : "/", mode)
++
+ /* server_http.c */
+ void	 server_http_init(struct server *);
+ void	 server_http(void);
+@@ -722,7 +718,6 @@
  int		 expand_string(char *, size_t, const char *, const char *);
  const char	*url_decode(char *);
  char		*url_encode(const char *);
@@ -418,7 +420,7 @@ Index: usr.sbin/httpd/httpd.h
  const char	*canonicalize_path(const char *, char *, size_t);
  size_t		 path_info(char *);
  char		*escape_html(const char *);
-@@ -744,8 +737,6 @@
+@@ -744,8 +739,6 @@
  struct kv	*kv_extend(struct kvtree *, struct kv *, char *);
  void		 kv_purge(struct kvtree *);
  void		 kv_free(struct kv *);
@@ -427,7 +429,7 @@ Index: usr.sbin/httpd/httpd.h
  struct kv	*kv_find(struct kvtree *, struct kv *);
  int		 kv_cmp(struct kv *, struct kv *);
  struct media_type
-@@ -764,7 +755,6 @@
+@@ -764,7 +757,6 @@
  struct auth	*auth_byid(struct serverauth *, uint32_t);
  void		 auth_free(struct serverauth *, struct auth *);
  const char	*print_host(struct sockaddr_storage *, char *, size_t);
@@ -882,7 +884,27 @@ Index: usr.sbin/httpd/server_fcgi.c
  	    kv_add(&resp->http_headers, "Date", tmbuf) == NULL))
  		return (-1);
 Index: usr.sbin/httpd/server_file.c
-@@ -477,14 +477,17 @@
+@@ -167,11 +167,18 @@
+ 	struct server_config	*srv_conf = clt->clt_srv_conf;
+ 	char			 path[PATH_MAX];
+ 	const char		*stripped, *errstr = NULL;
+-	int			 ret = 500;
++	int			 ret = 500, rootfd;
+ 
+ 	if (srv_conf->flags & SRVFLAG_FCGI)
+ 		return (server_fcgi(env, clt));
+ 
++	/* If the server root is not accessible, we have a problem */
++	if ((rootfd = open_server_root(srv_conf, O_RDONLY)) == -1) {
++		errstr = srv_conf->root;
++		goto abort;
++	}
++	close(rootfd);
++
+ 	/* Request path is already canonicalized */
+ 	stripped = server_root_strip(
+ 	    desc->http_path_alias != NULL ?
+@@ -477,14 +484,17 @@
  
  	/* A CSS stylesheet allows minimal customization by the user */
  	style = "body { background-color: white; color: black; font-family: "
@@ -928,7 +950,16 @@ Index: usr.sbin/httpd/server_http.c
  
  #include "httpd.h"
  #include "http.h"
-@@ -100,6 +103,8 @@
+@@ -48,6 +51,8 @@
+ 		    struct client *);
+ char		*server_expand_http(struct client *, const char *,
+ 		    char *, size_t);
++int		 server_locationaccesstest(struct server_config *,
++		    const char *);
+ 
+ static struct http_method	 http_methods[] = HTTP_METHODS;
+ static struct http_error	 http_errors[] = HTTP_ERRORS;
+@@ -100,6 +105,8 @@
  
  	free(desc->http_path);
  	desc->http_path = NULL;
@@ -937,7 +968,7 @@ Index: usr.sbin/httpd/server_http.c
  	free(desc->http_path_alias);
  	desc->http_path_alias = NULL;
  	free(desc->http_query);
-@@ -921,15 +926,17 @@
+@@ -921,15 +928,17 @@
  	/* A CSS stylesheet allows minimal customization by the user */
  	style = "body { background-color: white; color: black; font-family: "
  	    "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif; }\n"
@@ -958,7 +989,7 @@ Index: usr.sbin/httpd/server_http.c
  	    "<title>%03d %s</title>\n"
  	    "<style type=\"text/css\"><!--\n%s\n--></style>\n"
  	    "</head>\n"
-@@ -1202,11 +1209,15 @@
+@@ -1202,11 +1211,15 @@
  	char			*hostval, *query;
  	const char		*errstr = NULL;
  
@@ -976,7 +1007,7 @@ Index: usr.sbin/httpd/server_http.c
  	/* Canonicalize the request path */
  	if (canonicalize_path(desc->http_path, path, sizeof(path)) == NULL)
  		goto fail;
-@@ -1271,8 +1282,7 @@
+@@ -1271,8 +1284,7 @@
  				    hostname, FNM_CASEFOLD);
  			}
  			if (ret == 0 &&
@@ -986,33 +1017,40 @@ Index: usr.sbin/httpd/server_http.c
  				/* Replace host configuration */
  				clt->clt_srv_conf = srv_conf;
  				srv_conf = NULL;
-@@ -1310,7 +1320,11 @@
+@@ -1310,7 +1322,8 @@
  		goto fail;
  
  	/* Now search for the location */
 -	srv_conf = server_getlocation(clt, desc->http_path);
-+	if ((srv_conf = server_getlocation(clt,
-+	    desc->http_path)) == NULL) {
-+		server_abort_http(clt, 500, desc->http_path);
-+		return (-1);
-+	}
++	if ((srv_conf = server_getlocation(clt, desc->http_path)) == NULL)
++		goto rooterr;
  
  	/* Optional rewrite */
  	if (srv_conf->flags & SRVFLAG_PATH_REWRITE) {
-@@ -1346,7 +1360,11 @@
+@@ -1346,7 +1359,9 @@
  			goto fail;
  
  		/* Now search for the updated location */
 -		srv_conf = server_getlocation(clt, desc->http_path_alias);
 +		if ((srv_conf = server_getlocation(clt,
-+		    desc->http_path_alias)) == NULL) {
-+			server_abort_http(clt, 500, desc->http_path_alias);
-+			return (-1);
-+		}
++		    desc->http_path_alias)) == NULL)
++			goto rooterr;
  	}
  
  	if (clt->clt_toread > 0 && (size_t)clt->clt_toread >
-@@ -1412,6 +1430,12 @@
+@@ -1368,6 +1383,11 @@
+  fail:
+ 	server_abort_http(clt, 400, "bad request");
+ 	return (-1);
++
++ rooterr: /* server root inaccessible */
++	srv_conf = clt->clt_srv_conf;
++	server_abort_http(clt, 500, srv_conf->root);
++	return (-1);
+ }
+ 
+ const char *
+@@ -1412,6 +1432,12 @@
  				    path, FNM_CASEFOLD);
  			}
  			if (ret == 0 && errstr == NULL) {
@@ -1025,7 +1063,7 @@ Index: usr.sbin/httpd/server_http.c
  				/* Replace host configuration */
  				clt->clt_srv_conf = srv_conf = location;
  				break;
-@@ -1420,6 +1444,27 @@
+@@ -1420,6 +1446,28 @@
  	}
  
  	return (srv_conf);
@@ -1041,7 +1079,8 @@ Index: usr.sbin/httpd/server_http.c
 +	    srv_conf->flags) == 0)
 +		return (0);
 +
-+	if ((rootfd = open(srv_conf->root, O_RDONLY)) == -1)
++	/* If the server root is not accessible, we have a problem */
++	if ((rootfd = open_server_root(srv_conf, O_RDONLY)) == -1)
 +		return (-1);
 +
 +	path = server_root_strip(path, srv_conf->strip) + 1;

@@ -164,7 +164,7 @@ Index: usr.sbin/httpd/parse.y
  
  			if (media_add(conf->sc_mediatypes, &m) == NULL) {
 Index: usr.sbin/httpd/server_http.c
-@@ -1475,7 +1475,7 @@
+@@ -1478,7 +1478,7 @@
  	struct http_descriptor	*desc = clt->clt_descreq;
  	struct http_descriptor	*resp = clt->clt_descresp;
  	const char		*error;
@@ -173,7 +173,7 @@ Index: usr.sbin/httpd/server_http.c
  	char			 tmbuf[32];
  
  	if (desc == NULL || media == NULL ||
-@@ -1511,6 +1511,12 @@
+@@ -1514,6 +1514,12 @@
  	if (size >= 0 && ((cl =
  	    kv_add(&resp->http_headers, "Content-Length", NULL)) == NULL ||
  	    kv_set(cl, "%lld", (long long)size) == -1))
