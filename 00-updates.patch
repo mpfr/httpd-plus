@@ -99,14 +99,16 @@ Index: usr.sbin/httpd/httpd.h
  
  #define TCPFLAG_NODELAY		0x01
  #define TCPFLAG_NNODELAY	0x02
-@@ -690,6 +694,7 @@
- 	 server_root_strip(const char *, int);
- struct server_config *
- 	 server_getlocation(struct client *, const char *);
-+int	 server_locationaccesstest(struct server_config *, const char *);
- const char *
- 	 server_http_host(struct sockaddr_storage *, char *, size_t);
- char	*server_http_parsehost(char *, char *, size_t, int *);
+@@ -661,6 +665,9 @@
+ 	 server_match(struct server *, int);
+ 
+ SPLAY_PROTOTYPE(client_tree, client, clt_nodes, server_client_cmp);
++
++#define open_server_root(srv_conf, mode)				\
++	open(*(srv_conf)->root != '\0' ? (srv_conf)->root : "/", mode)
+ 
+ /* server_http.c */
+ void	 server_http_init(struct server *);
 Index: usr.sbin/httpd/parse.y
 @@ -1,6 +1,7 @@
  /*	$OpenBSD: parse.y,v 1.117 2020/08/26 06:50:20 florian Exp $	*/
@@ -301,6 +303,26 @@ Index: usr.sbin/httpd/server.c
  			return;
  		}
  		event_again(&clt->clt_ev, clt->clt_s, EV_TIMEOUT|EV_READ,
+Index: usr.sbin/httpd/server_file.c
+@@ -167,10 +167,17 @@
+ 	struct server_config	*srv_conf = clt->clt_srv_conf;
+ 	char			 path[PATH_MAX];
+ 	const char		*stripped, *errstr = NULL;
+-	int			 ret = 500;
++	int			 ret = 500, rootfd;
+ 
+ 	if (srv_conf->flags & SRVFLAG_FCGI)
+ 		return (server_fcgi(env, clt));
++
++	/* If the server root is not accessible, we have a problem */
++	if ((rootfd = open_server_root(srv_conf, O_RDONLY)) == -1) {
++		errstr = srv_conf->root;
++		goto abort;
++	}
++	close(rootfd);
+ 
+ 	/* Request path is already canonicalized */
+ 	stripped = server_root_strip(
 Index: usr.sbin/httpd/server_http.c
 @@ -1,6 +1,7 @@
  /*	$OpenBSD: server_http.c,v 1.141 2020/09/12 07:34:17 yasuoka Exp $	*/
@@ -326,33 +348,49 @@ Index: usr.sbin/httpd/server_http.c
  
  #include "httpd.h"
  #include "http.h"
-@@ -1317,7 +1320,11 @@
+@@ -48,6 +51,8 @@
+ 		    struct client *);
+ char		*server_expand_http(struct client *, const char *,
+ 		    char *, size_t);
++int		 server_locationaccesstest(struct server_config *,
++		    const char *);
+ 
+ static struct http_method	 http_methods[] = HTTP_METHODS;
+ static struct http_error	 http_errors[] = HTTP_ERRORS;
+@@ -1317,7 +1322,8 @@
  		goto fail;
  
  	/* Now search for the location */
 -	srv_conf = server_getlocation(clt, desc->http_path);
-+	if ((srv_conf = server_getlocation(clt,
-+	    desc->http_path)) == NULL) {
-+		server_abort_http(clt, 500, desc->http_path);
-+		return (-1);
-+	}
++	if ((srv_conf = server_getlocation(clt, desc->http_path)) == NULL)
++		goto rooterr;
  
  	/* Optional rewrite */
  	if (srv_conf->flags & SRVFLAG_PATH_REWRITE) {
-@@ -1353,7 +1360,11 @@
+@@ -1353,7 +1359,9 @@
  			goto fail;
  
  		/* Now search for the updated location */
 -		srv_conf = server_getlocation(clt, desc->http_path_alias);
 +		if ((srv_conf = server_getlocation(clt,
-+		    desc->http_path_alias)) == NULL) {
-+			server_abort_http(clt, 500, desc->http_path_alias);
-+			return (-1);
-+		}
++		    desc->http_path_alias)) == NULL)
++			goto rooterr;
  	}
  
  	if (clt->clt_toread > 0 && (size_t)clt->clt_toread >
-@@ -1419,6 +1430,12 @@
+@@ -1375,6 +1383,11 @@
+  fail:
+ 	server_abort_http(clt, 400, "bad request");
+ 	return (-1);
++
++ rooterr: /* server root inaccessible */
++	srv_conf = clt->clt_srv_conf;
++	server_abort_http(clt, 500, srv_conf->root);
++	return (-1);
+ }
+ 
+ const char *
+@@ -1419,6 +1432,12 @@
  				    path, FNM_CASEFOLD);
  			}
  			if (ret == 0 && errstr == NULL) {
@@ -365,7 +403,7 @@ Index: usr.sbin/httpd/server_http.c
  				/* Replace host configuration */
  				clt->clt_srv_conf = srv_conf = location;
  				break;
-@@ -1427,6 +1444,27 @@
+@@ -1427,6 +1446,28 @@
  	}
  
  	return (srv_conf);
@@ -381,7 +419,8 @@ Index: usr.sbin/httpd/server_http.c
 +	    srv_conf->flags) == 0)
 +		return (0);
 +
-+	if ((rootfd = open(srv_conf->root, O_RDONLY)) == -1)
++	/* If the server root is not accessible, we have a problem */
++	if ((rootfd = open_server_root(srv_conf, O_RDONLY)) == -1)
 +		return (-1);
 +
 +	path = server_root_strip(path, srv_conf->strip) + 1;
