@@ -119,24 +119,15 @@ Index: usr.sbin/httpd/httpd.h
  struct server_config {
  	uint32_t		 id;
  	uint32_t		 parent_id;
-@@ -546,6 +573,8 @@
+@@ -545,6 +572,8 @@
+ 
  	struct server_fcgiparams fcgiparams;
  	int			 fcgistrip;
- 
-+	struct ip_range	 clientfilter[HTTPD_CLIENT_FILTER_MAX];
 +
++	struct ip_range	 clientfilter[HTTPD_CLIENT_FILTER_MAX];
+ 
  	TAILQ_ENTRY(server_config) entry;
  };
- TAILQ_HEAD(serverhosts, server_config);
-@@ -699,6 +728,8 @@
- struct server_config *
- 	 server_getlocation(struct client *, const char *);
- int	 server_locationaccesstest(struct server_config *, const char *);
-+int	 server_clientipfilter(struct server_config *,
-+	    struct server_client_addr *);
- const char *
- 	 server_http_host(struct sockaddr_storage *, char *, size_t);
- char	*server_http_parsehost(char *, char *, size_t, int *);
 Index: usr.sbin/httpd/parse.y
 @@ -73,6 +73,9 @@
  int		 check_file_secrecy(int, const char *);
@@ -405,7 +396,16 @@ Index: usr.sbin/httpd/parse.y
  		{ "include",		INCLUDE },
  		{ "index",		INDEX },
 Index: usr.sbin/httpd/server_http.c
-@@ -1406,11 +1406,47 @@
+@@ -53,6 +53,8 @@
+ 		    char *, size_t);
+ int		 server_locationaccesstest(struct server_config *,
+ 		    const char *);
++int		 server_clientipfilter(struct server_config *,
++		    struct server_client_addr *);
+ 
+ static struct http_method	 http_methods[] = HTTP_METHODS;
+ static struct http_error	 http_errors[] = HTTP_ERRORS;
+@@ -1408,11 +1410,47 @@
  struct server_config *
  server_getlocation(struct client *clt, const char *path)
  {
@@ -453,7 +453,7 @@ Index: usr.sbin/httpd/server_http.c
  	/* Now search for the location */
  	TAILQ_FOREACH(location, &srv->srv_hosts, entry) {
  #ifdef DEBUG
-@@ -1434,7 +1470,8 @@
+@@ -1436,7 +1474,8 @@
  				    path)) == -1)
  					return (NULL);
  
@@ -463,7 +463,7 @@ Index: usr.sbin/httpd/server_http.c
  					continue;
  				/* Replace host configuration */
  				clt->clt_srv_conf = srv_conf = location;
-@@ -1465,6 +1502,66 @@
+@@ -1468,6 +1507,66 @@
  	close(rootfd);
  	return ((ret == -1 && SRVFLAG_LOCATION_FOUND & srv_conf->flags) ||
  	    (ret == 0 && SRVFLAG_LOCATION_NOT_FOUND & srv_conf->flags));
