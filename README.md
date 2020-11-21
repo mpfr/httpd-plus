@@ -91,7 +91,7 @@ $ pwd
 Download and extract patch files and installation script.
 
 ```
-$ doas rm -rf httpd-plus-current/
+$ rm -rf httpd-plus-current/
 $ ftp -Vo - https://codeload.github.com/mpfr/httpd-plus/tar.gz/current | tar xzvf -
 httpd-plus-current
 httpd-plus-current/00-updates.patch
