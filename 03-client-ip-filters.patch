@@ -139,7 +139,7 @@ Index: usr.sbin/httpd/parse.y
  int		 yyerror(const char *, ...)
      __attribute__((__format__ (printf, 1, 2)))
      __attribute__((__nonnull__ (1)));
-@@ -143,7 +146,7 @@
+@@ -139,7 +142,7 @@
  %token	PROTOCOLS REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TICKET
  %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
  %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
@@ -148,7 +148,7 @@ Index: usr.sbin/httpd/parse.y
  %token	<v.string>	STRING
  %token  <v.number>	NUMBER
  %type	<v.port>	port
-@@ -151,6 +154,7 @@
+@@ -147,6 +150,7 @@
  %type	<v.number>	opttls optmatch optfound
  %type	<v.tv>		timeout
  %type	<v.string>	numberstring optstring
@@ -156,7 +156,7 @@ Index: usr.sbin/httpd/parse.y
  %type	<v.auth>	authopts
  
  %%
-@@ -514,7 +518,7 @@
+@@ -510,7 +514,7 @@
  		| fastcgi
  		| authenticate
  		| filter
@@ -165,7 +165,7 @@ Index: usr.sbin/httpd/parse.y
  			struct server		*s;
  			struct sockaddr_un	*sun;
  
-@@ -579,6 +583,25 @@
+@@ -575,6 +579,25 @@
  			}
  			if ($3)
  				s->srv_conf.flags |= SRVFLAG_LOCATION_MATCH;
@@ -191,7 +191,7 @@ Index: usr.sbin/httpd/parse.y
  			s->srv_s = -1;
  			memcpy(&s->srv_conf.ss, &srv->srv_conf.ss,
  			    sizeof(s->srv_conf.ss));
-@@ -599,7 +622,9 @@
+@@ -595,7 +618,9 @@
  			struct server	*s = NULL;
  			uint32_t	 f;
  
@@ -202,7 +202,7 @@ Index: usr.sbin/httpd/parse.y
  			    SRVFLAG_LOCATION_NOT_FOUND;
  
  			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
-@@ -610,7 +635,9 @@
+@@ -606,7 +631,9 @@
  				    (s->srv_conf.flags & f) ==
  				    (srv_conf->flags & f) &&
  				    strcmp(s->srv_conf.location,
@@ -213,7 +213,7 @@ Index: usr.sbin/httpd/parse.y
  					break;
  			}
  			if (s != NULL) {
-@@ -651,6 +678,51 @@
+@@ -647,6 +674,51 @@
  		| NOT FOUND	{ $$ = -1; }
  		;
  
@@ -265,7 +265,7 @@ Index: usr.sbin/httpd/parse.y
  hsts		: HSTS '{' optnl hstsflags_l '}'
  		| HSTS hstsflags
  		| HSTS
-@@ -1375,7 +1447,121 @@
+@@ -1371,7 +1443,121 @@
  	int		 k_val;
  };
  
@@ -387,7 +387,7 @@ Index: usr.sbin/httpd/parse.y
  yyerror(const char *fmt, ...)
  {
  	va_list		 ap;
-@@ -1429,6 +1615,7 @@
+@@ -1425,6 +1611,7 @@
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
  		{ "found",		FOUND },
