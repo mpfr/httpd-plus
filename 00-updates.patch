@@ -279,6 +279,16 @@ Index: usr.sbin/httpd/parse.y
  		{ "ocsp",		OCSP },
  		{ "on",			ON },
  		{ "optional",		OPTIONAL },
+@@ -2094,7 +2124,8 @@
+ 
+  nextaf:
+ 	for (p = ifap; p != NULL && cnt < max; p = p->ifa_next) {
+-		if (p->ifa_addr->sa_family != af ||
++		if (p->ifa_addr == NULL ||
++		    p->ifa_addr->sa_family != af ||
+ 		    (strcmp(s, p->ifa_name) != 0 &&
+ 		    !is_if_in_group(p->ifa_name, s)))
+ 			continue;
 Index: usr.sbin/httpd/server.c
 @@ -119,13 +119,6 @@
  	}
