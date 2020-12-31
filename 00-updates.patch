@@ -730,7 +730,17 @@ Index: usr.sbin/httpd/parse.y
  		{ "ocsp",		OCSP },
  		{ "on",			ON },
  		{ "optional",		OPTIONAL },
-@@ -2326,10 +2415,8 @@
+@@ -2035,7 +2124,8 @@
+ 
+  nextaf:
+ 	for (p = ifap; p != NULL && cnt < max; p = p->ifa_next) {
+-		if (p->ifa_addr->sa_family != af ||
++		if (p->ifa_addr == NULL ||
++		    p->ifa_addr->sa_family != af ||
+ 		    (strcmp(s, p->ifa_name) != 0 &&
+ 		    !is_if_in_group(p->ifa_name, s)))
+ 			continue;
+@@ -2326,10 +2416,8 @@
  		s = getservbyname(n, "tcp");
  		if (s == NULL)
  			s = getservbyname(n, "udp");
@@ -742,7 +752,7 @@ Index: usr.sbin/httpd/parse.y
  		return (s->s_port);
  	}
  
-@@ -2378,4 +2465,27 @@
+@@ -2378,4 +2466,27 @@
  end:
  	close(s);
  	return (ret);
