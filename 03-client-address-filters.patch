@@ -1,5 +1,5 @@
 
-Copyright (c) 2020 Matthias Pressfreund
+Copyright (c) 2020, 2021 Matthias Pressfreund
 
 Permission to use, copy, modify, and distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
@@ -34,7 +34,7 @@ Index: usr.sbin/httpd/httpd.conf.5
 +.Ic from
 +or
 +.Ic not from
-+enables client IP filtering accepting or refusing connections from
++enables client address filtering accepting or refusing connections from
 +the specified list of up to 16
 +.Ar network
 +strings, as outlined in
@@ -104,7 +104,7 @@ Index: usr.sbin/httpd/httpd.h
 +	enum addrtype	 type;
 +};
 +
-+struct ip_range {
++struct addr_filter {
 +	union addrvalue	 first;
 +	union addrvalue	 last;
 +	enum addrtype	 type;
@@ -124,7 +124,7 @@ Index: usr.sbin/httpd/httpd.h
  	struct server_fcgiparams fcgiparams;
  	int			 fcgistrip;
 +
-+	struct ip_range	 clientfilter[HTTPD_CLIENT_FILTER_MAX];
++	struct addr_filter	 clientfilter[HTTPD_CLIENT_FILTER_MAX];
  
  	TAILQ_ENTRY(server_config) entry;
  };
@@ -133,9 +133,9 @@ Index: usr.sbin/httpd/parse.y
  int		 check_file_secrecy(int, const char *);
  int		 yyparse(void);
  int		 yylex(void);
-+struct ip_range
++struct addr_filter
 +		*build_clientfilter(struct server_config *, const char *);
-+int		 clientfilter_cmp(struct ip_range *, struct ip_range *);
++int		 clientfilter_cmp(struct addr_filter *, struct addr_filter *);
  int		 yyerror(const char *, ...)
      __attribute__((__format__ (printf, 1, 2)))
      __attribute__((__nonnull__ (1)));
@@ -265,14 +265,14 @@ Index: usr.sbin/httpd/parse.y
  hsts		: HSTS '{' optnl hstsflags_l '}'
  		| HSTS hstsflags
  		| HSTS
-@@ -1371,7 +1443,121 @@
+@@ -1371,7 +1443,122 @@
  	int		 k_val;
  };
  
-+struct ip_range *
++struct addr_filter *
 +build_clientfilter(struct server_config *sc, const char *cfgstr)
 +{
-+	struct ip_range		*clt_fltr, rbuf;
++	struct addr_filter	*clt_fltr, rbuf;
 +	const char		*cstr;
 +	char			 buf[24];
 +	size_t			 span;
@@ -363,17 +363,18 @@ Index: usr.sbin/httpd/parse.y
 +}
 +
  int
-+clientfilter_cmp(struct ip_range *a, struct ip_range *b)
++clientfilter_cmp(struct addr_filter *a, struct addr_filter *b)
 +{
 +	int	 i, j, c;
 +
 +	for (i = 0; i < HTTPD_CLIENT_FILTER_MAX; i++) {
 +		if (!a[i].type)
-+			return (memcmp(&a[i], &b[i], sizeof(struct ip_range)));
++			return (memcmp(&a[i], &b[i],
++			    sizeof(struct addr_filter)));
 +
 +		j = 0;
 +		while (1) {
-+			c = memcmp(&a[i], &b[j], sizeof(struct ip_range));
++			c = memcmp(&a[i], &b[j], sizeof(struct addr_filter));
 +			if (c == 0)
 +				break;
 +			if (!b[j].type || ++j == HTTPD_CLIENT_FILTER_MAX)
@@ -387,7 +388,7 @@ Index: usr.sbin/httpd/parse.y
  yyerror(const char *fmt, ...)
  {
  	va_list		 ap;
-@@ -1425,6 +1611,7 @@
+@@ -1425,6 +1612,7 @@
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
  		{ "found",		FOUND },
@@ -473,7 +474,7 @@ Index: usr.sbin/httpd/server_http.c
 +server_clientipfilter(struct server_config *srv_conf,
 +    struct server_client_addr *clt_addr)
 +{
-+	struct ip_range		*clt_fltr;
++	struct addr_filter	*clt_fltr;
 +	int			 i;
 +	struct client_addr	*caddr;
 +
