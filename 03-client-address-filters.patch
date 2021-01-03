@@ -97,7 +97,7 @@ Index: usr.sbin/httpd/httpd.h
 +	struct in_addr	 ipv4;
 +	struct in6_addr	 ipv6;
 +};
-+enum addrtype { IPv4 = 1, IPv6 };
++enum addrtype { ADDR_IPV4 = 1, ADDR_IPV6 };
 +
 +struct client_addr {
 +	union addrvalue	 value;
@@ -307,14 +307,14 @@ Index: usr.sbin/httpd/parse.y
 +		memset(buf, 0, sizeof(buf));
 +		if ((bits = inet_net_pton(AF_INET, strncpy(buf, cstr, span),
 +		    &rbuf.first.ipv4, sizeof(rbuf.first.ipv4))) != -1) {
-+			rbuf.type = IPv4;
++			rbuf.type = ADDR_IPV4;
 +			first = (unsigned char *)&rbuf.first.ipv4.s_addr;
 +			last = (unsigned char *)&rbuf.last.ipv4.s_addr;
 +			j = 32 - bits;
 +			k = 3;
 +		} else if ((bits = inet_net_pton(AF_INET6, buf,
 +		    &rbuf.first.ipv6, sizeof(rbuf.first.ipv6))) != -1) {
-+			rbuf.type = IPv6;
++			rbuf.type = ADDR_IPV6;
 +			first = (unsigned char *)&rbuf.first.ipv6.s6_addr;
 +			last = (unsigned char *)&rbuf.last.ipv6.s6_addr;
 +			j = 128 - bits;
@@ -336,7 +336,7 @@ Index: usr.sbin/httpd/parse.y
 +			if (memcmp(&clt_fltr[--j], &rbuf, sizeof(rbuf)) == 0)
 +				goto next;
 +#if DEBUG
-+		if (rbuf.type == IPv4)
++		if (rbuf.type == ADDR_IPV4)
 +			DPRINTF("%s: \"%s\" xff:%u type:%d bits:%d range:"
 +			    "%08X...%08X",
 +			    __func__, buf, rbuf.xff, rbuf.type, bits,
@@ -427,10 +427,10 @@ Index: usr.sbin/httpd/server_http.c
 +	    xff->kv_value != NULL) {
 +		if (inet_pton(AF_INET, xff->kv_value,
 +		    &clt_addr.xff.value.ipv4) == 1)
-+			clt_addr.xff.type = IPv4;
++			clt_addr.xff.type = ADDR_IPV4;
 +		else if (inet_pton(AF_INET6, xff->kv_value,
 +		    &clt_addr.xff.value.ipv6) == 1)
-+			clt_addr.xff.type = IPv6;
++			clt_addr.xff.type = ADDR_IPV6;
 +		else
 +			return (NULL);
 +	}
@@ -438,12 +438,12 @@ Index: usr.sbin/httpd/server_http.c
 +	case AF_INET:
 +		sin = (struct sockaddr_in *)&clt->clt_ss;
 +		clt_addr.srv.value.ipv4 = sin->sin_addr;
-+		clt_addr.srv.type = IPv4;
++		clt_addr.srv.type = ADDR_IPV4;
 +		break;
 +	case AF_INET6:
 +		sin6 = (struct sockaddr_in6 *)&clt->clt_ss;
 +		clt_addr.srv.value.ipv6 = sin6->sin6_addr;
-+		clt_addr.srv.type = IPv6;
++		clt_addr.srv.type = ADDR_IPV6;
 +		break;
 +	default:
 +		return (NULL);
@@ -491,7 +491,7 @@ Index: usr.sbin/httpd/server_http.c
 +			continue;
 +		}
 +#if DEBUG
-+		if (caddr->type == IPv4)
++		if (caddr->type == ADDR_IPV4)
 +			DPRINTF("%s: xff:%u type:%d client:%08X "
 +			    "range:%08X...%08X",
 +			    __func__, clt_fltr[i].xff, clt_fltr[i].type,
@@ -515,12 +515,12 @@ Index: usr.sbin/httpd/server_http.c
 +			    be64toh(*(uint64_t *)
 +			    &clt_fltr[i].last.ipv6.s6_addr[8]));
 +#endif
-+		if ((caddr->type == IPv4 &&
++		if ((caddr->type == ADDR_IPV4 &&
 +		    memcmp(&caddr->value.ipv4, &clt_fltr[i].first.ipv4,
 +		    sizeof(struct in_addr)) >= 0 &&
 +		    memcmp(&caddr->value.ipv4, &clt_fltr[i].last.ipv4,
 +		    sizeof(struct in_addr)) <= 0) ||
-+		    (caddr->type == IPv6 &&
++		    (caddr->type == ADDR_IPV6 &&
 +		    memcmp(&caddr->value.ipv6, &clt_fltr[i].first.ipv6,
 +		    sizeof(struct in6_addr)) >= 0 &&
 +		    memcmp(&caddr->value.ipv6, &clt_fltr[i].last.ipv6,
