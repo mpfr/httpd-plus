@@ -63,9 +63,9 @@ server "www.example.com" {
 }
 ```
 
-### client-ip-filters
+### client-address-filters
 
-Client IP matching (`from` or `not from`) for `location` sections in `httpd.conf(5)`.
+Client address matching (`from` or `not from`) for `location` sections in `httpd.conf(5)`.
 
 ```
 server "www.example.com" {
@@ -99,7 +99,7 @@ httpd-plus-6.8-stable
 httpd-plus-6.8-stable/00-updates.patch
 httpd-plus-6.8-stable/01-cache-control-headers.patch
 httpd-plus-6.8-stable/02-fastcgi-script-overrides.patch
-httpd-plus-6.8-stable/03-client-ip-filters.patch
+httpd-plus-6.8-stable/03-client-address-filters.patch
 httpd-plus-6.8-stable/LICENSE
 httpd-plus-6.8-stable/README.md
 httpd-plus-6.8-stable/install
