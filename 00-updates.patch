@@ -1,5 +1,5 @@
 
-Copyright (c) 2020 Matthias Pressfreund
+Copyright (c) 2020, 2021 Matthias Pressfreund
 
 Permission to use, copy, modify, and distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
@@ -349,6 +349,34 @@ Index: usr.sbin/httpd/server.c
  }
  
  void
+@@ -1325,6 +1316,11 @@
+ 	/* free the HTTP descriptors incl. headers */
+ 	server_close_http(clt);
+ 
++	/* tls_close must be called before the underlying socket is closed. */
++	if (clt->clt_tls_ctx != NULL)
++		tls_close(clt->clt_tls_ctx); /* XXX - error handling */
++	tls_free(clt->clt_tls_ctx);
++
+ 	event_del(&clt->clt_ev);
+ 	if (clt->clt_bev != NULL)
+ 		bufferevent_disable(clt->clt_bev, EV_READ|EV_WRITE);
+@@ -1342,14 +1338,11 @@
+ 
+ 	if (clt->clt_srvbev != NULL)
+ 		bufferevent_free(clt->clt_srvbev);
++
+ 	if (clt->clt_fd != -1)
+ 		close(clt->clt_fd);
+ 	if (clt->clt_s != -1)
+ 		close(clt->clt_s);
+-
+-	if (clt->clt_tls_ctx != NULL)
+-		tls_close(clt->clt_tls_ctx);
+-	tls_free(clt->clt_tls_ctx);
+ 
+ 	server_inflight_dec(clt, __func__);
+ 
 Index: usr.sbin/httpd/server_file.c
 @@ -167,10 +167,17 @@
  	struct server_config	*srv_conf = clt->clt_srv_conf;
