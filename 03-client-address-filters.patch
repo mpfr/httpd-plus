@@ -14,6 +14,14 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/httpd.conf.5
+@@ -1,6 +1,6 @@
+ .\"	$OpenBSD: httpd.conf.5,v 1.113 2020/09/05 11:49:38 tb Exp $
+ .\"
+-.\" Copyright (c) 2020 Matthias Pressfreund
++.\" Copyright (c) 2020, 2021 Matthias Pressfreund
+ .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
+ .\"
+ .\" Permission to use, copy, modify, and distribute this software for any
 @@ -403,7 +403,8 @@
  .It Ic listen on Ar address Oo Ic tls Oc Ic port Ar number
  Set the listen address and port.
@@ -62,6 +70,15 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Ic location
  option,
 Index: usr.sbin/httpd/httpd.h
+@@ -1,7 +1,7 @@
+ /*	$OpenBSD: httpd.h,v 1.152 2020/08/29 07:53:48 florian Exp $	*/
+ 
+ /*
+- * Copyright (c) 2020 Matthias Pressfreund
++ * Copyright (c) 2020, 2021 Matthias Pressfreund
+  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
+  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
+  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 @@ -57,6 +57,7 @@
  #define HTTPD_MAX_ALIAS_IP	16
  #define HTTPD_REALM_MAX		255
@@ -129,6 +146,15 @@ Index: usr.sbin/httpd/httpd.h
  	TAILQ_ENTRY(server_config) entry;
  };
 Index: usr.sbin/httpd/parse.y
+@@ -1,7 +1,7 @@
+ /*	$OpenBSD: parse.y,v 1.117 2020/08/26 06:50:20 florian Exp $	*/
+ 
+ /*
+- * Copyright (c) 2020 Matthias Pressfreund
++ * Copyright (c) 2020, 2021 Matthias Pressfreund
+  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
+  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
+  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 @@ -73,6 +73,9 @@
  int		 check_file_secrecy(int, const char *);
  int		 yyparse(void);
@@ -265,7 +291,7 @@ Index: usr.sbin/httpd/parse.y
  hsts		: HSTS '{' optnl hstsflags_l '}'
  		| HSTS hstsflags
  		| HSTS
-@@ -1371,7 +1443,122 @@
+@@ -1371,7 +1443,114 @@
  	int		 k_val;
  };
  
@@ -274,16 +300,10 @@ Index: usr.sbin/httpd/parse.y
 +{
 +	struct addr_filter	*clt_fltr, rbuf;
 +	const char		*cstr;
-+	char			 buf[24];
++	char			 buf[INET6_ADDRSTRLEN + 4];
 +	size_t			 span;
-+	int			 i, bits, j, k, b;
++	int			 i, bits, nbit, nbyte, b;
 +	unsigned char		*first, *last;
-+
-+	if (((SRVFLAG_CLIENT_FROM | SRVFLAG_CLIENT_NOT_FROM) &
-+	    sc->flags) != 0) {
-+		yyerror("client ip filter already defined");
-+		return (NULL);
-+	}
 +
 +	clt_fltr = sc->clientfilter;
 +	memset(clt_fltr, 0, sizeof(*clt_fltr) * HTTPD_CLIENT_FILTER_MAX);
@@ -291,17 +311,16 @@ Index: usr.sbin/httpd/parse.y
 +	for (cstr = cfgstr, i = 0;
 +	    (cstr = strpbrk(cstr, "0123456789AaBbCcDdEeFf:>")) != NULL;) {
 +		if (i >= HTTPD_CLIENT_FILTER_MAX) {
-+			yyerror("too many client ip filter networks");
++			yyerror("too many client address filters");
 +			return (NULL);
 +		}
 +		memset(&rbuf, 0, sizeof(rbuf));
 +		if (*cstr == '>') {
 +			rbuf.xff = 1;
 +			cstr++;
-+		} else
-+			rbuf.xff = 0;
++		}
 +		if ((span = strcspn(cstr, " ,\t\n\\")) >= sizeof(buf)) {
-+			yyerror("client ip filter too large: %s", cstr);
++			yyerror("client address filter too large: %s", cstr);
 +			return (NULL);
 +		}
 +		memset(buf, 0, sizeof(buf));
@@ -310,30 +329,29 @@ Index: usr.sbin/httpd/parse.y
 +			rbuf.type = ADDR_IPV4;
 +			first = (unsigned char *)&rbuf.first.ipv4.s_addr;
 +			last = (unsigned char *)&rbuf.last.ipv4.s_addr;
-+			j = 32 - bits;
-+			k = 3;
++			nbyte = sizeof(struct in_addr);
 +		} else if ((bits = inet_net_pton(AF_INET6, buf,
 +		    &rbuf.first.ipv6, sizeof(rbuf.first.ipv6))) != -1) {
 +			rbuf.type = ADDR_IPV6;
 +			first = (unsigned char *)&rbuf.first.ipv6.s6_addr;
 +			last = (unsigned char *)&rbuf.last.ipv6.s6_addr;
-+			j = 128 - bits;
-+			k = 15;
++			nbyte = sizeof(struct in6_addr);
 +		} else {
-+			yyerror("invalid client ip filter: %s", cstr);
++			yyerror("invalid client address filter: %s", cstr);
 +			return (NULL);
 +		}
 +		rbuf.last = rbuf.first;
-+		for (b = 0; j > 0; j -= 1) {
-+			first[k] &= ~(1 << b);
-+			last[k] |= 1 << b;
-+			if (++b > 7) {
++		for (nbit = (nbyte-- << 3) - bits, b = 0; nbit > 0; nbit--) {
++			first[nbyte] &= ~(1 << b);
++			last[nbyte] |= 1 << b;
++			if (b == 7) {
 +				b = 0;
-+				k -= 1;
-+			}
++				nbyte--;
++			} else
++				b++;
 +		}
-+		for (j = i; j > 0;)
-+			if (memcmp(&clt_fltr[--j], &rbuf, sizeof(rbuf)) == 0)
++		for (b = i; b > 0;)
++			if (memcmp(&clt_fltr[--b], &rbuf, sizeof(rbuf)) == 0)
 +				goto next;
 +#if DEBUG
 +		if (rbuf.type == ADDR_IPV4)
@@ -388,7 +406,7 @@ Index: usr.sbin/httpd/parse.y
  yyerror(const char *fmt, ...)
  {
  	va_list		 ap;
-@@ -1425,6 +1612,7 @@
+@@ -1425,6 +1604,7 @@
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
  		{ "found",		FOUND },
@@ -397,6 +415,15 @@ Index: usr.sbin/httpd/parse.y
  		{ "include",		INCLUDE },
  		{ "index",		INDEX },
 Index: usr.sbin/httpd/server_http.c
+@@ -1,7 +1,7 @@
+ /*	$OpenBSD: server_http.c,v 1.141 2020/09/12 07:34:17 yasuoka Exp $	*/
+ 
+ /*
+- * Copyright (c) 2020 Matthias Pressfreund
++ * Copyright (c) 2020, 2021 Matthias Pressfreund
+  * Copyright (c) 2006 - 2018 Reyk Floeter <reyk@openbsd.org>
+  *
+  * Permission to use, copy, modify, and distribute this software for any
 @@ -53,6 +53,8 @@
  		    char *, size_t);
  int		 server_locationaccesstest(struct server_config *,
