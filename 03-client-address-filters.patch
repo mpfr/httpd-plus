@@ -434,7 +434,7 @@ Index: usr.sbin/httpd/server_http.c
  		    char *, size_t);
  int		 server_locationaccesstest(struct server_config *,
  		    const char *);
-+int		 server_clientipfilter(struct server_config *,
++int		 server_clientfilter(struct server_config *,
 +		    struct server_client_addr *);
  
  static struct http_method	 http_methods[] = HTTP_METHODS;
@@ -492,7 +492,7 @@ Index: usr.sbin/httpd/server_http.c
  					return (NULL);
  
 -				if (ret)
-+				if (ret || server_clientipfilter(location,
++				if (ret || server_clientfilter(location,
 +				    &clt_addr))
  					continue;
  				/* Replace host configuration */
@@ -504,7 +504,7 @@ Index: usr.sbin/httpd/server_http.c
 +}
 +
 +int
-+server_clientipfilter(struct server_config *srv_conf,
++server_clientfilter(struct server_config *srv_conf,
 +    struct server_client_addr *clt_addr)
 +{
 +	struct addr_filter	*clt_fltr;
