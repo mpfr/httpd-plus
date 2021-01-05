@@ -32,7 +32,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  Specify server configuration rules for a specific location.
  The
  .Ar path
-@@ -412,7 +413,25 @@
+@@ -412,7 +413,29 @@
  .Ic found
  (i.e. accessible) or
  .Ic not found
@@ -43,23 +43,27 @@ Index: usr.sbin/httpd/httpd.conf.5
 +or
 +.Ic not from
 +enables client address filtering accepting or refusing connections from
-+the specified list of up to 16
++the specified (whitespace separated) list of up to 16
 +.Ar network
 +strings, as outlined in
 +.Xr inet_net_ntop 3 ,
 +each being matched either against the client's IP address or, in case a
 +.Ar network
-+string is preceded by a '>' character, against the content of the
++string is preceded by a
++.Sq >
++character, against the content of the
 +.Ar X-Forwarded-For
 +HTTP request header.
 +If there was no such header transmitted or the data transmitted could not be
 +read as a valid IP address, the unspecified address
-+.Ar 0:0:0:0:0:0:0:0, resp. 0.0.0.0
++.Ar 0:0:0:0:0:0:0:0 ,
++resp.
++.Ar 0.0.0.0
 +will be silently used for matching instead.
  In case of multiple location statements in the same context, the
  first matching location statement will be put into effect, while all
  later ones will be ignored.
-@@ -428,7 +447,8 @@
+@@ -428,7 +451,8 @@
  .Ic tcp
  and
  .Ic tls .
@@ -160,7 +164,7 @@ Index: usr.sbin/httpd/parse.y
  int		 yyparse(void);
  int		 yylex(void);
 +struct addr_filter
-+		*build_clientfilter(struct server_config *, const char *);
++		*build_clientfilter(struct server_config *, char *);
 +int		 clientfilter_cmp(struct addr_filter *, struct addr_filter *);
  int		 yyerror(const char *, ...)
      __attribute__((__format__ (printf, 1, 2)))
@@ -291,26 +295,28 @@ Index: usr.sbin/httpd/parse.y
  hsts		: HSTS '{' optnl hstsflags_l '}'
  		| HSTS hstsflags
  		| HSTS
-@@ -1371,7 +1443,114 @@
+@@ -1371,7 +1443,116 @@
  	int		 k_val;
  };
  
 +struct addr_filter *
-+build_clientfilter(struct server_config *sc, const char *cfgstr)
++build_clientfilter(struct server_config *sc, char *cfgstr)
 +{
 +	struct addr_filter	*clt_fltr, rbuf;
-+	const char		*cstr;
-+	char			 buf[INET6_ADDRSTRLEN + 4];
-+	size_t			 span;
++	size_t			 cfglen, span;
++	char			*cstr;
 +	int			 i, bits, nbit, nbyte, b;
 +	unsigned char		*first, *last;
++
++	cfglen = strlen(cfgstr);
++	DPRINTF("%s: received \"%s\" len:%zu", __func__, cfgstr, cfglen);
 +
 +	clt_fltr = sc->clientfilter;
 +	memset(clt_fltr, 0, sizeof(*clt_fltr) * HTTPD_CLIENT_FILTER_MAX);
 +
-+	for (cstr = cfgstr, i = 0;
++	for (cstr = cfgstr, i = 0, cfgstr += cfglen; cstr <= cfgstr &&
 +	    (cstr = strpbrk(cstr, "0123456789AaBbCcDdEeFf:>")) != NULL;) {
-+		if (i >= HTTPD_CLIENT_FILTER_MAX) {
++		if (i == HTTPD_CLIENT_FILTER_MAX) {
 +			yyerror("too many client address filters");
 +			return (NULL);
 +		}
@@ -319,25 +325,22 @@ Index: usr.sbin/httpd/parse.y
 +			rbuf.xff = 1;
 +			cstr++;
 +		}
-+		if ((span = strcspn(cstr, " ,\t\n\\")) >= sizeof(buf)) {
-+			yyerror("client address filter too large: %s", cstr);
-+			return (NULL);
-+		}
-+		memset(buf, 0, sizeof(buf));
-+		if ((bits = inet_net_pton(AF_INET, strncpy(buf, cstr, span),
-+		    &rbuf.first.ipv4, sizeof(rbuf.first.ipv4))) != -1) {
++		span = strcspn(cstr, " \t");
++		cstr[span] = '\0';
++		if ((bits = inet_net_pton(AF_INET, cstr, &rbuf.first.ipv4,
++		    sizeof(rbuf.first.ipv4))) != -1) {
 +			rbuf.type = ADDR_IPV4;
 +			first = (unsigned char *)&rbuf.first.ipv4.s_addr;
 +			last = (unsigned char *)&rbuf.last.ipv4.s_addr;
 +			nbyte = sizeof(struct in_addr);
-+		} else if ((bits = inet_net_pton(AF_INET6, buf,
++		} else if ((bits = inet_net_pton(AF_INET6, cstr,
 +		    &rbuf.first.ipv6, sizeof(rbuf.first.ipv6))) != -1) {
 +			rbuf.type = ADDR_IPV6;
 +			first = (unsigned char *)&rbuf.first.ipv6.s6_addr;
 +			last = (unsigned char *)&rbuf.last.ipv6.s6_addr;
 +			nbyte = sizeof(struct in6_addr);
 +		} else {
-+			yyerror("invalid client address filter: %s", cstr);
++			yyerror("invalid client address filter: \"%s\"", cstr);
 +			return (NULL);
 +		}
 +		rbuf.last = rbuf.first;
@@ -351,19 +354,22 @@ Index: usr.sbin/httpd/parse.y
 +				b++;
 +		}
 +		for (b = i; b > 0;)
-+			if (memcmp(&clt_fltr[--b], &rbuf, sizeof(rbuf)) == 0)
++			if (memcmp(&clt_fltr[--b], &rbuf, sizeof(rbuf)) == 0) {
++				DPRINTF("%s: skipping duplicate \"%s\"",
++				    __func__, cstr);
 +				goto next;
++			}
 +#if DEBUG
 +		if (rbuf.type == ADDR_IPV4)
-+			DPRINTF("%s: \"%s\" xff:%u type:%d bits:%d range:"
-+			    "%08X...%08X",
-+			    __func__, buf, rbuf.xff, rbuf.type, bits,
++			DPRINTF("%s: adding \"%s\" xff:%u type:%d bits:%d "
++			    "range:%08X...%08X",
++			    __func__, cstr, rbuf.xff, rbuf.type, bits,
 +			    be32toh(rbuf.first.ipv4.s_addr),
 +			    be32toh(rbuf.last.ipv4.s_addr));
 +		else
-+			DPRINTF("%s: \"%s\" xff:%u type:%d bits:%d range:"
-+			    "%016llX%016llX...%016llX%016llX",
-+			    __func__, buf, rbuf.xff, rbuf.type, bits,
++			DPRINTF("%s: adding \"%s\" xff:%u type:%d bits:%d "
++			    "range:%016llX%016llX...%016llX%016llX",
++			    __func__, cstr, rbuf.xff, rbuf.type, bits,
 +			    be64toh(*(uint64_t *)rbuf.first.ipv6.s6_addr),
 +			    be64toh(*(uint64_t *)&rbuf.first.ipv6.s6_addr[8]),
 +			    be64toh(*(uint64_t *)rbuf.last.ipv6.s6_addr),
@@ -371,10 +377,10 @@ Index: usr.sbin/httpd/parse.y
 +#endif
 +		clt_fltr[i++] = rbuf;
 +next:
-+		cstr += span;
++		cstr += ++span;
 +	}
 +	if (i == 0) {
-+		yyerror("empty client ip filter");
++		yyerror("empty client address filter");
 +		return (NULL);
 +	}
 +	return (clt_fltr);
@@ -406,7 +412,7 @@ Index: usr.sbin/httpd/parse.y
  yyerror(const char *fmt, ...)
  {
  	va_list		 ap;
-@@ -1425,6 +1604,7 @@
+@@ -1425,6 +1606,7 @@
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
  		{ "found",		FOUND },
