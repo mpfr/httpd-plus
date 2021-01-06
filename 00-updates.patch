@@ -1,5 +1,5 @@
 
-Copyright (c) 2020 Matthias Pressfreund
+Copyright (c) 2020, 2021 Matthias Pressfreund
 
 Permission to use, copy, modify, and distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
@@ -77,12 +77,11 @@ Index: usr.sbin/httpd/server_http.c
  
  static struct http_method	 http_methods[] = HTTP_METHODS;
  static struct http_error	 http_errors[] = HTTP_ERRORS;
-@@ -1320,11 +1322,8 @@
+@@ -1320,10 +1322,8 @@
  		goto fail;
  
  	/* Now search for the location */
--	if ((srv_conf = server_getlocation(clt,
--	    desc->http_path)) == NULL) {
+-	if ((srv_conf = server_getlocation(clt, desc->http_path)) == NULL) {
 -		server_abort_http(clt, 500, desc->http_path);
 -		return (-1);
 -	}
@@ -91,7 +90,7 @@ Index: usr.sbin/httpd/server_http.c
  
  	/* Optional rewrite */
  	if (srv_conf->flags & SRVFLAG_PATH_REWRITE) {
-@@ -1361,10 +1360,8 @@
+@@ -1360,10 +1360,8 @@
  
  		/* Now search for the updated location */
  		if ((srv_conf = server_getlocation(clt,
@@ -104,7 +103,7 @@ Index: usr.sbin/httpd/server_http.c
  	}
  
  	if (clt->clt_toread > 0 && (size_t)clt->clt_toread >
-@@ -1386,6 +1383,11 @@
+@@ -1385,6 +1383,11 @@
   fail:
  	server_abort_http(clt, 400, "bad request");
  	return (-1);
@@ -116,7 +115,7 @@ Index: usr.sbin/httpd/server_http.c
  }
  
  const char *
-@@ -1456,7 +1458,8 @@
+@@ -1455,7 +1458,8 @@
  	    srv_conf->flags) == 0)
  		return (0);
  
