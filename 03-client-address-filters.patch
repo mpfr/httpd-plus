@@ -305,8 +305,8 @@ Index: usr.sbin/httpd/parse.y
 +	struct addr_filter	*clt_fltr, rbuf;
 +	size_t			 cfglen, span;
 +	char			*cstr;
-+	int			 i, bits, nbit, nbyte, b;
-+	unsigned char		*first, *last;
++	int			 i, bits, c, nbyte;
++	unsigned char		*first, *last, b;
 +
 +	cfglen = strlen(cfgstr);
 +	DPRINTF("%s: received \"%s\" len:%zu", __func__, cfgstr, cfglen);
@@ -344,17 +344,17 @@ Index: usr.sbin/httpd/parse.y
 +			return (NULL);
 +		}
 +		rbuf.last = rbuf.first;
-+		for (nbit = (nbyte-- << 3) - bits, b = 0; nbit > 0; nbit--) {
-+			first[nbyte] &= ~(1 << b);
-+			last[nbyte] |= 1 << b;
-+			if (b == 7) {
-+				b = 0;
++		for (c = (nbyte-- << 3) - bits, b = 1; c > 0; c--) {
++			first[nbyte] &= ~b;
++			last[nbyte] |= b;
++			b <<= 1;
++			if (b == 0) {
++				b = 1;
 +				nbyte--;
-+			} else
-+				b++;
++			}
 +		}
-+		for (b = i; b > 0;)
-+			if (memcmp(&clt_fltr[--b], &rbuf, sizeof(rbuf)) == 0) {
++		for (c = i; c > 0;)
++			if (memcmp(&clt_fltr[--c], &rbuf, sizeof(rbuf)) == 0) {
 +				DPRINTF("%s: skipping duplicate \"%s\"",
 +				    __func__, cstr);
 +				goto next;
