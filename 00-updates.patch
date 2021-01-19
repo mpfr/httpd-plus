@@ -127,7 +127,15 @@ Index: usr.sbin/httpd/parse.y
   * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
   * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
   * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
-@@ -126,10 +127,6 @@
+@@ -118,6 +119,7 @@
+ int		 getservice(char *);
+ int		 is_if_in_group(const char *, const char *);
+ int		 get_fastcgi_dest(struct server_config *, const char *, char *);
++void		 remove_locations(struct server_config *);
+ 
+ typedef struct {
+ 	union {
+@@ -126,10 +128,6 @@
  		struct timeval		 tv;
  		struct portrange	 port;
  		struct auth		 auth;
@@ -138,7 +146,7 @@ Index: usr.sbin/httpd/parse.y
  	} v;
  	int lineno;
  } YYSTYPE;
-@@ -142,12 +139,12 @@
+@@ -142,12 +140,12 @@
  %token	PROTOCOLS REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TICKET
  %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
  %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
@@ -153,7 +161,7 @@ Index: usr.sbin/httpd/parse.y
  %type	<v.tv>		timeout
  %type	<v.string>	numberstring optstring
  %type	<v.auth>	authopts
-@@ -355,10 +352,17 @@
+@@ -355,11 +353,20 @@
  				YYERROR;
  			}
  
@@ -163,16 +171,19 @@ Index: usr.sbin/httpd/parse.y
  				log_warnx("%s:%d: server \"%s\": failed to "
  				    "load public/private keys", file->name,
  				    yylval.lineno, srv->srv_conf.name);
+ 
++				remove_locations(srv_conf);
 +				serverconfig_free(srv_conf);
 +				srv_conf = NULL;
 +				free(srv);
 +				srv = NULL;
 +				break;
 +			}
- 
++
  			if (server_tls_load_ca(srv) == -1) {
  				yyerror("server \"%s\": failed to load "
-@@ -506,39 +510,39 @@
+ 				    "ca cert(s)", srv->srv_conf.name);
+@@ -506,39 +513,39 @@
  		| fastcgi
  		| authenticate
  		| filter
@@ -220,7 +231,7 @@ Index: usr.sbin/httpd/parse.y
  
  			if (strlcpy(s->srv_conf.name, srv->srv_conf.name,
  			    sizeof(s->srv_conf.name)) >=
-@@ -558,7 +562,18 @@
+@@ -558,7 +565,18 @@
  			/* A location entry uses the parent id */
  			s->srv_conf.parent_id = srv->srv_conf.id;
  			s->srv_conf.flags = SRVFLAG_LOCATION;
@@ -240,7 +251,7 @@ Index: usr.sbin/httpd/parse.y
  				s->srv_conf.flags |= SRVFLAG_LOCATION_MATCH;
  			s->srv_s = -1;
  			memcpy(&s->srv_conf.ss, &srv->srv_conf.ss,
-@@ -578,10 +593,18 @@
+@@ -578,10 +596,18 @@
  			SPLAY_INIT(&srv->srv_clients);
  		} '{' optnl serveropts_l '}'	{
  			struct server	*s = NULL;
@@ -260,7 +271,7 @@ Index: usr.sbin/httpd/parse.y
  				    strcmp(s->srv_conf.location,
  				    srv_conf->location) == 0)
  					break;
-@@ -619,6 +642,11 @@
+@@ -619,6 +645,11 @@
  		}
  		;
  
@@ -272,7 +283,7 @@ Index: usr.sbin/httpd/parse.y
  hsts		: HSTS '{' optnl hstsflags_l '}'
  		| HSTS hstsflags
  		| HSTS
-@@ -1367,6 +1395,7 @@
+@@ -1367,6 +1398,7 @@
  		{ "error",		ERR },
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
@@ -280,7 +291,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "hsts",		HSTS },
  		{ "include",		INCLUDE },
  		{ "index",		INDEX },
-@@ -1382,6 +1411,7 @@
+@@ -1382,6 +1414,7 @@
  		{ "max-age",		MAXAGE },
  		{ "no",			NO },
  		{ "nodelay",		NODELAY },
@@ -288,7 +299,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "ocsp",		OCSP },
  		{ "on",			ON },
  		{ "optional",		OPTIONAL },
-@@ -2094,7 +2124,8 @@
+@@ -2094,7 +2127,8 @@
  
   nextaf:
  	for (p = ifap; p != NULL && cnt < max; p = p->ifa_next) {
@@ -298,6 +309,26 @@ Index: usr.sbin/httpd/parse.y
  		    (strcmp(s, p->ifa_name) != 0 &&
  		    !is_if_in_group(p->ifa_name, s)))
  			continue;
+@@ -2458,4 +2492,19 @@
+ 	freeaddrinfo(res);
+ 
+ 	return (0);
++}
++
++void
++remove_locations(struct server_config *xsrv_conf)
++{
++	struct server *s, *next;
++
++	TAILQ_FOREACH_SAFE(s, conf->sc_servers, srv_entry, next) {
++		if (!(s->srv_conf.flags & SRVFLAG_LOCATION &&
++		    s->srv_conf.parent_id == xsrv_conf->parent_id))
++			continue;
++		TAILQ_REMOVE(conf->sc_servers, s, srv_entry);
++		serverconfig_free(&s->srv_conf);
++		free(s);
++	}
+ }
 Index: usr.sbin/httpd/server.c
 @@ -119,13 +119,6 @@
  	}
