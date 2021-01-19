@@ -1,5 +1,5 @@
 
-Copyright (c) 2020 Matthias Pressfreund
+Copyright (c) 2020, 2021 Matthias Pressfreund
 
 Permission to use, copy, modify, and distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
@@ -119,7 +119,7 @@ Index: usr.sbin/httpd/httpd.h
  	RB_ENTRY(media_type)	 media_entry;
  };
 Index: usr.sbin/httpd/parse.y
-@@ -139,7 +139,7 @@
+@@ -140,7 +140,7 @@
  %token	PROTOCOLS REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TICKET
  %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
  %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
@@ -128,7 +128,7 @@ Index: usr.sbin/httpd/parse.y
  %token	<v.string>	STRING
  %token  <v.number>	NUMBER
  %type	<v.port>	port
-@@ -1231,7 +1231,7 @@
+@@ -1234,7 +1234,7 @@
  		| mediaoptsl nl
  		;
  
@@ -137,7 +137,7 @@ Index: usr.sbin/httpd/parse.y
  		| include
  		;
  
-@@ -1252,6 +1252,24 @@
+@@ -1255,6 +1255,24 @@
  		}
  		;
  
@@ -162,7 +162,7 @@ Index: usr.sbin/httpd/parse.y
  medianames_l	: medianames_l medianamesl
  		| medianamesl
  		;
-@@ -1379,6 +1397,7 @@
+@@ -1382,6 +1400,7 @@
  		{ "body",		BODY },
  		{ "buffer",		BUFFER },
  		{ "ca",			CA },
@@ -170,7 +170,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "certificate",	CERTIFICATE },
  		{ "chroot",		CHROOT },
  		{ "ciphers",		CIPHERS },
-@@ -1893,6 +1912,7 @@
+@@ -1896,6 +1915,7 @@
  			(void)strlcpy(m.media_subtype,
  			    mediatypes[i].media_subtype,
  			    sizeof(m.media_subtype));
