@@ -463,15 +463,16 @@ Index: usr.sbin/httpd/parse.y
  #include <sys/stat.h>
  #include <sys/queue.h>
  #include <sys/tree.h>
-@@ -116,6 +118,7 @@
+@@ -116,6 +118,8 @@
  int		 listen_on(const char *, int, struct portrange *);
  int		 getservice(char *);
  int		 is_if_in_group(const char *, const char *);
 +int		 get_fastcgi_dest(struct server_config *, const char *, char *);
++void		 remove_locations(struct server_config *);
  
  typedef struct {
  	union {
-@@ -124,10 +127,6 @@
+@@ -124,10 +128,6 @@
  		struct timeval		 tv;
  		struct portrange	 port;
  		struct auth		 auth;
@@ -482,7 +483,7 @@ Index: usr.sbin/httpd/parse.y
  	} v;
  	int lineno;
  } YYSTYPE;
-@@ -140,11 +139,12 @@
+@@ -140,11 +140,12 @@
  %token	PROTOCOLS REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TICKET
  %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
  %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
@@ -497,7 +498,7 @@ Index: usr.sbin/httpd/parse.y
  %type	<v.tv>		timeout
  %type	<v.string>	numberstring optstring
  %type	<v.auth>	authopts
-@@ -221,7 +221,8 @@
+@@ -221,7 +222,8 @@
  		;
  
  server		: SERVER optmatch STRING	{
@@ -507,7 +508,7 @@ Index: usr.sbin/httpd/parse.y
  
  			if (!loadcfg) {
  				free($3);
-@@ -278,6 +279,12 @@
+@@ -278,6 +280,12 @@
  			    HTTPD_TLS_ECDHE_CURVES,
  			    sizeof(s->srv_conf.tls_ecdhe_curves));
  
@@ -520,7 +521,7 @@ Index: usr.sbin/httpd/parse.y
  			s->srv_conf.hsts_max_age = SERVER_HSTS_DEFAULT_AGE;
  
  			if (last_server_id == INT_MAX) {
-@@ -345,10 +352,17 @@
+@@ -345,11 +353,20 @@
  				YYERROR;
  			}
  
@@ -530,16 +531,19 @@ Index: usr.sbin/httpd/parse.y
  				log_warnx("%s:%d: server \"%s\": failed to "
  				    "load public/private keys", file->name,
  				    yylval.lineno, srv->srv_conf.name);
+ 
++				remove_locations(srv_conf);
 +				serverconfig_free(srv_conf);
 +				srv_conf = NULL;
 +				free(srv);
 +				srv = NULL;
 +				break;
 +			}
- 
++
  			if (server_tls_load_ca(srv) == -1) {
  				yyerror("server \"%s\": failed to load "
-@@ -496,38 +510,39 @@
+ 				    "ca cert(s)", srv->srv_conf.name);
+@@ -496,38 +513,39 @@
  		| fastcgi
  		| authenticate
  		| filter
@@ -588,7 +592,7 @@ Index: usr.sbin/httpd/parse.y
  
  			if (strlcpy(s->srv_conf.name, srv->srv_conf.name,
  			    sizeof(s->srv_conf.name)) >=
-@@ -537,11 +552,28 @@
+@@ -537,11 +555,28 @@
  				YYERROR;
  			}
  
@@ -618,7 +622,7 @@ Index: usr.sbin/httpd/parse.y
  				s->srv_conf.flags |= SRVFLAG_LOCATION_MATCH;
  			s->srv_s = -1;
  			memcpy(&s->srv_conf.ss, &srv->srv_conf.ss,
-@@ -561,10 +593,18 @@
+@@ -561,10 +596,18 @@
  			SPLAY_INIT(&srv->srv_clients);
  		} '{' optnl serveropts_l '}'	{
  			struct server	*s = NULL;
@@ -638,7 +642,7 @@ Index: usr.sbin/httpd/parse.y
  				    strcmp(s->srv_conf.location,
  				    srv_conf->location) == 0)
  					break;
-@@ -602,6 +642,11 @@
+@@ -602,6 +645,11 @@
  		}
  		;
  
@@ -650,7 +654,7 @@ Index: usr.sbin/httpd/parse.y
  hsts		: HSTS '{' optnl hstsflags_l '}'
  		| HSTS hstsflags
  		| HSTS
-@@ -648,17 +693,38 @@
+@@ -648,17 +696,38 @@
  		| fcgiflags optnl
  		;
  
@@ -695,7 +699,7 @@ Index: usr.sbin/httpd/parse.y
  		| PARAM STRING STRING	{
  			struct fastcgi_param	*param;
  
-@@ -1086,6 +1152,27 @@
+@@ -1086,6 +1155,27 @@
  		| STRING		{ $$ = $1; }
  		;
  
@@ -723,7 +727,7 @@ Index: usr.sbin/httpd/parse.y
  tcpip		: TCP '{' optnl tcpflags_l '}'
  		| TCP tcpflags
  		;
-@@ -1308,6 +1395,7 @@
+@@ -1308,6 +1398,7 @@
  		{ "error",		ERR },
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
@@ -731,7 +735,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "hsts",		HSTS },
  		{ "include",		INCLUDE },
  		{ "index",		INDEX },
-@@ -1323,6 +1411,7 @@
+@@ -1323,6 +1414,7 @@
  		{ "max-age",		MAXAGE },
  		{ "no",			NO },
  		{ "nodelay",		NODELAY },
@@ -739,7 +743,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "ocsp",		OCSP },
  		{ "on",			ON },
  		{ "optional",		OPTIONAL },
-@@ -2035,7 +2124,8 @@
+@@ -2035,7 +2127,8 @@
  
   nextaf:
  	for (p = ifap; p != NULL && cnt < max; p = p->ifa_next) {
@@ -749,7 +753,7 @@ Index: usr.sbin/httpd/parse.y
  		    (strcmp(s, p->ifa_name) != 0 &&
  		    !is_if_in_group(p->ifa_name, s)))
  			continue;
-@@ -2326,10 +2416,8 @@
+@@ -2326,10 +2419,8 @@
  		s = getservbyname(n, "tcp");
  		if (s == NULL)
  			s = getservbyname(n, "udp");
@@ -761,7 +765,7 @@ Index: usr.sbin/httpd/parse.y
  		return (s->s_port);
  	}
  
-@@ -2378,4 +2466,27 @@
+@@ -2378,4 +2469,42 @@
  end:
  	close(s);
  	return (ret);
@@ -788,6 +792,21 @@ Index: usr.sbin/httpd/parse.y
 +	freeaddrinfo(res);
 +
 +	return (0);
++}
++
++void
++remove_locations(struct server_config *xsrv_conf)
++{
++	struct server *s, *next;
++
++	TAILQ_FOREACH_SAFE(s, conf->sc_servers, srv_entry, next) {
++		if (!(s->srv_conf.flags & SRVFLAG_LOCATION &&
++		    s->srv_conf.parent_id == xsrv_conf->parent_id))
++			continue;
++		TAILQ_REMOVE(conf->sc_servers, s, srv_entry);
++		serverconfig_free(&s->srv_conf);
++		free(s);
++	}
  }
 Index: usr.sbin/httpd/proc.c
 @@ -401,7 +401,7 @@
