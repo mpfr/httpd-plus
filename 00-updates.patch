@@ -309,7 +309,15 @@ Index: usr.sbin/httpd/parse.y
  		    (strcmp(s, p->ifa_name) != 0 &&
  		    !is_if_in_group(p->ifa_name, s)))
  			continue;
-@@ -2458,4 +2492,19 @@
+@@ -2109,6 +2143,7 @@
+ 				log_warnx("%s: interface name truncated",
+ 				    __func__);
+ 			freeifaddrs(ifap);
++			free(h);
+ 			return (-1);
+ 		}
+ 		if (ipproto != -1)
+@@ -2458,4 +2493,19 @@
  	freeaddrinfo(res);
  
  	return (0);
