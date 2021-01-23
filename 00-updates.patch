@@ -753,7 +753,15 @@ Index: usr.sbin/httpd/parse.y
  		    (strcmp(s, p->ifa_name) != 0 &&
  		    !is_if_in_group(p->ifa_name, s)))
  			continue;
-@@ -2326,10 +2419,8 @@
+@@ -2050,6 +2143,7 @@
+ 				log_warnx("%s: interface name truncated",
+ 				    __func__);
+ 			freeifaddrs(ifap);
++			free(h);
+ 			return (-1);
+ 		}
+ 		if (ipproto != -1)
+@@ -2326,10 +2420,8 @@
  		s = getservbyname(n, "tcp");
  		if (s == NULL)
  			s = getservbyname(n, "udp");
@@ -765,7 +773,7 @@ Index: usr.sbin/httpd/parse.y
  		return (s->s_port);
  	}
  
-@@ -2378,4 +2469,42 @@
+@@ -2378,4 +2470,42 @@
  end:
  	close(s);
  	return (ret);
