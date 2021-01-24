@@ -1,0 +1,519 @@
+
+Copyright (c) 2021 Matthias Pressfreund
+
+Permission to use, copy, modify, and distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+Index: usr.sbin/httpd/httpd.conf.5
+@@ -184,9 +184,72 @@
+ Use the
+ .Ic no authenticate
+ directive to disable authentication in a location.
+-.It Ic block drop
++.It Ic block drop Op Ic notify Ar socket Ic send Ar message ...
+ Drop the connection without sending an error page.
+-.It Ic block Op Ic return Ar code Op Ar uri
++.Pp
++If the optional
++.Ic notify
++keyword is specified, one or more messages will be sent to a listening
++UNIX-domain
++.Ar socket .
++The
++.Ar message
++itself may consist of an arbitrary number of subsequent strings and/or newline
++substitutes represented by
++.Ic cr
++.Pq Sq Li \er
++and
++.Ic lf
++.Pq Sq Li \en .
++.Pp
++Additionally,
++.Ar message
++may contain the following macros which will be expanded at runtime:
++.Pp
++.Bl -tag -width $HTTP_USER_AGENT -offset indent -compact
++.It Ic $REMOTE_ADDR
++The client IP address.
++.It Ic $REQUEST_METHOD
++The HTTP method the connected client used when making the request.
++.It Ic $REQUEST_URI
++The request path and optional query string.
++.It Ic $RESPONSE_CODE
++The 3-digit HTTP response code sent to the client or
++.Li 000
++when the connection was dropped.
++.It Ic $HTTP_REFERRER
++The referrer from the HTTP
++.Sq Li Referer
++header.
++.It Ic $HTTP_USER_AGENT
++The user agent from the HTTP
++.Sq Li User-Agent
++header.
++.El
++.Pp
++In order to not be forced to place the whole
++.Ar message
++in a single line, multiple
++.Ic send
++parameter lines may be specified between curly brackets.
++The following example defines a two line message, line 1 containing the client
++IP address, line 2 the requested URI, using
++.Sq Li \en
++as the newline character:
++.Bd -literal -offset indent
++block drop notify "/run/example.sock" {
++	send "$REMOTE_ADDR" lf
++	send "$REQUEST_URI"
++}
++.Ed
++.Pp
++Here, the two
++.Ic send
++parameter lines internally concatenate and transform to
++.Pp
++.Dl send \(dq$REMOTE_ADDR\en$REQUEST_URI\(dq
++.It Ic block Oo Ic return Ar code Oo Ar uri Oc Oc Op Ic notify Ar path Ic \
++send Ar message ...
+ Close the connection and send an error page.
+ If the optional return code is not specified,
+ .Xr httpd 8
+@@ -237,6 +300,11 @@
+ .Ic location match
+ option.
+ .El
++.Pp
++The
++.Ic notify
++option may be specified as documented with
++.Ic block drop .
+ .It Ic connection Ar option
+ Set the specified options and limits for HTTP connections.
+ Multiple options may be specified within curly braces.
+Index: usr.sbin/httpd/httpd.h
+@@ -27,6 +27,7 @@
+ #include <sys/queue.h>
+ #include <sys/tree.h>
+ #include <sys/time.h>
++#include <sys/un.h>
+ 
+ #include <net/if.h>
+ #include <netinet/in.h>
+@@ -88,6 +89,7 @@
+ #define SERVER_DEF_TLS_LIFETIME	(2 * 3600)
+ #define SERVER_MIN_TLS_LIFETIME	(60)
+ #define SERVER_MAX_TLS_LIFETIME	(24 * 3600)
++#define SERVER_MAXNOTIFYMESSAGE	512
+ 
+ #define MEDIATYPE_NAMEMAX	128	/* file name extension */
+ #define MEDIATYPE_TYPEMAX	64	/* length of type/subtype */
+@@ -496,6 +498,11 @@
+ 	unsigned char	 xff;
+ };
+ 
++struct socket_notifier {
++	struct sockaddr_un	 ssa_un;
++	char			 message[SERVER_MAXNOTIFYMESSAGE];
++};
++
+ struct server_client_addr {
+ 	struct client_addr	 srv;
+ 	struct client_addr	 xff;
+@@ -574,6 +581,7 @@
+ 	int			 fcgistrip;
+ 
+ 	struct addr_filter	 clientfilter[HTTPD_CLIENT_FILTER_MAX];
++	struct socket_notifier	 notifier;
+ 
+ 	TAILQ_ENTRY(server_config) entry;
+ };
+Index: usr.sbin/httpd/parse.y
+@@ -144,14 +144,15 @@
+ %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
+ %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
+ %token	CA CLIENT CRL OPTIONAL PARAM FORWARDED FOUND NOT CACHE SCRIPT FROM
++%token	NOTIFY SEND CR LF
+ %token	<v.string>	STRING
+ %token  <v.number>	NUMBER
+ %type	<v.port>	port
+ %type	<v.string>	fcgiport
+ %type	<v.number>	opttls optmatch optfound
+ %type	<v.tv>		timeout
+-%type	<v.string>	numberstring optstring
+-%type	<v.string>	optclientfilter clientfilters_l
++%type	<v.string>	numberstring optstring stringornl
++%type	<v.string>	optclientfilter clientfilters_l sendopts_l
+ %type	<v.auth>	authopts
+ 
+ %%
+@@ -1189,7 +1190,7 @@
+ 		}
+ 		;
+ 
+-filter		: block RETURN NUMBER optstring	{
++filter		: block RETURN NUMBER optstring	optnotify {
+ 			if ($3 <= 0 || server_httperror_byid($3) == NULL) {
+ 				yyerror("invalid return code: %lld", $3);
+ 				free($4);
+@@ -1209,26 +1210,110 @@
+ 				srv_conf->return_uri_len = strlen($4) + 1;
+ 			}
+ 		}
+-		| block DROP			{
++		| block DROP optnotify		{
+ 			/* No return code, silently drop the connection */
+ 			srv_conf->return_code = 0;
+ 		}
+-		| block				{
++		| block optnotify		{
+ 			/* Forbidden */
+ 			srv_conf->return_code = 403;
+ 		}
+ 		| PASS				{
+ 			srv_conf->flags &= ~SRVFLAG_BLOCK;
+ 			srv_conf->flags |= SRVFLAG_NO_BLOCK;
++			*srv_conf->notifier.ssa_un.sun_path = '\0';
++			*srv_conf->notifier.message = '\0';
+ 		}
+ 		;
+ 
+ block		: BLOCK				{
+ 			srv_conf->flags &= ~SRVFLAG_NO_BLOCK;
+ 			srv_conf->flags |= SRVFLAG_BLOCK;
++			*srv_conf->notifier.ssa_un.sun_path = '\0';
++			*srv_conf->notifier.message = '\0';
+ 		}
+ 		;
+ 
++optnotify	: /* empty */
++		| notify '{' optnl notifyopts_l '}'
++		| notify notifyopts
++		;
++
++notify		: NOTIFY STRING	{
++			if (*$2 == '\0') {
++				yyerror("empty notify socket path");
++				free($2);
++				YYERROR;
++			}
++			if (strlcpy(srv_conf->notifier.ssa_un.sun_path, $2,
++			    sizeof(srv_conf->notifier.ssa_un.sun_path)) >=
++			    sizeof(srv_conf->notifier.ssa_un.sun_path)) {
++				yyerror("notify socket path too long");
++				free($2);
++				YYERROR;
++			}
++			free($2);
++			srv_conf->notifier.ssa_un.sun_family = AF_UNIX;
++		}
++		;
++
++notifyopts_l	: notifyopts optcommanl notifyopts_l
++		| notifyopts optnl
++		;
++
++notifyopts	: SEND sendopts_l		{
++			if (strlcat(srv_conf->notifier.message, $2,
++			    sizeof(srv_conf->notifier.message)) >=
++			    sizeof(srv_conf->notifier.message)) {
++				yyerror("notification message too long");
++				free($2);
++				YYERROR;
++			}
++			free($2);
++	   	}
++		;
++
++sendopts_l	: sendopts_l stringornl	{
++			char	*s;
++
++			if (asprintf(&s, "%s%s", $1, $2) == -1) {
++				yyerror("asprintf: \"%s%s\"", $1, $2);
++				free($1);
++				free($2);
++				YYERROR;
++			}
++			free($1);
++			free($2);
++			$$ = s;
++		}
++		| stringornl		{
++			$$ = $1;
++		}
++		;
++
++stringornl	: CR		{
++	   		char	*s;
++
++	   		if ((s = strdup("\r")) == NULL) {
++				yyerror("strdup: \"\\r\"");
++				YYERROR;
++			}
++			$$ = s;
++		}
++		| LF		{
++	   		char	*s;
++
++	   		if ((s = strdup("\n")) == NULL) {
++				yyerror("strdup: \"\\n\"");
++				YYERROR;
++			}
++			$$ = s;
++		}
++		| STRING	{
++			$$ = $1;
++		}
++		;
++
+ optmatch	: /* empty */		{ $$ = 0; }
+ 		| MATCH			{ $$ = 1; }
+ 		;
+@@ -1599,6 +1684,7 @@
+ 		{ "combined",		COMBINED },
+ 		{ "common",		COMMON },
+ 		{ "connection",		CONNECTION },
++		{ "cr",			CR },
+ 		{ "crl",		CRL },
+ 		{ "default",		DEFAULT },
+ 		{ "dhe",		DHE },
+@@ -1615,6 +1701,7 @@
+ 		{ "index",		INDEX },
+ 		{ "ip",			IP },
+ 		{ "key",		KEY },
++		{ "lf",			LF },
+ 		{ "lifetime",		LIFETIME },
+ 		{ "listen",		LISTEN },
+ 		{ "location",		LOCATION },
+@@ -1626,6 +1713,7 @@
+ 		{ "no",			NO },
+ 		{ "nodelay",		NODELAY },
+ 		{ "not",		NOT },
++		{ "notify",		NOTIFY },
+ 		{ "ocsp",		OCSP },
+ 		{ "on",			ON },
+ 		{ "optional",		OPTIONAL },
+@@ -1642,6 +1730,7 @@
+ 		{ "root",		ROOT },
+ 		{ "sack",		SACK },
+ 		{ "script",		SCRIPT },
++		{ "send",		SEND },
+ 		{ "server",		SERVER },
+ 		{ "socket",		SOCKET },
+ 		{ "strip",		STRIP },
+Index: usr.sbin/httpd/server_http.c
+@@ -39,6 +39,7 @@
+ #include <ctype.h>
+ #include <vis.h>
+ #include <fcntl.h>
++#include <netdb.h>
+ 
+ #include "httpd.h"
+ #include "http.h"
+@@ -51,6 +52,10 @@
+ 		    struct client *);
+ char		*server_expand_http(struct client *, const char *,
+ 		    char *, size_t);
++char		*replace_var(const char *, const char *, const char *);
++char		*server_notify_init(struct client *, struct socket_notifier *,
++		    unsigned int);
++int		 server_notify_send(struct socket_notifier *, const char *);
+ int		 server_locationaccesstest(struct server_config *,
+ 		    const char *);
+ int		 server_clientfilter(struct server_config *,
+@@ -1212,6 +1217,7 @@
+ 	int			 portval = -1, ret;
+ 	char			*hostval, *query;
+ 	const char		*errstr = NULL;
++	char			*notify_msg = NULL;
+ 
+ 	/* Preserve original path */
+ 	if (desc->http_path == NULL ||
+@@ -1373,8 +1379,17 @@
+ 	}
+ 
+ 	if (srv_conf->flags & SRVFLAG_BLOCK) {
++		if (*srv_conf->notifier.ssa_un.sun_path != '\0' &&
++		    (notify_msg = server_notify_init(clt, &srv_conf->notifier,
++		    srv_conf->return_code)) == NULL)
++			log_warn("failed initializing notifier");
+ 		server_abort_http(clt, srv_conf->return_code,
+ 		    srv_conf->return_uri);
++		if (notify_msg != NULL &&
++		    server_notify_send(&srv_conf->notifier, notify_msg) == -1)
++			log_warn("failed notifing socket at '%s'",
++			    srv_conf->notifier.ssa_un.sun_path);
++		free(notify_msg);
+ 		return (-1);
+ 	} else if (srv_conf->flags & SRVFLAG_AUTH &&
+ 	    server_http_authenticate(srv_conf, clt) == -1) {
+@@ -1389,6 +1404,159 @@
+  rooterr: /* server root inaccessible */
+ 	srv_conf = clt->clt_srv_conf;
+ 	server_abort_http(clt, 500, srv_conf->root);
++	return (-1);
++}
++
++char *
++replace_var(const char *str, const char *var, const char *repl)
++{
++	char	*i, *new, *r;
++
++	if ((new = strdup(str)) == NULL)
++		return (NULL);
++
++	while ((i = strstr(new, var)) != NULL) {
++		*i = '\0';
++		if (asprintf(&r, "%s%s%s", new, repl, i + strlen(var)) == -1) {
++			free(new);
++			return (NULL);
++		}
++		free(new);
++		new = r;
++	}
++	return (new);
++}
++
++char *
++server_notify_init(struct client *clt, struct socket_notifier *notifier,
++    unsigned int code)
++{
++	char			*msg, hbuf[NI_MAXHOST], *buf, *str = NULL;
++	struct http_descriptor	*desc;
++	struct kv		 key, *k;
++
++	if ((msg = strdup(notifier->message)) == NULL)
++		goto err;
++
++	if (strstr(msg, "$REMOTE_ADDR") != NULL) {
++		if (print_host(&clt->clt_ss, hbuf, sizeof(hbuf)) == NULL ||
++		    (buf = replace_var(msg, "$REMOTE_ADDR", hbuf)) == NULL)
++			goto err;
++
++		free(msg);
++		msg = buf;
++	}
++	desc = clt->clt_descreq;
++	if (strstr(msg, "$REQUEST_METHOD") != NULL) {
++		if ((buf = replace_var(msg, "$REQUEST_METHOD",
++		    server_httpmethod_byid(desc->http_method))) == NULL)
++			goto err;
++
++		free(msg);
++		msg = buf;
++	}
++	if (strstr(msg, "$REQUEST_URI") != NULL) {
++		if (desc->http_query == NULL) {
++			if ((str = strdup(desc->http_path)) == NULL)
++				goto err;
++
++		} else if (asprintf(&str, "%s?%s", desc->http_path,
++		    desc->http_query) == -1)
++			goto err;
++
++		if ((buf = replace_var(msg, "$REQUEST_URI", str)) == NULL)
++			goto err;
++
++		free(msg);
++		msg = buf;
++	}
++	if (strstr(msg, "$RESPONSE_CODE") != NULL) {
++		if (asprintf(&str, "%03u", code) == -1 ||
++		    (buf = replace_var(msg, "$RESPONSE_CODE", str)) == NULL)
++			goto err;
++
++		free(msg);
++		msg = buf;
++	}
++	if (strstr(msg, "$HTTP_REFERRER") != NULL) {
++		key.kv_key = "Referer"; /* sic */
++		if ((k = kv_find(&desc->http_headers, &key)) != NULL &&
++		    k->kv_value != NULL) {
++			if (stravis(&str, k->kv_value, HTTPD_LOGVIS) == -1)
++				goto err;
++
++		} else if ((str = calloc(1, 1)) == NULL)
++			goto err;
++
++		if ((buf = replace_var(msg, "$HTTP_REFERRER", str)) == NULL)
++			goto err;
++
++		free(msg);
++		msg = buf;
++	}
++	if (strstr(msg, "$HTTP_USER_AGENT") != NULL) {
++		key.kv_key = "User-Agent";
++		if ((k = kv_find(&desc->http_headers, &key)) != NULL &&
++		    k->kv_value != NULL) {
++			if (stravis(&str, k->kv_value, HTTPD_LOGVIS) == -1)
++				goto err;
++
++		} else if ((str = calloc(1, 1)) == NULL)
++			goto err;
++
++		if ((buf = replace_var(msg, "$HTTP_USER_AGENT", str)) == NULL)
++			goto err;
++
++		free(msg);
++		msg = buf;
++	}
++	if (strstr(msg, "$HTTP_VERSION") != NULL) {
++		if (stravis(&str, desc->http_version, HTTPD_LOGVIS) == -1 ||
++		    (buf = replace_var(msg, "$HTTP_VERSION", str)) == NULL)
++			goto err;
++
++		free(msg);
++		msg = buf;
++	}
++
++	free(str);
++	return (msg);
++
++ err:
++	free(str);
++	free(msg);
++	return (NULL);
++}
++
++int
++server_notify_send(struct socket_notifier *notifier, const char *message)
++{
++	static const struct timespec	 ts = { 0, 50000L };
++
++	int	 fd;
++	ssize_t	 len, nw, n;
++
++	if ((fd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0)) == -1)
++		return (-1);
++
++	if (connect(fd, (struct sockaddr *)&notifier->ssa_un,
++	    sizeof(notifier->ssa_un)) == -1)
++		goto err;
++
++	len = strlen(message) + 1;
++	for (n = 0; n < len; n += nw)
++		while ((nw = write(fd, &message[n], len - n)) == -1) {
++			if (errno != EAGAIN)
++				goto err;
++
++			nanosleep(&ts, NULL);
++		}
++
++	close(fd);
++	return (0);
++
++ err:
++	close(fd);
+ 	return (-1);
+ }
+ 
