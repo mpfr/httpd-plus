@@ -14,7 +14,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -184,9 +184,72 @@
+@@ -184,9 +184,81 @@
  Use the
  .Ic no authenticate
  directive to disable authentication in a location.
@@ -25,18 +25,21 @@ Index: usr.sbin/httpd/httpd.conf.5
 +.Pp
 +If the optional
 +.Ic notify
-+keyword is specified, one or more messages will be sent to a listening
-+UNIX-domain
-+.Ar socket .
-+The
++keyword is specified, a string consisting of one or more
 +.Ar message
-+itself may consist of an arbitrary number of subsequent strings and/or newline
-+substitutes represented by
++parts will be sent to the given listening
++UNIX-domain
++.Ar socket
++right after the connection to the client was closed.
++Each
++.Ar message
++part may be either a regular string or one of the newline substitutes
 +.Ic cr
 +.Pq Sq Li \er
-+and
++or
 +.Ic lf
 +.Pq Sq Li \en .
++The parts will be concatenated in the given order.
 +.Pp
 +Additionally,
 +.Ar message
@@ -62,6 +65,12 @@ Index: usr.sbin/httpd/httpd.conf.5
 +.Sq Li User-Agent
 +header.
 +.El
++.Pp
++In case connecting to
++.Ar socket
++or sending
++.Ar message
++fails, a corresponding warning will be written into the system log.
 +.Pp
 +In order to not be forced to place the whole
 +.Ar message
@@ -89,7 +98,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  Close the connection and send an error page.
  If the optional return code is not specified,
  .Xr httpd 8
-@@ -237,6 +300,11 @@
+@@ -237,6 +309,11 @@
  .Ic location match
  option.
  .El
@@ -166,7 +175,7 @@ Index: usr.sbin/httpd/parse.y
  			if ($3 <= 0 || server_httperror_byid($3) == NULL) {
  				yyerror("invalid return code: %lld", $3);
  				free($4);
-@@ -1209,26 +1210,110 @@
+@@ -1209,26 +1210,115 @@
  				srv_conf->return_uri_len = strlen($4) + 1;
  			}
  		}
@@ -197,11 +206,7 @@ Index: usr.sbin/httpd/parse.y
  		;
  
 +optnotify	: /* empty */
-+		| notify '{' optnl notifyopts_l '}'
-+		| notify notifyopts
-+		;
-+
-+notify		: NOTIFY STRING	{
++		| NOTIFY STRING	{
 +			if (*$2 == '\0') {
 +				yyerror("empty notify socket path");
 +				free($2);
@@ -216,14 +221,23 @@ Index: usr.sbin/httpd/parse.y
 +			}
 +			free($2);
 +			srv_conf->notifier.ssa_un.sun_family = AF_UNIX;
++		} notifyopts_v	{
++			if (*srv_conf->notifier.message == '\0') {
++				yyerror("empty notify message");
++				YYERROR;
++			}
 +		}
++		;
++
++notifyopts_v	: '{' optnl notifyopts_l '}'
++		| notifyopts
 +		;
 +
 +notifyopts_l	: notifyopts optcommanl notifyopts_l
 +		| notifyopts optnl
 +		;
 +
-+notifyopts	: SEND sendopts_l		{
++notifyopts	: SEND sendopts_l	{
 +			if (strlcat(srv_conf->notifier.message, $2,
 +			    sizeof(srv_conf->notifier.message)) >=
 +			    sizeof(srv_conf->notifier.message)) {
@@ -279,7 +293,7 @@ Index: usr.sbin/httpd/parse.y
  optmatch	: /* empty */		{ $$ = 0; }
  		| MATCH			{ $$ = 1; }
  		;
-@@ -1599,6 +1684,7 @@
+@@ -1599,6 +1689,7 @@
  		{ "combined",		COMBINED },
  		{ "common",		COMMON },
  		{ "connection",		CONNECTION },
@@ -287,7 +301,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "crl",		CRL },
  		{ "default",		DEFAULT },
  		{ "dhe",		DHE },
-@@ -1615,6 +1701,7 @@
+@@ -1615,6 +1706,7 @@
  		{ "index",		INDEX },
  		{ "ip",			IP },
  		{ "key",		KEY },
@@ -295,7 +309,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "lifetime",		LIFETIME },
  		{ "listen",		LISTEN },
  		{ "location",		LOCATION },
-@@ -1626,6 +1713,7 @@
+@@ -1626,6 +1718,7 @@
  		{ "no",			NO },
  		{ "nodelay",		NODELAY },
  		{ "not",		NOT },
@@ -303,7 +317,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "ocsp",		OCSP },
  		{ "on",			ON },
  		{ "optional",		OPTIONAL },
-@@ -1642,6 +1730,7 @@
+@@ -1642,6 +1735,7 @@
  		{ "root",		ROOT },
  		{ "sack",		SACK },
  		{ "script",		SCRIPT },
