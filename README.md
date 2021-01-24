@@ -67,9 +67,46 @@ Client address matching (`from` or `not from`) for `location` sections in `httpd
 
 ```
 server "www.example.com" {
-	listen on * port www
-
+	...
 	location "/intranet*" not from "10.0.0/24" { block }
+	...
+}
+```
+
+### notify-on-block
+
+Send notification messages to UNIX-domain sockets for `location` sections specifying a `block` option in `httpd.conf(5)`.
+
+This cooperates perfectly with [pftbld(8)](https://github.com/mpfr/pftbld), offering an easy and straightforward means to effectively protect the web server from offensive clients and successively build customized firewall blocklists. The example below will make `httpd(8)` not only block clients from outside the `10.0.0/24` network requesting a `/forbidden*` URL by sending a 403 return status, but also report their IP addresses to `pftbld(8)` (with its listening socket at `/var/www/run/pftbld-www.sock`) for further handling.
+
+`httpd.conf`:
+
+```
+server "www.example.com" {
+	...
+	location "/forbidden*" not from "10.0.0/24" {
+		block notify "/run/pftbld-www.sock" {
+			send "$REMOTE_ADDR"
+		}
+	}
+	...
+}
+```
+
+`pftbld.conf`:
+
+```
+target "www" {
+	...
+	socket "/var/www/run/pftbld-www.sock" {
+		owner "www"
+		group "www"
+	}
+	cascade {
+		table "attackers"
+		expire 1h
+		...
+	}
 	...
 }
 ```
@@ -98,6 +135,7 @@ httpd-plus-current/00-updates.patch
 httpd-plus-current/01-cache-control-headers.patch
 httpd-plus-current/02-fastcgi-script-overrides.patch
 httpd-plus-current/03-client-address-filters.patch
+httpd-plus-current/04-notify-on-block.patch
 httpd-plus-current/LICENSE
 httpd-plus-current/README.md
 httpd-plus-current/install
