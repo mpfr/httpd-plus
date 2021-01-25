@@ -14,7 +14,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -184,9 +184,89 @@
+@@ -184,9 +184,92 @@
  Use the
  .Ic no authenticate
  directive to disable authentication in a location.
@@ -66,12 +66,15 @@ Index: usr.sbin/httpd/httpd.conf.5
 +The HTTP authenticated remote user.
 +.It Ic $REQUEST_METHOD
 +The HTTP method the connected client used when making the request.
++.It Ic $REQUEST_SCHEME
++The request scheme
++.Pq So Li http Sc No or Sq Li https .
 +.It Ic $REQUEST_URI
 +The request path and optional query string.
 +.It Ic $RESPONSE_CODE
 +The 3-digit HTTP response code sent to the client or
 +.Sq Li 000
-+when the connection was dropped.
++if the connection was dropped.
 +.El
 +.Pp
 +In case connecting to
@@ -106,7 +109,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  Close the connection and send an error page.
  If the optional return code is not specified,
  .Xr httpd 8
-@@ -237,6 +317,11 @@
+@@ -237,6 +320,11 @@
  .Ic location match
  option.
  .El
