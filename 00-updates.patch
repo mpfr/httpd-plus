@@ -99,7 +99,16 @@ Index: usr.sbin/httpd/http.h
  	/* A tree of headers and attached lists for repeated headers. */
  	struct kv		*http_lastheader;
 Index: usr.sbin/httpd/httpd.c
-@@ -552,59 +552,6 @@
+@@ -67,6 +67,8 @@
+ 	{ "logger",	PROC_LOGGER, parent_dispatch_logger, logger }
+ };
+ 
++enum privsep_procid privsep_process;
++
+ void
+ parent_sig_handler(int sig, short event, void *arg)
+ {
+@@ -552,59 +554,6 @@
  }
  
  const char *
@@ -159,7 +168,7 @@ Index: usr.sbin/httpd/httpd.c
  url_decode(char *url)
  {
  	char		*p, *q;
-@@ -1112,50 +1059,6 @@
+@@ -1112,50 +1061,6 @@
  }
  
  struct kv *
@@ -210,7 +219,7 @@ Index: usr.sbin/httpd/httpd.c
  kv_find(struct kvtree *keys, struct kv *kv)
  {
  	struct kv	*match;
-@@ -1323,22 +1226,6 @@
+@@ -1323,22 +1228,6 @@
  		buf[0] = '\0';
  		return (NULL);
  	}
@@ -361,7 +370,26 @@ Index: usr.sbin/httpd/httpd.h
  #define KV_FLAG_INVALID		 0x01
  #define KV_FLAG_GLOBBING	 0x02
  	uint8_t			 kv_flags;
-@@ -387,7 +377,6 @@
+@@ -179,7 +169,7 @@
+ };
+ TAILQ_HEAD(control_socks, control_sock);
+ 
+-struct {
++extern struct {
+ 	struct event	 ev;
+ 	int		 fd;
+ } control_state;
+@@ -241,7 +231,8 @@
+ 	PROC_SERVER,
+ 	PROC_LOGGER,
+ 	PROC_MAX
+-} privsep_process;
++};
++extern enum privsep_procid privsep_process;
+ 
+ /* Attach the control socket to the following process */
+ #define PROC_CONTROL	PROC_LOGGER
+@@ -387,7 +378,6 @@
  #define SRVFLAG_NO_FCGI		0x00000080
  #define SRVFLAG_LOG		0x00000100
  #define SRVFLAG_NO_LOG		0x00000200
@@ -369,7 +397,7 @@ Index: usr.sbin/httpd/httpd.h
  #define SRVFLAG_SYSLOG		0x00000800
  #define SRVFLAG_NO_SYSLOG	0x00001000
  #define SRVFLAG_TLS		0x00002000
-@@ -403,13 +392,16 @@
+@@ -403,13 +393,16 @@
  #define SRVFLAG_DEFAULT_TYPE	0x00800000
  #define SRVFLAG_PATH_REWRITE	0x01000000
  #define SRVFLAG_NO_PATH_REWRITE	0x02000000
@@ -388,7 +416,16 @@ Index: usr.sbin/httpd/httpd.h
  
  #define TCPFLAG_NODELAY		0x01
  #define TCPFLAG_NNODELAY	0x02
-@@ -487,11 +479,12 @@
+@@ -447,7 +440,7 @@
+ 	uint32_t		log_id;
+ 	TAILQ_ENTRY(log_file)	log_entry;
+ };
+-TAILQ_HEAD(log_files, log_file) log_files;
++extern TAILQ_HEAD(log_files, log_file) log_files;
+ 
+ struct media_type {
+ 	char			 media_name[MEDIATYPE_NAMEMAX];
+@@ -487,11 +480,12 @@
  	char			 root[PATH_MAX];
  	char			 path[PATH_MAX];
  	char			 index[PATH_MAX];
@@ -402,7 +439,7 @@ Index: usr.sbin/httpd/httpd.h
  	in_port_t		 port;
  	struct sockaddr_storage	 ss;
  	int			 prefixlen;
-@@ -673,6 +666,9 @@
+@@ -673,6 +667,9 @@
  
  SPLAY_PROTOTYPE(client_tree, client, clt_nodes, server_client_cmp);
  
@@ -412,7 +449,7 @@ Index: usr.sbin/httpd/httpd.h
  /* server_http.c */
  void	 server_http_init(struct server *);
  void	 server_http(void);
-@@ -722,7 +718,6 @@
+@@ -722,7 +719,6 @@
  int		 expand_string(char *, size_t, const char *, const char *);
  const char	*url_decode(char *);
  char		*url_encode(const char *);
@@ -420,7 +457,7 @@ Index: usr.sbin/httpd/httpd.h
  const char	*canonicalize_path(const char *, char *, size_t);
  size_t		 path_info(char *);
  char		*escape_html(const char *);
-@@ -744,8 +739,6 @@
+@@ -744,8 +740,6 @@
  struct kv	*kv_extend(struct kvtree *, struct kv *, char *);
  void		 kv_purge(struct kvtree *);
  void		 kv_free(struct kv *);
@@ -429,7 +466,7 @@ Index: usr.sbin/httpd/httpd.h
  struct kv	*kv_find(struct kvtree *, struct kv *);
  int		 kv_cmp(struct kv *, struct kv *);
  struct media_type
-@@ -764,7 +757,6 @@
+@@ -764,7 +758,6 @@
  struct auth	*auth_byid(struct serverauth *, uint32_t);
  void		 auth_free(struct serverauth *, struct auth *);
  const char	*print_host(struct sockaddr_storage *, char *, size_t);
@@ -438,7 +475,16 @@ Index: usr.sbin/httpd/httpd.h
  void		 getmonotime(struct timeval *);
  
 Index: usr.sbin/httpd/logger.c
-@@ -89,6 +89,7 @@
+@@ -45,6 +45,8 @@
+ 
+ static uint32_t		 last_log_id = 0;
+ 
++struct log_files log_files;
++
+ static struct privsep_proc procs[] = {
+ 	{ "parent",	PROC_PARENT,	logger_dispatch_parent },
+ 	{ "server",	PROC_SERVER,	logger_dispatch_server }
+@@ -89,6 +91,7 @@
  			log->log_fd = -1;
  		}
  		TAILQ_REMOVE(&log_files, log, log_entry);
