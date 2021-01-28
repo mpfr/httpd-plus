@@ -138,7 +138,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define MEDIATYPE_NAMEMAX	128	/* file name extension */
  #define MEDIATYPE_TYPEMAX	64	/* length of type/subtype */
-@@ -496,6 +498,11 @@
+@@ -497,6 +499,11 @@
  	unsigned char	 xff;
  };
  
@@ -150,7 +150,7 @@ Index: usr.sbin/httpd/httpd.h
  struct server_client_addr {
  	struct client_addr	 srv;
  	struct client_addr	 xff;
-@@ -574,6 +581,7 @@
+@@ -575,6 +582,7 @@
  	int			 fcgistrip;
  
  	struct addr_filter	 clientfilter[HTTPD_CLIENT_FILTER_MAX];

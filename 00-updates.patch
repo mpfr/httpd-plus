@@ -29,7 +29,7 @@ Index: usr.sbin/httpd/config.c
  			    sizeof(srv_conf->index));
  		}
 Index: usr.sbin/httpd/httpd.h
-@@ -665,6 +665,9 @@
+@@ -666,6 +666,9 @@
  
  SPLAY_PROTOTYPE(client_tree, client, clt_nodes, server_client_cmp);
  
@@ -39,7 +39,7 @@ Index: usr.sbin/httpd/httpd.h
  /* server_http.c */
  void	 server_http_init(struct server *);
  void	 server_http(void);
-@@ -693,7 +696,6 @@
+@@ -694,7 +697,6 @@
  	 server_root_strip(const char *, int);
  struct server_config *
  	 server_getlocation(struct client *, const char *);
