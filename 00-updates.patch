@@ -28,6 +28,16 @@ Index: usr.sbin/httpd/config.c
  			(void)strlcpy(srv_conf->index, parent->index,
  			    sizeof(srv_conf->index));
  		}
+Index: usr.sbin/httpd/httpd.c
+@@ -67,6 +67,8 @@
+ 	{ "logger",	PROC_LOGGER, parent_dispatch_logger, logger }
+ };
+ 
++enum privsep_procid privsep_process;
++
+ void
+ parent_sig_handler(int sig, short event, void *arg)
+ {
 Index: usr.sbin/httpd/httpd.conf.5
 @@ -1,5 +1,6 @@
  .\"	$OpenBSD: httpd.conf.5,v 1.113 2020/09/05 11:49:38 tb Exp $
@@ -81,7 +91,26 @@ Index: usr.sbin/httpd/httpd.h
   * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
   * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
   * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
-@@ -391,13 +392,16 @@
+@@ -168,7 +169,7 @@
+ };
+ TAILQ_HEAD(control_socks, control_sock);
+ 
+-struct {
++extern struct {
+ 	struct event	 ev;
+ 	int		 fd;
+ } control_state;
+@@ -230,7 +231,8 @@
+ 	PROC_SERVER,
+ 	PROC_LOGGER,
+ 	PROC_MAX
+-} privsep_process;
++};
++extern enum privsep_procid privsep_process;
+ 
+ /* Attach the control socket to the following process */
+ #define PROC_CONTROL	PROC_LOGGER
+@@ -391,13 +393,16 @@
  #define SRVFLAG_DEFAULT_TYPE	0x00800000
  #define SRVFLAG_PATH_REWRITE	0x01000000
  #define SRVFLAG_NO_PATH_REWRITE	0x02000000
@@ -99,7 +128,16 @@ Index: usr.sbin/httpd/httpd.h
  
  #define TCPFLAG_NODELAY		0x01
  #define TCPFLAG_NNODELAY	0x02
-@@ -661,6 +665,9 @@
+@@ -435,7 +440,7 @@
+ 	uint32_t		log_id;
+ 	TAILQ_ENTRY(log_file)	log_entry;
+ };
+-TAILQ_HEAD(log_files, log_file) log_files;
++extern TAILQ_HEAD(log_files, log_file) log_files;
+ 
+ struct media_type {
+ 	char			 media_name[MEDIATYPE_NAMEMAX];
+@@ -661,6 +666,9 @@
  	 server_match(struct server *, int);
  
  SPLAY_PROTOTYPE(client_tree, client, clt_nodes, server_client_cmp);
@@ -110,7 +148,16 @@ Index: usr.sbin/httpd/httpd.h
  /* server_http.c */
  void	 server_http_init(struct server *);
 Index: usr.sbin/httpd/logger.c
-@@ -89,6 +89,7 @@
+@@ -45,6 +45,8 @@
+ 
+ static uint32_t		 last_log_id = 0;
+ 
++struct log_files log_files;
++
+ static struct privsep_proc procs[] = {
+ 	{ "parent",	PROC_PARENT,	logger_dispatch_parent },
+ 	{ "server",	PROC_SERVER,	logger_dispatch_server }
+@@ -89,6 +91,7 @@
  			log->log_fd = -1;
  		}
  		TAILQ_REMOVE(&log_files, log, log_entry);
