@@ -13,27 +13,56 @@ WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+Index: usr.sbin/httpd/config.c
+@@ -590,6 +590,15 @@
+ 		srv_conf->maxrequests = parent->maxrequests;
+ 		srv_conf->maxrequestbody = parent->maxrequestbody;
+ 
++		if (*srv_conf->notifier.socket.sun_path == '\0')
++			srv_conf->notifier.socket = parent->notifier.socket;
++		if (*srv_conf->notifier.message == '\0')
++			(void)strlcpy(srv_conf->notifier.message,
++			    parent->notifier.message,
++			    sizeof(srv_conf->notifier.message));
++		if (srv_conf->notifier.timeout == 0)
++			srv_conf->notifier.timeout = parent->notifier.timeout;
++
+ 		DPRINTF("%s: %s %d location \"%s\", "
+ 		    "parent \"%s[%u]\", flags: %s",
+ 		    __func__, ps->ps_title[privsep_process], ps->ps_instance,
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -184,9 +184,92 @@
- Use the
- .Ic no authenticate
- directive to disable authentication in a location.
--.It Ic block drop
-+.It Ic block drop Op Ic notify Ar socket Ic send Ar message ...
- Drop the connection without sending an error page.
--.It Ic block Op Ic return Ar code Op Ar uri
+@@ -531,6 +531,121 @@
+ .Xr syslog 3
+ instead of the log files.
+ .El
++.It Oo Ic no Oc Ic notify-on-block Ar option | Brq ...
++Makes
++.Xr httpd 8
++send a notification message to a listening UNIX-domain socket right after the
++connection to the client has been closed due to a
++.Ic block
++directive.
++If specified on
++.Ic server
++level,
++.Ic notify-on-block
++will be inherited by all enclosed locations unless
++.Ic no notify-on-block
++is specified.
++In case making the connection or sending the message fails (either because of
++transmission error or timeout), a corresponding warning will be written into
++the system log.
 +.Pp
-+If the optional
-+.Ic notify
-+keyword is specified, a string consisting of one or more
-+.Ar message
-+parts will be sent to the given listening
-+UNIX-domain
-+.Ar socket
-+right after the connection to the client was closed.
-+Each
-+.Ar message
-+part may be either a regular string or one of the newline substitutes
++Options may be specified either one at a time or bundled between curly
++brackets.
++Valid options are:
++.Bl -tag -width Ds
++.It Ic message Ar string ... | Ic drop
++Specifies the notification message to be sent and may consist of one or more
++parts.
++Each part may be either a regular
++.Ar string
++or one of the newline substitutes
 +.Ic cr
 +.Pq Sq Li \er
 +or
@@ -41,8 +70,8 @@ Index: usr.sbin/httpd/httpd.conf.5
 +.Pq Sq Li \en .
 +The parts will be concatenated in the given order.
 +.Pp
-+Additionally,
-+.Ar message
++Additionally, a
++.Ar string
 +may contain the following macros which will be expanded at runtime:
 +.Pp
 +.Bl -tag -width $HTTP_USER_AGENT -offset indent -compact
@@ -75,52 +104,55 @@ Index: usr.sbin/httpd/httpd.conf.5
 +The 3-digit HTTP response code sent to the client or
 +.Sq Li 000
 +if the connection was dropped.
++.It Ic $RESPONSE_URI
++The URI sent to the client in the HTTP
++.Sq Li Location
++header.
 +.El
 +.Pp
-+In case connecting to
-+.Ar socket
-+or sending
-+.Ar message
-+fails, a corresponding warning will be written into the system log.
-+.Pp
-+In order to not be forced to place the whole
-+.Ar message
-+in a single line, multiple
-+.Ic send
-+parameter lines may be specified between curly brackets.
++In order to not be forced to place the whole message in a single line, multiple
++.Ic message
++parameter lines may be specified.
 +The following example defines a two line message, line 1 containing the client
 +IP address, line 2 the requested URI, using
 +.Sq Li \en
 +as the newline character:
 +.Bd -literal -offset indent
-+block drop notify "/run/example.sock" {
-+	send "$REMOTE_ADDR" lf
-+	send "$REQUEST_URI"
++notify-on-block {
++	socket "/run/example.sock"
++	message "$REMOTE_ADDR" lf
++	message "$REQUEST_URI"
 +}
 +.Ed
 +.Pp
 +Here, the two
-+.Ic send
++.Ic message
 +parameter lines internally concatenate and transform to
 +.Pp
-+.Dl send \(dq$REMOTE_ADDR\en$REQUEST_URI\(dq
-+.It Ic block Oo Ic return Ar code Oo Ar uri Oc Oc Op Ic notify Ar path Ic \
-+send Ar message ...
- Close the connection and send an error page.
- If the optional return code is not specified,
- .Xr httpd 8
-@@ -237,6 +320,11 @@
- .Ic location match
- option.
- .El
++.Dl message \(dq$REMOTE_ADDR\en$REQUEST_URI\(dq
 +.Pp
-+The
-+.Ic notify
-+option may be specified as documented with
-+.Ic block drop .
- .It Ic connection Ar option
- Set the specified options and limits for HTTP connections.
- Multiple options may be specified within curly braces.
++If
++.Ic drop
++is specified instead of an actual message, a previously (perhaps in a parent
++.Ic server )
++defined message will be deleted.
++.It Ic socket Ar path
++Specifies the
++.Ar path
++to the listening UNIX-domain socket that will be notified.
++.It Oo Ic no Oc Ic timeout Ar millis
++Set the maximum time the server will try to send the notification message to
++.Ar millis
++milliseconds, or disable the
++.Ic timeout
++by specifying the
++.Ic no
++keyword.
++Defaults to 2000 milliseconds.
++.El
+ .It Ic pass
+ Disable any previous
+ .Ic block
 Index: usr.sbin/httpd/httpd.h
 @@ -27,6 +27,7 @@
  #include <sys/queue.h>
@@ -130,27 +162,38 @@ Index: usr.sbin/httpd/httpd.h
  
  #include <net/if.h>
  #include <netinet/in.h>
-@@ -88,6 +89,7 @@
+@@ -88,6 +89,8 @@
  #define SERVER_DEF_TLS_LIFETIME	(2 * 3600)
  #define SERVER_MIN_TLS_LIFETIME	(60)
  #define SERVER_MAX_TLS_LIFETIME	(24 * 3600)
 +#define SERVER_MAXNOTIFYMESSAGE	512
++#define SERVER_NOTIFYTIMEOUT	2000
  
  #define MEDIATYPE_NAMEMAX	128	/* file name extension */
  #define MEDIATYPE_TYPEMAX	64	/* length of type/subtype */
-@@ -497,6 +499,11 @@
+@@ -497,6 +500,21 @@
  	unsigned char	 xff;
  };
  
 +struct socket_notifier {
-+	struct sockaddr_un	 ssa_un;
++	struct sockaddr_un	 socket;
 +	char			 message[SERVER_MAXNOTIFYMESSAGE];
++	long			 timeout;
++};
++
++struct notify_message {
++	const char	*str;
++	size_t		 size;
++	size_t		 n;
++	const char	*path;
++	struct event	*ev_wr;
++	struct event	*ev_to;
 +};
 +
  struct server_client_addr {
  	struct client_addr	 srv;
  	struct client_addr	 xff;
-@@ -575,6 +582,7 @@
+@@ -575,6 +593,7 @@
  	int			 fcgistrip;
  
  	struct addr_filter	 clientfilter[HTTPD_CLIENT_FILTER_MAX];
@@ -163,7 +206,7 @@ Index: usr.sbin/httpd/parse.y
  %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
  %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
  %token	CA CLIENT CRL OPTIONAL PARAM FORWARDED FOUND NOT CACHE SCRIPT FROM
-+%token	NOTIFY SEND CR LF
++%token	NOTIFY MESSAGE CR LF
  %token	<v.string>	STRING
  %token  <v.number>	NUMBER
  %type	<v.port>	port
@@ -173,73 +216,38 @@ Index: usr.sbin/httpd/parse.y
 -%type	<v.string>	numberstring optstring
 -%type	<v.string>	optclientfilter clientfilters_l
 +%type	<v.string>	numberstring optstring stringornl
-+%type	<v.string>	optclientfilter clientfilters_l sendopts_l
++%type	<v.string>	optclientfilter clientfilters_l msgopts_l
  %type	<v.auth>	authopts
  
  %%
-@@ -1189,7 +1190,7 @@
- 		}
- 		;
- 
--filter		: block RETURN NUMBER optstring	{
-+filter		: block RETURN NUMBER optstring	optnotify {
- 			if ($3 <= 0 || server_httperror_byid($3) == NULL) {
- 				yyerror("invalid return code: %lld", $3);
- 				free($4);
-@@ -1209,26 +1210,115 @@
- 				srv_conf->return_uri_len = strlen($4) + 1;
- 			}
- 		}
--		| block DROP			{
-+		| block DROP optnotify		{
- 			/* No return code, silently drop the connection */
- 			srv_conf->return_code = 0;
- 		}
--		| block				{
-+		| block optnotify		{
- 			/* Forbidden */
- 			srv_conf->return_code = 403;
- 		}
- 		| PASS				{
+@@ -1221,6 +1222,23 @@
  			srv_conf->flags &= ~SRVFLAG_BLOCK;
  			srv_conf->flags |= SRVFLAG_NO_BLOCK;
-+			*srv_conf->notifier.ssa_un.sun_path = '\0';
-+			*srv_conf->notifier.message = '\0';
  		}
- 		;
- 
- block		: BLOCK				{
- 			srv_conf->flags &= ~SRVFLAG_NO_BLOCK;
- 			srv_conf->flags |= SRVFLAG_BLOCK;
-+			*srv_conf->notifier.ssa_un.sun_path = '\0';
-+			*srv_conf->notifier.message = '\0';
- 		}
- 		;
- 
-+optnotify	: /* empty */
-+		| NOTIFY STRING	{
-+			if (*$2 == '\0') {
-+				yyerror("empty notify socket path");
-+				free($2);
-+				YYERROR;
-+			}
-+			if (strlcpy(srv_conf->notifier.ssa_un.sun_path, $2,
-+			    sizeof(srv_conf->notifier.ssa_un.sun_path)) >=
-+			    sizeof(srv_conf->notifier.ssa_un.sun_path)) {
-+				yyerror("notify socket path too long");
-+				free($2);
-+				YYERROR;
-+			}
-+			free($2);
-+			srv_conf->notifier.ssa_un.sun_family = AF_UNIX;
-+		} notifyopts_v	{
++		| NO NOTIFY			{
++			memset(&srv_conf->notifier, 0,
++			    sizeof(srv_conf->notifier));
++		}
++		| NOTIFY			{
++			if (parentsrv != NULL)
++				srv_conf->notifier =
++				    parentsrv->srv_conf.notifier;
++		} notifyopts_v		{
 +			if (*srv_conf->notifier.message == '\0') {
 +				yyerror("empty notify message");
 +				YYERROR;
 +			}
++			if (srv_conf->notifier.timeout == 0)
++				srv_conf->notifier.timeout =
++				    SERVER_NOTIFYTIMEOUT;
 +		}
-+		;
-+
+ 		;
+ 
+ block		: BLOCK				{
+@@ -1229,6 +1247,96 @@
+ 		}
+ 		;
+ 
 +notifyopts_v	: '{' optnl notifyopts_l '}'
 +		| notifyopts
 +		;
@@ -248,19 +256,48 @@ Index: usr.sbin/httpd/parse.y
 +		| notifyopts optnl
 +		;
 +
-+notifyopts	: SEND sendopts_l	{
++notifyopts	: MESSAGE DROP		{
++			*srv_conf->notifier.message = '\0';
++		}
++		| MESSAGE msgopts_l	{
 +			if (strlcat(srv_conf->notifier.message, $2,
 +			    sizeof(srv_conf->notifier.message)) >=
 +			    sizeof(srv_conf->notifier.message)) {
-+				yyerror("notification message too long");
++				yyerror("notify message too long");
 +				free($2);
 +				YYERROR;
 +			}
 +			free($2);
 +	   	}
++		| NO TIMEOUT		{
++			srv_conf->notifier.timeout = -1;
++		}
++		| SOCKET STRING		{
++			if (*$2 == '\0') {
++				yyerror("empty notify socket path");
++				free($2);
++				YYERROR;
++			}
++			if (strlcpy(srv_conf->notifier.socket.sun_path, $2,
++			    sizeof(srv_conf->notifier.socket.sun_path)) >=
++			    sizeof(srv_conf->notifier.socket.sun_path)) {
++				yyerror("notify socket path too long");
++				free($2);
++				YYERROR;
++			}
++			free($2);
++			srv_conf->notifier.socket.sun_family = AF_UNIX;
++		}
++		| TIMEOUT NUMBER	{
++			if ($2 < 1 || $2 > LONG_MAX) {
++				yyerror("notify timeout out of bounds");
++				YYERROR;
++			}
++			srv_conf->notifier.timeout = $2;
++		}
 +		;
 +
-+sendopts_l	: sendopts_l stringornl	{
++msgopts_l	: msgopts_l stringornl	{
 +			char	*s;
 +
 +			if (asprintf(&s, "%s%s", $1, $2) == -1) {
@@ -304,7 +341,7 @@ Index: usr.sbin/httpd/parse.y
  optmatch	: /* empty */		{ $$ = 0; }
  		| MATCH			{ $$ = 1; }
  		;
-@@ -1599,6 +1689,7 @@
+@@ -1599,6 +1707,7 @@
  		{ "combined",		COMBINED },
  		{ "common",		COMMON },
  		{ "connection",		CONNECTION },
@@ -312,7 +349,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "crl",		CRL },
  		{ "default",		DEFAULT },
  		{ "dhe",		DHE },
-@@ -1615,6 +1706,7 @@
+@@ -1615,6 +1724,7 @@
  		{ "index",		INDEX },
  		{ "ip",			IP },
  		{ "key",		KEY },
@@ -320,22 +357,18 @@ Index: usr.sbin/httpd/parse.y
  		{ "lifetime",		LIFETIME },
  		{ "listen",		LISTEN },
  		{ "location",		LOCATION },
-@@ -1626,6 +1718,7 @@
+@@ -1623,9 +1733,11 @@
+ 		{ "match",		MATCH },
+ 		{ "max",		MAXIMUM },
+ 		{ "max-age",		MAXAGE },
++		{ "message",		MESSAGE },
  		{ "no",			NO },
  		{ "nodelay",		NODELAY },
  		{ "not",		NOT },
-+		{ "notify",		NOTIFY },
++		{ "notify-on-block",	NOTIFY },
  		{ "ocsp",		OCSP },
  		{ "on",			ON },
  		{ "optional",		OPTIONAL },
-@@ -1642,6 +1735,7 @@
- 		{ "root",		ROOT },
- 		{ "sack",		SACK },
- 		{ "script",		SCRIPT },
-+		{ "send",		SEND },
- 		{ "server",		SERVER },
- 		{ "socket",		SOCKET },
- 		{ "strip",		STRIP },
 Index: usr.sbin/httpd/server_http.c
 @@ -39,6 +39,7 @@
  #include <ctype.h>
@@ -345,18 +378,19 @@ Index: usr.sbin/httpd/server_http.c
  
  #include "httpd.h"
  #include "http.h"
-@@ -51,6 +52,10 @@
+@@ -51,6 +52,11 @@
  		    struct client *);
  char		*server_expand_http(struct client *, const char *,
  		    char *, size_t);
 +char		*replace_var(const char *, const char *, const char *);
 +char		*server_notify_init(struct client *, struct socket_notifier *,
-+		    unsigned int);
++		    unsigned int, const char *);
 +int		 server_notify_send(struct socket_notifier *, const char *);
++void		 server_notify_write(int, short, void *);
  int		 server_locationaccesstest(struct server_config *,
  		    const char *);
  int		 server_clientfilter(struct server_config *,
-@@ -1212,6 +1217,7 @@
+@@ -1212,6 +1218,7 @@
  	int			 portval = -1, ret;
  	char			*hostval, *query;
  	const char		*errstr = NULL;
@@ -364,29 +398,28 @@ Index: usr.sbin/httpd/server_http.c
  
  	/* Preserve original path */
  	if (desc->http_path == NULL ||
-@@ -1373,8 +1379,17 @@
+@@ -1373,8 +1380,17 @@
  	}
  
  	if (srv_conf->flags & SRVFLAG_BLOCK) {
-+		if (*srv_conf->notifier.ssa_un.sun_path != '\0' &&
++		if (*srv_conf->notifier.socket.sun_path != '\0' &&
 +		    (notify_msg = server_notify_init(clt, &srv_conf->notifier,
-+		    srv_conf->return_code)) == NULL)
-+			log_warn("failed initializing notifier");
++		    srv_conf->return_code, srv_conf->return_uri)) == NULL)
++			log_warn("failed initializing notifier at '%s'",
++			    srv_conf->notifier.socket.sun_path);
  		server_abort_http(clt, srv_conf->return_code,
  		    srv_conf->return_uri);
-+		if (notify_msg != NULL &&
-+		    server_notify_send(&srv_conf->notifier, notify_msg) == -1)
-+			log_warn("failed notifing socket at '%s'",
-+			    srv_conf->notifier.ssa_un.sun_path);
-+		free(notify_msg);
++		if (notify_msg != NULL) {
++			server_notify_send(&srv_conf->notifier, notify_msg);
++			free(notify_msg);
++		}
  		return (-1);
  	} else if (srv_conf->flags & SRVFLAG_AUTH &&
  	    server_http_authenticate(srv_conf, clt) == -1) {
-@@ -1389,6 +1404,208 @@
-  rooterr: /* server root inaccessible */
+@@ -1390,6 +1406,286 @@
  	srv_conf = clt->clt_srv_conf;
  	server_abort_http(clt, 500, srv_conf->root);
-+	return (-1);
+ 	return (-1);
 +}
 +
 +char *
@@ -413,9 +446,10 @@ Index: usr.sbin/httpd/server_http.c
 +
 +char *
 +server_notify_init(struct client *clt, struct socket_notifier *notifier,
-+    unsigned int code)
++    unsigned int code, const char *uri)
 +{
-+	char			*msg, hbuf[NI_MAXHOST], *buf, *str = NULL;
++	char			*msg, hbuf[NI_MAXHOST], ibuf[IBUF_READ_SIZE];
++	char			*buf, *str = NULL;
 +	struct http_descriptor	*desc;
 +	struct server_config	*srv_conf;
 +	struct kv		 key, *k;
@@ -550,6 +584,18 @@ Index: usr.sbin/httpd/server_http.c
 +		free(msg);
 +		msg = buf;
 +	}
++	if (strstr(msg, "$RESPONSE_URI") != NULL) {
++		memset(ibuf, 0, sizeof(ibuf));
++		if (uri != NULL &&
++		    server_expand_http(clt, uri, ibuf, sizeof(ibuf)) == NULL)
++			goto err;
++
++		if ((buf = replace_var(msg, "$RESPONSE_URI", ibuf)) == NULL)
++			goto err;
++
++		free(msg);
++		msg = buf;
++	}
 +
 +	return (msg);
 +
@@ -562,32 +608,98 @@ Index: usr.sbin/httpd/server_http.c
 +int
 +server_notify_send(struct socket_notifier *notifier, const char *message)
 +{
-+	static const struct timespec	 ts = { 0, 50000L };
++	int			 fd, z;
++	long			 timeout;
++	struct notify_message	 msg;
++	struct timeval		 tv;
++	struct event_base	*evb;
++	struct event		 ev_wr, ev_to;
 +
-+	int	 fd;
-+	ssize_t	 len, nw, n;
-+
-+	if ((fd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0)) == -1)
++	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
++		fatal("socket");
++	if ((evb = event_base_new()) == NULL)
++		fatal("event_base_new");
++	timeout = notifier->timeout;
++	msg.str = message;
++	msg.size = strlen(message) + 1;
++	msg.n = 0;
++	msg.path = notifier->socket.sun_path;
++	msg.ev_wr = &ev_wr;
++	if (timeout != -1) {
++		msg.ev_to = &ev_to;
++		tv.tv_sec = timeout / 1000;
++		tv.tv_usec = timeout % 1000 * 1000;
++		if (setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &tv,
++		    sizeof(tv)) == -1 ||
++		    setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv,
++		    sizeof(tv)) == -1)
++			fatal("setsockopt");
++		event_set(&ev_to, fd, EV_TIMEOUT, &server_notify_write, &msg);
++		if (event_base_set(evb, &ev_to) == -1)
++			fatal("event_base_set");
++		if (event_add(&ev_to, &tv) == -1)
++			fatal("event_add");
++	} else
++		msg.ev_to = NULL;
++	if (connect(fd, (struct sockaddr *)&notifier->socket,
++	    sizeof(notifier->socket)) == -1) {
++		log_warn("failed connecting to notify socket at '%s'",
++		    notifier->socket.sun_path);
++		close(fd);
 +		return (-1);
-+
-+	if (connect(fd, (struct sockaddr *)&notifier->ssa_un,
-+	    sizeof(notifier->ssa_un)) == -1)
-+		goto err;
-+
-+	len = strlen(message) + 1;
-+	for (n = 0; n < len; n += nw)
-+		while ((nw = write(fd, &message[n], len - n)) == -1) {
-+			if (errno != EAGAIN)
-+				goto err;
-+
-+			nanosleep(&ts, NULL);
-+		}
-+
++	}
++	event_set(&ev_wr, fd, EV_WRITE, &server_notify_write, &msg);
++	if (event_base_set(evb, &ev_wr) == -1)
++		fatal("event_base_set");
++	if (event_add(&ev_wr, NULL) == -1)
++		fatal("event_add");
++	if (timeout != -1) {
++		z = 1;
++		if (setsockopt(fd, SOL_SOCKET, SO_SNDBUF, &z, sizeof(z)) == -1)
++			fatal("setsockopt");
++	}
++	if (event_base_dispatch(evb) == -1)
++		fatal("event_base_dispatch");
++	event_base_free(evb);
 +	close(fd);
 +	return (0);
++}
 +
-+ err:
-+	close(fd);
- 	return (-1);
++void
++server_notify_write(int fd, short ev, void *arg)
++{
++	struct notify_message	*msg = arg;
++	size_t			 n, size;
++	ssize_t			 nw;
++	struct event		*ev_wr = msg->ev_wr, *ev_to = msg->ev_to;
++
++	if (ev == EV_TIMEOUT) {
++		log_warnx("timeout while writing to notify socket at '%s'",
++		    msg->path);
++		goto done;
++	}
++	/* EV_WRITE */
++	n = msg->n;
++	size = msg->size;
++	if ((nw = write(fd, &msg->str[n],
++	    ev_to != NULL ? 1 : size - n)) == -1) {
++		log_warn("failed writing to notify socket at '%s'", msg->path);
++		goto done;
++	}
++	n += nw;
++	if (n == size || nw == 0) /* be safe */
++		goto done;
++
++	event_del(ev_wr);
++	if (event_add(ev_wr, NULL) == -1)
++		fatal("event_add");
++	msg->n = n;
++	return;
++
++ done:
++	event_del(ev_wr);
++	if (ev_to != NULL)
++		event_del(ev_to);
  }
  
+ const char *
