@@ -416,7 +416,7 @@ Index: usr.sbin/httpd/server_http.c
  		return (-1);
  	} else if (srv_conf->flags & SRVFLAG_AUTH &&
  	    server_http_authenticate(srv_conf, clt) == -1) {
-@@ -1390,6 +1406,286 @@
+@@ -1390,6 +1406,275 @@
  	srv_conf = clt->clt_srv_conf;
  	server_abort_http(clt, 500, srv_conf->root);
  	return (-1);
@@ -608,7 +608,7 @@ Index: usr.sbin/httpd/server_http.c
 +int
 +server_notify_send(struct socket_notifier *notifier, const char *message)
 +{
-+	int			 fd, z;
++	int			 fd;
 +	long			 timeout;
 +	struct notify_message	 msg;
 +	struct timeval		 tv;
@@ -617,6 +617,13 @@ Index: usr.sbin/httpd/server_http.c
 +
 +	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 +		fatal("socket");
++	if (connect(fd, (struct sockaddr *)&notifier->socket,
++	    sizeof(notifier->socket)) == -1) {
++		log_warn("failed connecting to notify socket at '%s'",
++		    notifier->socket.sun_path);
++		close(fd);
++		return (-1);
++	}
 +	if ((evb = event_base_new()) == NULL)
 +		fatal("event_base_new");
 +	timeout = notifier->timeout;
@@ -625,15 +632,15 @@ Index: usr.sbin/httpd/server_http.c
 +	msg.n = 0;
 +	msg.path = notifier->socket.sun_path;
 +	msg.ev_wr = &ev_wr;
++	event_set(&ev_wr, fd, EV_WRITE, &server_notify_write, &msg);
++	if (event_base_set(evb, &ev_wr) == -1)
++		fatal("event_base_set");
++	if (event_add(&ev_wr, NULL) == -1)
++		fatal("event_add");
 +	if (timeout != -1) {
 +		msg.ev_to = &ev_to;
 +		tv.tv_sec = timeout / 1000;
 +		tv.tv_usec = timeout % 1000 * 1000;
-+		if (setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &tv,
-+		    sizeof(tv)) == -1 ||
-+		    setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv,
-+		    sizeof(tv)) == -1)
-+			fatal("setsockopt");
 +		event_set(&ev_to, fd, EV_TIMEOUT, &server_notify_write, &msg);
 +		if (event_base_set(evb, &ev_to) == -1)
 +			fatal("event_base_set");
@@ -641,23 +648,6 @@ Index: usr.sbin/httpd/server_http.c
 +			fatal("event_add");
 +	} else
 +		msg.ev_to = NULL;
-+	if (connect(fd, (struct sockaddr *)&notifier->socket,
-+	    sizeof(notifier->socket)) == -1) {
-+		log_warn("failed connecting to notify socket at '%s'",
-+		    notifier->socket.sun_path);
-+		close(fd);
-+		return (-1);
-+	}
-+	event_set(&ev_wr, fd, EV_WRITE, &server_notify_write, &msg);
-+	if (event_base_set(evb, &ev_wr) == -1)
-+		fatal("event_base_set");
-+	if (event_add(&ev_wr, NULL) == -1)
-+		fatal("event_add");
-+	if (timeout != -1) {
-+		z = 1;
-+		if (setsockopt(fd, SOL_SOCKET, SO_SNDBUF, &z, sizeof(z)) == -1)
-+			fatal("setsockopt");
-+	}
 +	if (event_base_dispatch(evb) == -1)
 +		fatal("event_base_dispatch");
 +	event_base_free(evb);
@@ -681,8 +671,7 @@ Index: usr.sbin/httpd/server_http.c
 +	/* EV_WRITE */
 +	n = msg->n;
 +	size = msg->size;
-+	if ((nw = write(fd, &msg->str[n],
-+	    ev_to != NULL ? 1 : size - n)) == -1) {
++	if ((nw = write(fd, &msg->str[n], size - n)) == -1) {
 +		log_warn("failed writing to notify socket at '%s'", msg->path);
 +		goto done;
 +	}
