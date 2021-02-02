@@ -14,22 +14,39 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/config.c
-@@ -590,6 +590,15 @@
+@@ -1,6 +1,7 @@
+ /*	$OpenBSD: config.c,v 1.57 2019/05/08 19:57:45 reyk Exp $	*/
+ 
+ /*
++ * Copyright (c) 2021 Matthias Pressfreund
+  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
+  *
+  * Permission to use, copy, modify, and distribute this software for any
+@@ -453,6 +454,7 @@
+ 	uint8_t			*p = imsg->data;
+ 	unsigned int		 f;
+ 	size_t			 s;
++	struct timeval		*tv;
+ 
+ 	if ((srv_conf = calloc(1, sizeof(*srv_conf))) == NULL)
+ 		return (-1);
+@@ -589,6 +591,16 @@
+ 		    sizeof(srv_conf->timeout));
  		srv_conf->maxrequests = parent->maxrequests;
  		srv_conf->maxrequestbody = parent->maxrequestbody;
- 
++
 +		if (*srv_conf->notifier.socket.sun_path == '\0')
 +			srv_conf->notifier.socket = parent->notifier.socket;
 +		if (*srv_conf->notifier.message == '\0')
 +			(void)strlcpy(srv_conf->notifier.message,
 +			    parent->notifier.message,
 +			    sizeof(srv_conf->notifier.message));
-+		if (srv_conf->notifier.timeout == 0)
-+			srv_conf->notifier.timeout = parent->notifier.timeout;
-+
++		tv = &srv_conf->notifier.timeout;
++		if (!timeval_isset(tv))
++			*tv = parent->notifier.timeout;
+ 
  		DPRINTF("%s: %s %d location \"%s\", "
  		    "parent \"%s[%u]\", flags: %s",
- 		    __func__, ps->ps_title[privsep_process], ps->ps_instance,
 Index: usr.sbin/httpd/httpd.conf.5
 @@ -531,6 +531,121 @@
  .Xr syslog 3
@@ -171,29 +188,34 @@ Index: usr.sbin/httpd/httpd.h
  
  #define MEDIATYPE_NAMEMAX	128	/* file name extension */
  #define MEDIATYPE_TYPEMAX	64	/* length of type/subtype */
-@@ -497,6 +500,21 @@
+@@ -497,6 +500,26 @@
  	unsigned char	 xff;
  };
  
 +struct socket_notifier {
 +	struct sockaddr_un	 socket;
 +	char			 message[SERVER_MAXNOTIFYMESSAGE];
-+	long			 timeout;
++	struct timeval		 timeout;
 +};
++#define timeval_isset(t)	((t)->tv_sec != 0 || (t)->tv_usec != 0)
++#define timeval_setmillis(t, m)	do {	\
++	(t)->tv_sec = m / 1000;		\
++	(t)->tv_usec = m % 1000 * 1000;	\
++} while (0)
 +
 +struct notify_message {
 +	const char	*str;
 +	size_t		 size;
 +	size_t		 n;
 +	const char	*path;
-+	struct event	*ev_wr;
-+	struct event	*ev_to;
++	struct timeval	*tv;
++	struct event	*ev;
 +};
 +
  struct server_client_addr {
  	struct client_addr	 srv;
  	struct client_addr	 xff;
-@@ -575,6 +593,7 @@
+@@ -575,6 +598,7 @@
  	int			 fcgistrip;
  
  	struct addr_filter	 clientfilter[HTTPD_CLIENT_FILTER_MAX];
@@ -220,7 +242,7 @@ Index: usr.sbin/httpd/parse.y
  %type	<v.auth>	authopts
  
  %%
-@@ -1221,6 +1222,23 @@
+@@ -1221,6 +1222,25 @@
  			srv_conf->flags &= ~SRVFLAG_BLOCK;
  			srv_conf->flags |= SRVFLAG_NO_BLOCK;
  		}
@@ -233,18 +255,20 @@ Index: usr.sbin/httpd/parse.y
 +				srv_conf->notifier =
 +				    parentsrv->srv_conf.notifier;
 +		} notifyopts_v		{
++			struct timeval	*tv;
++
 +			if (*srv_conf->notifier.message == '\0') {
 +				yyerror("empty notify message");
 +				YYERROR;
 +			}
-+			if (srv_conf->notifier.timeout == 0)
-+				srv_conf->notifier.timeout =
-+				    SERVER_NOTIFYTIMEOUT;
++			tv = &srv_conf->notifier.timeout;
++			if (!timeval_isset(tv))
++				timeval_setmillis(tv, SERVER_NOTIFYTIMEOUT);
 +		}
  		;
  
  block		: BLOCK				{
-@@ -1229,6 +1247,96 @@
+@@ -1229,6 +1249,97 @@
  		}
  		;
  
@@ -270,7 +294,8 @@ Index: usr.sbin/httpd/parse.y
 +			free($2);
 +	   	}
 +		| NO TIMEOUT		{
-+			srv_conf->notifier.timeout = -1;
++			memset(&srv_conf->notifier.timeout, 0,
++			    sizeof(srv_conf->notifier.timeout));
 +		}
 +		| SOCKET STRING		{
 +			if (*$2 == '\0') {
@@ -293,7 +318,7 @@ Index: usr.sbin/httpd/parse.y
 +				yyerror("notify timeout out of bounds");
 +				YYERROR;
 +			}
-+			srv_conf->notifier.timeout = $2;
++			timeval_setmillis(&srv_conf->notifier.timeout, $2);
 +		}
 +		;
 +
@@ -341,7 +366,7 @@ Index: usr.sbin/httpd/parse.y
  optmatch	: /* empty */		{ $$ = 0; }
  		| MATCH			{ $$ = 1; }
  		;
-@@ -1599,6 +1707,7 @@
+@@ -1599,6 +1710,7 @@
  		{ "combined",		COMBINED },
  		{ "common",		COMMON },
  		{ "connection",		CONNECTION },
@@ -349,7 +374,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "crl",		CRL },
  		{ "default",		DEFAULT },
  		{ "dhe",		DHE },
-@@ -1615,6 +1724,7 @@
+@@ -1615,6 +1727,7 @@
  		{ "index",		INDEX },
  		{ "ip",			IP },
  		{ "key",		KEY },
@@ -357,7 +382,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "lifetime",		LIFETIME },
  		{ "listen",		LISTEN },
  		{ "location",		LOCATION },
-@@ -1623,9 +1733,11 @@
+@@ -1623,9 +1736,11 @@
  		{ "match",		MATCH },
  		{ "max",		MAXIMUM },
  		{ "max-age",		MAXAGE },
@@ -416,7 +441,7 @@ Index: usr.sbin/httpd/server_http.c
  		return (-1);
  	} else if (srv_conf->flags & SRVFLAG_AUTH &&
  	    server_http_authenticate(srv_conf, clt) == -1) {
-@@ -1390,6 +1406,275 @@
+@@ -1390,6 +1406,272 @@
  	srv_conf = clt->clt_srv_conf;
  	server_abort_http(clt, 500, srv_conf->root);
  	return (-1);
@@ -609,14 +634,19 @@ Index: usr.sbin/httpd/server_http.c
 +server_notify_send(struct socket_notifier *notifier, const char *message)
 +{
 +	int			 fd;
-+	long			 timeout;
++	struct timeval		*tv;
 +	struct notify_message	 msg;
-+	struct timeval		 tv;
 +	struct event_base	*evb;
-+	struct event		 ev_wr, ev_to;
++	struct event		 ev;
 +
 +	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 +		fatal("socket");
++
++	tv = &notifier->timeout;
++	if (timeval_isset(tv) &&
++	    setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, tv, sizeof(*tv)) == -1)
++		fatal("setsockopt");
++
 +	if (connect(fd, (struct sockaddr *)&notifier->socket,
 +	    sizeof(notifier->socket)) == -1) {
 +		log_warn("failed connecting to notify socket at '%s'",
@@ -624,71 +654,63 @@ Index: usr.sbin/httpd/server_http.c
 +		close(fd);
 +		return (-1);
 +	}
++
 +	if ((evb = event_base_new()) == NULL)
 +		fatal("event_base_new");
-+	timeout = notifier->timeout;
++	event_set(&ev, fd, EV_WRITE, &server_notify_write, &msg);
++	if (event_base_set(evb, &ev) == -1)
++		fatal("event_base_set");
++	if (event_add(&ev, timeval_isset(tv) ? tv : NULL) == -1)
++		fatal("event_add");
++
 +	msg.str = message;
 +	msg.size = strlen(message) + 1;
 +	msg.n = 0;
 +	msg.path = notifier->socket.sun_path;
-+	msg.ev_wr = &ev_wr;
-+	event_set(&ev_wr, fd, EV_WRITE, &server_notify_write, &msg);
-+	if (event_base_set(evb, &ev_wr) == -1)
-+		fatal("event_base_set");
-+	if (event_add(&ev_wr, NULL) == -1)
-+		fatal("event_add");
-+	if (timeout != -1) {
-+		msg.ev_to = &ev_to;
-+		tv.tv_sec = timeout / 1000;
-+		tv.tv_usec = timeout % 1000 * 1000;
-+		event_set(&ev_to, fd, EV_TIMEOUT, &server_notify_write, &msg);
-+		if (event_base_set(evb, &ev_to) == -1)
-+			fatal("event_base_set");
-+		if (event_add(&ev_to, &tv) == -1)
-+			fatal("event_add");
-+	} else
-+		msg.ev_to = NULL;
++	msg.tv = tv;
++	msg.ev = &ev;
++
 +	if (event_base_dispatch(evb) == -1)
 +		fatal("event_base_dispatch");
++
 +	event_base_free(evb);
 +	close(fd);
 +	return (0);
 +}
 +
 +void
-+server_notify_write(int fd, short ev, void *arg)
++server_notify_write(int fd, short event, void *arg)
 +{
 +	struct notify_message	*msg = arg;
++	struct event		*ev = msg->ev;
++	const char		*path = msg->path;
++	struct timeval		*tv = msg->tv;
 +	size_t			 n, size;
 +	ssize_t			 nw;
-+	struct event		*ev_wr = msg->ev_wr, *ev_to = msg->ev_to;
 +
-+	if (ev == EV_TIMEOUT) {
++	if (event == EV_TIMEOUT) {
 +		log_warnx("timeout while writing to notify socket at '%s'",
-+		    msg->path);
-+		goto done;
++		    path);
++		event_del(ev);
++		return;
 +	}
 +	/* EV_WRITE */
 +	n = msg->n;
 +	size = msg->size;
 +	if ((nw = write(fd, &msg->str[n], size - n)) == -1) {
-+		log_warn("failed writing to notify socket at '%s'", msg->path);
-+		goto done;
++		log_warn("failed writing to notify socket at '%s'", path);
++		event_del(ev);
++		return;
 +	}
 +	n += nw;
-+	if (n == size || nw == 0) /* be safe */
-+		goto done;
-+
-+	event_del(ev_wr);
-+	if (event_add(ev_wr, NULL) == -1)
++	if (n == size || nw == 0) {
++		event_del(ev);
++		return;
++	}
++	event_del(ev);
++	if (event_add(ev, timeval_isset(tv) ? tv : NULL) == -1)
 +		fatal("event_add");
 +	msg->n = n;
-+	return;
-+
-+ done:
-+	event_del(ev_wr);
-+	if (ev_to != NULL)
-+		event_del(ev_to);
  }
  
  const char *
