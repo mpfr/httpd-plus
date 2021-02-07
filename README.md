@@ -77,7 +77,7 @@ server "www.example.com" {
 
 ### notify-on-block
 
-Send notification messages to UNIX-domain sockets for `location` sections specifying a `block` option in `httpd.conf(5)`.
+Send notification messages to UNIX-domain sockets for `server` and/or `location` sections with a `block` option in `httpd.conf(5)`.
 
 This cooperates perfectly with [pftbld(8)](https://github.com/mpfr/pftbld/tree/6.8-stable), offering an easy and straightforward means to effectively protect the web server from offensive clients and successively build customized firewall blocklists. The example below will make `httpd(8)` not only block clients from outside the `10.0.0/24` network requesting a `/restricted*` URL by sending a 403 return status, but also report their IP addresses to `pftbld(8)` (with its listening socket at `/var/www/run/pftbld-www.sock`) for further handling.
 
