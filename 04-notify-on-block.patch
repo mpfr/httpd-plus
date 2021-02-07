@@ -81,10 +81,10 @@ Index: usr.sbin/httpd/httpd.conf.5
 +.Ar string
 +or one of the newline substitutes
 +.Ic cr
-+.Pq Sq Li \er
++.Pq Sq Dv \er
 +or
 +.Ic lf
-+.Pq Sq Li \en .
++.Pq Sq Dv \en .
 +The parts will be concatenated in the given order.
 +.Pp
 +Additionally, a
@@ -94,15 +94,15 @@ Index: usr.sbin/httpd/httpd.conf.5
 +.Bl -tag -width $HTTP_USER_AGENT -offset indent -compact
 +.It Ic $HTTP_HOST
 +The host from the HTTP
-+.Sq Li Host
++.Sq Dv Host
 +header.
 +.It Ic $HTTP_REFERRER
 +The referrer from the HTTP
-+.Sq Li Referer
++.Sq Dv Referer
 +header.
 +.It Ic $HTTP_USER_AGENT
 +The user agent from the HTTP
-+.Sq Li User-Agent
++.Sq Dv User-Agent
 +header.
 +.It Ic $REMOTE_ADDR
 +The client IP address.
@@ -114,16 +114,16 @@ Index: usr.sbin/httpd/httpd.conf.5
 +The HTTP method the connected client used when making the request.
 +.It Ic $REQUEST_SCHEME
 +The request scheme
-+.Pq So Li http Sc No or Sq Li https .
++.Pq So Dv http Sc No or Sq Dv https .
 +.It Ic $REQUEST_URI
 +The request path and optional query string.
 +.It Ic $RESPONSE_CODE
 +The 3-digit HTTP response code sent to the client or
-+.Sq Li 000
++.Sq Dv 000
 +if the connection was dropped.
 +.It Ic $RESPONSE_URI
 +The URI sent to the client in the HTTP
-+.Sq Li Location
++.Sq Dv Location
 +header.
 +.El
 +.Pp
@@ -132,7 +132,7 @@ Index: usr.sbin/httpd/httpd.conf.5
 +parameter lines may be specified.
 +The following example defines a two line message, line 1 containing the client
 +IP address, line 2 the requested URI, using
-+.Sq Li \en
++.Sq Dv \en
 +as the newline character:
 +.Bd -literal -offset indent
 +notify-on-block {
@@ -254,7 +254,7 @@ Index: usr.sbin/httpd/parse.y
 +			if (parentsrv != NULL)
 +				srv_conf->notifier =
 +				    parentsrv->srv_conf.notifier;
-+		} notifyopts_v		{
++		} notifyopts_v			{
 +			struct timeval	*tv;
 +
 +			if (*srv_conf->notifier.message == '\0') {
@@ -268,7 +268,7 @@ Index: usr.sbin/httpd/parse.y
  		;
  
  block		: BLOCK				{
-@@ -1229,6 +1249,97 @@
+@@ -1229,6 +1249,92 @@
  		}
  		;
  
@@ -298,11 +298,6 @@ Index: usr.sbin/httpd/parse.y
 +			    sizeof(srv_conf->notifier.timeout));
 +		}
 +		| SOCKET STRING		{
-+			if (*$2 == '\0') {
-+				yyerror("empty notify socket path");
-+				free($2);
-+				YYERROR;
-+			}
 +			if (strlcpy(srv_conf->notifier.socket.sun_path, $2,
 +			    sizeof(srv_conf->notifier.socket.sun_path)) >=
 +			    sizeof(srv_conf->notifier.socket.sun_path)) {
@@ -314,7 +309,7 @@ Index: usr.sbin/httpd/parse.y
 +			srv_conf->notifier.socket.sun_family = AF_UNIX;
 +		}
 +		| TIMEOUT NUMBER	{
-+			if ($2 < 1 || $2 > LONG_MAX) {
++			if ($2 <= 0 || $2 > LONG_MAX) {
 +				yyerror("notify timeout out of bounds");
 +				YYERROR;
 +			}
@@ -366,7 +361,7 @@ Index: usr.sbin/httpd/parse.y
  optmatch	: /* empty */		{ $$ = 0; }
  		| MATCH			{ $$ = 1; }
  		;
-@@ -1599,6 +1710,7 @@
+@@ -1599,6 +1705,7 @@
  		{ "combined",		COMBINED },
  		{ "common",		COMMON },
  		{ "connection",		CONNECTION },
@@ -374,7 +369,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "crl",		CRL },
  		{ "default",		DEFAULT },
  		{ "dhe",		DHE },
-@@ -1615,6 +1727,7 @@
+@@ -1615,6 +1722,7 @@
  		{ "index",		INDEX },
  		{ "ip",			IP },
  		{ "key",		KEY },
@@ -382,7 +377,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "lifetime",		LIFETIME },
  		{ "listen",		LISTEN },
  		{ "location",		LOCATION },
-@@ -1623,9 +1736,11 @@
+@@ -1623,9 +1731,11 @@
  		{ "match",		MATCH },
  		{ "max",		MAXIMUM },
  		{ "max-age",		MAXAGE },
