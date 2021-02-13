@@ -25,7 +25,7 @@ The former [`location-access-tests`](https://github.com/mpfr/httpd-plus/blob/900
 
 ### cache-control-headers
 
-Optional HTTP `Cache-Control` headers via `httpd.conf(5)`.
+Optional HTTP `Cache-Control` headers via [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/6.8-stable/httpd.conf.5.html#TYPES).
 
 ```
 types {
@@ -39,7 +39,7 @@ types {
 
 ### fastcgi-script-overrides
 
-Definition of `script` overrides for `fastcgi` environments via `httpd.conf(5)`. This may be used either to run a dedicated `script` in its specific `param` environment for a certain `location`, or simply as a shortcut avoiding unnecessary evaluation rounds for the server (as required when using `request rewrite`).
+Definition of `script` overrides for `fastcgi` environments via [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/6.8-stable/httpd.conf.5.html#script). This may be used either to run a dedicated `script` in its specific `param` environment for a certain `location`, or simply as a shortcut avoiding unnecessary evaluation rounds for the server (as required when using `request rewrite`).
 
 ```
 server "www.example.com" {
@@ -65,7 +65,7 @@ server "www.example.com" {
 
 ### client-address-filters
 
-Client address matching (`from` or `not from`) for `location` sections in `httpd.conf(5)`.
+Client address matching (`from` or `not from`) for `location` sections in [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/6.8-stable/httpd.conf.5.html#location).
 
 ```
 server "www.example.com" {
@@ -77,7 +77,7 @@ server "www.example.com" {
 
 ### notify-on-block
 
-Send notification messages to UNIX-domain sockets for `server` and/or `location` sections with a `block` option in `httpd.conf(5)`.
+Send notification messages to UNIX-domain sockets for `server` and/or `location` sections with a `block` option in [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/6.8-stable/httpd.conf.5.html#message).
 
 This cooperates perfectly with [pftbld(8)](https://github.com/mpfr/pftbld/tree/6.8-stable), offering an easy and straightforward means to effectively protect the web server from offensive clients and successively build customized firewall blocklists. The example below will make `httpd(8)` not only block clients from outside the `10.0.0/24` network requesting a `/restricted*` URL by sending a 403 return status, but also report their IP addresses to `pftbld(8)` (with its listening socket at `/var/www/run/pftbld-www.sock`) for further handling.
 
@@ -175,7 +175,7 @@ Installing httpd-plus binary and manpage completed successfully.
 Please consult 'man httpd.conf' for further information on new features.
 ```
 
-Adapt your `httpd.conf` for the newly added features. For further information, have a look at the updated `httpd.conf(5)` manpage via `man httpd.conf`. Make sure your new configuration is valid.
+Adapt your `httpd.conf` for the newly added features. For further information, have a look at the updated `httpd.conf(5)` [manpage](https://mpfr.net/man/httpd-plus/6.8-stable/httpd.conf.5.html) (also via `man httpd.conf`). Make sure your new configuration is valid.
 
 ```
 $ doas vi /etc/httpd.conf
