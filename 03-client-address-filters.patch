@@ -186,7 +186,7 @@ Index: usr.sbin/httpd/parse.y
  %type	<v.auth>	authopts
  
  %%
-@@ -513,7 +517,7 @@
+@@ -513,24 +517,27 @@
  		| fastcgi
  		| authenticate
  		| filter
@@ -195,7 +195,43 @@ Index: usr.sbin/httpd/parse.y
  			struct server		*s;
  			struct sockaddr_un	*sun;
  
-@@ -578,6 +582,25 @@
+ 			if (srv->srv_conf.ss.ss_family == AF_UNSPEC) {
+ 				yyerror("listen address not specified");
+ 				free($4);
++				free($5);
+ 				YYERROR;
+ 			}
+ 
+ 			if (parentsrv != NULL) {
+ 				yyerror("location %s inside location", $4);
+ 				free($4);
++				free($5);
+ 				YYERROR;
+ 			}
+ 
+ 			if (!loadcfg) {
+ 				free($4);
++				free($5);
+ 				YYACCEPT;
+ 			}
+ 
+@@ -542,6 +549,7 @@
+ 			    sizeof(s->srv_conf.location)) {
+ 				yyerror("server location truncated");
+ 				free($4);
++				free($5);
+ 				free(s);
+ 				YYERROR;
+ 			}
+@@ -551,6 +559,7 @@
+ 			    sizeof(s->srv_conf.name)) >=
+ 			    sizeof(s->srv_conf.name)) {
+ 				yyerror("server name truncated");
++				free($5);
+ 				free(s);
+ 				YYERROR;
+ 			}
+@@ -578,6 +587,26 @@
  			}
  			if ($3)
  				s->srv_conf.flags |= SRVFLAG_LOCATION_MATCH;
@@ -203,6 +239,7 @@ Index: usr.sbin/httpd/parse.y
 +				if (build_clientfilter(&s->srv_conf,
 +				    $5 + 1) == NULL) {
 +					free($5);
++					free(s);
 +					YYERROR;
 +				}
 +				if (*$5 == '+') {
@@ -221,7 +258,7 @@ Index: usr.sbin/httpd/parse.y
  			s->srv_s = -1;
  			memcpy(&s->srv_conf.ss, &srv->srv_conf.ss,
  			    sizeof(s->srv_conf.ss));
-@@ -598,7 +621,9 @@
+@@ -598,7 +627,9 @@
  			struct server	*s = NULL;
  			uint32_t	 f;
  
@@ -232,7 +269,7 @@ Index: usr.sbin/httpd/parse.y
  			    SRVFLAG_LOCATION_NOT_FOUND;
  
  			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
-@@ -609,7 +634,9 @@
+@@ -609,7 +640,9 @@
  				    (s->srv_conf.flags & f) ==
  				    (srv_conf->flags & f) &&
  				    strcmp(s->srv_conf.location,
@@ -243,7 +280,7 @@ Index: usr.sbin/httpd/parse.y
  					break;
  			}
  			if (s != NULL) {
-@@ -650,6 +677,51 @@
+@@ -650,6 +683,51 @@
  		| NOT FOUND	{ $$ = -1; }
  		;
  
@@ -295,7 +332,7 @@ Index: usr.sbin/httpd/parse.y
  hsts		: HSTS '{' optnl hstsflags_l '}'
  		| HSTS hstsflags
  		| HSTS
-@@ -1374,7 +1446,116 @@
+@@ -1374,7 +1452,116 @@
  	int		 k_val;
  };
  
@@ -412,7 +449,7 @@ Index: usr.sbin/httpd/parse.y
  yyerror(const char *fmt, ...)
  {
  	va_list		 ap;
-@@ -1428,6 +1609,7 @@
+@@ -1428,6 +1615,7 @@
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
  		{ "found",		FOUND },

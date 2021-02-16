@@ -242,7 +242,7 @@ Index: usr.sbin/httpd/parse.y
  %type	<v.auth>	authopts
  
  %%
-@@ -1221,6 +1222,25 @@
+@@ -1227,6 +1228,25 @@
  			srv_conf->flags &= ~SRVFLAG_BLOCK;
  			srv_conf->flags |= SRVFLAG_NO_BLOCK;
  		}
@@ -268,7 +268,7 @@ Index: usr.sbin/httpd/parse.y
  		;
  
  block		: BLOCK				{
-@@ -1229,6 +1249,92 @@
+@@ -1235,6 +1255,92 @@
  		}
  		;
  
@@ -361,7 +361,7 @@ Index: usr.sbin/httpd/parse.y
  optmatch	: /* empty */		{ $$ = 0; }
  		| MATCH			{ $$ = 1; }
  		;
-@@ -1599,6 +1705,7 @@
+@@ -1605,6 +1711,7 @@
  		{ "combined",		COMBINED },
  		{ "common",		COMMON },
  		{ "connection",		CONNECTION },
@@ -369,7 +369,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "crl",		CRL },
  		{ "default",		DEFAULT },
  		{ "dhe",		DHE },
-@@ -1615,6 +1722,7 @@
+@@ -1621,6 +1728,7 @@
  		{ "index",		INDEX },
  		{ "ip",			IP },
  		{ "key",		KEY },
@@ -377,7 +377,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "lifetime",		LIFETIME },
  		{ "listen",		LISTEN },
  		{ "location",		LOCATION },
-@@ -1623,9 +1731,11 @@
+@@ -1629,9 +1737,11 @@
  		{ "match",		MATCH },
  		{ "max",		MAXIMUM },
  		{ "max-age",		MAXAGE },
