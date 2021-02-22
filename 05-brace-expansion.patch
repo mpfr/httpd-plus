@@ -1,0 +1,621 @@
+
+Copyright (c) 2021 Matthias Pressfreund
+
+Permission to use, copy, modify, and distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+Index: usr.sbin/httpd/httpd.conf.5
+@@ -855,6 +855,81 @@
+ Include types definitions from an external file, for example
+ .Pa /usr/share/misc/mime.types .
+ .El
++.Sh BRACE EXPANSION
++Text enclosed by curly braces inside the
++.Ic alias Ar name ,
++.Ic include Ar path ,
++and
++.Ic location Ar path
++parameters will be handled as follows:
++.Pp
++Comma-separated lists in the form
++.Dl <list> ::= <text> | <text> ',' <list>
++.Pp
++expand according to the given list items, e.g.
++.Dl alias \(dqserver-{AAA,BBB}-{XX,YY}\(dq
++.Pp
++expands to
++.Bd -literal -offset indent -compact
++alias "server-AAA-XX"
++alias "server-AAA-YY"
++alias "server-BBB-XX"
++alias "server-BBB-YY"
++.Ed
++.Pp
++Number sequences formatted as
++.Dl <sequence> ::= <first> '..' <last>
++.Pp
++with
++.Dv <first>
++and
++.Dv <last>
++as decimal numbers denoting the respective elements expand as such, e.g.
++.Dl include \(dq/etc/httpd-{19..47}.conf\(dq
++.Pp
++expands to
++.Bd -literal -offset indent -compact
++include "/etc/httpd-19.conf"
++include "/etc/httpd-20.conf"
++\&...
++include "/etc/httpd-47.conf"
++.Ed
++.Pp
++In case a curly brace character is needed inside a brace extended parameter, a
++preceding escape character
++.Pq Sq \(rs
++is required.
++Escape characters inside number sequence braces are not allowed and would
++result in the number sequence being handled as if it was a list.
++.Pp
++In case there are multiple brace sections inside one parameter, the following
++rules of thumb apply:
++.Pp
++.Bl -bullet -offset indent -compact
++.It
++Nested braces expand in depth first.
++.It
++For consecutive sections, the second will be fully traversed for each step of
++the first.
++.El
++.Pp
++Here's an example:
++.Dl location \(dq/chapter/{A_0{1,2,5},F_{17..49}}-{B,C}/*\(dq { block }
++.Pp
++expands to
++.Bd -literal -offset indent -compact
++location "/chapter/A_01-B/*" { block }
++location "/chapter/A_01-C/*" { block }
++location "/chapter/A_02-B/*" { block }
++location "/chapter/A_02-C/*" { block }
++location "/chapter/A_05-B/*" { block }
++location "/chapter/A_05-C/*" { block }
++location "/chapter/F_17-B/*" { block }
++location "/chapter/F_17-C/*" { block }
++\&...
++location "/chapter/F_49-B/*" { block }
++location "/chapter/F_49-C/*" { block }
++.Ed
+ .Sh FILES
+ .Bl -tag -width /etc/examples/httpd.conf -compact
+ .It Pa /etc/examples/httpd.conf
+Index: usr.sbin/httpd/parse.y
+@@ -86,6 +86,20 @@
+ void		 lungetc(int);
+ int		 findeol(void);
+ 
++TAILQ_HEAD(bstrq, bstr)		 bstrq = TAILQ_HEAD_INITIALIZER(bstrq);
++struct bstr {
++	TAILQ_ENTRY(bstr)	 bstrs;
++	char			*str;
++};
++int		 expand_braces(struct bstrq *, const char *);
++int		 expand_seq(struct bstrq *, const char *);
++int		 append_bstr(struct bstrq *, struct bstrq *, const char *);
++void		 append_bexp(struct bstrq *, struct bstrq *, const char *);
++char		*unesc(char *);
++void		 free_bstrq(struct bstrq *);
++struct server	*location_cpy(struct server *, int);
++int		 location_add(struct server *, struct bstr *);
++
+ TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
+ struct sym {
+ 	TAILQ_ENTRY(sym)	 entry;
+@@ -168,17 +182,31 @@
+ 		;
+ 
+ include		: INCLUDE STRING		{
++			struct bstr	*bs;
+ 			struct file	*nfile;
+ 
+-			if ((nfile = pushfile($2, 0)) == NULL) {
+-				yyerror("failed to include file %s", $2);
++			if (expand_braces(&bstrq, $2) == -1) {
++				yyerror("brace expansion error in include "
++				    "\"%s\"", $2);
+ 				free($2);
+ 				YYERROR;
+ 			}
+ 			free($2);
+ 
+-			file = nfile;
+-			lungetc('\n');
++			while ((bs = TAILQ_FIRST(&bstrq)) != NULL) {
++				if ((nfile = pushfile(bs->str, 0)) == NULL) {
++					yyerror("failed to include file %s",
++					    bs->str);
++					free_bstrq(&bstrq);
++					YYERROR;
++				}
++				TAILQ_REMOVE(&bstrq, bs, bstrs);
++				free(bs->str);
++				free(bs);
++
++				file = nfile;
++				lungetc('\n');
++			}
+ 		}
+ 		;
+ 
+@@ -456,6 +484,7 @@
+ 			free($3);
+ 		}
+ 		| ALIAS optmatch STRING		{
++			struct bstr		*bs;
+ 			struct server_config	*alias;
+ 
+ 			if (parentsrv != NULL) {
+@@ -464,22 +493,37 @@
+ 				YYERROR;
+ 			}
+ 
+-			if ((alias = calloc(1, sizeof(*alias))) == NULL)
+-				fatal("out of memory");
+-
+-			if (strlcpy(alias->name, $3, sizeof(alias->name)) >=
+-			    sizeof(alias->name)) {
+-				yyerror("server alias truncated");
++			if (expand_braces(&bstrq, $3) == -1) {
++				yyerror("brace expansion error in alias "
++				    "\"%s\"", $3);
+ 				free($3);
+-				free(alias);
+ 				YYERROR;
+ 			}
+ 			free($3);
+ 
+-			if ($2)
+-				alias->flags |= SRVFLAG_SERVER_MATCH;
++			while ((bs = TAILQ_FIRST(&bstrq)) != NULL) {
++				if ((alias = calloc(1,
++				    sizeof(*alias))) == NULL)
++				fatal("out of memory");
+ 
+-			TAILQ_INSERT_TAIL(&srv->srv_hosts, alias, entry);
++				if (strlcpy(alias->name, bs->str,
++				    sizeof(alias->name)) >=
++				    sizeof(alias->name)) {
++					yyerror("server alias truncated");
++					free(alias);
++					free_bstrq(&bstrq);
++					YYERROR;
++				}
++				TAILQ_REMOVE(&bstrq, bs, bstrs);
++				free(bs->str);
++				free(bs);
++
++				if ($2)
++					alias->flags |= SRVFLAG_SERVER_MATCH;
++
++				TAILQ_INSERT_TAIL(&srv->srv_hosts, alias,
++				    entry);
++			}
+ 		}
+ 		| tcpip			{
+ 			if (parentsrv != NULL) {
+@@ -521,6 +565,8 @@
+ 		| LOCATION optfound optmatch STRING optclientfilter	{
+ 			struct server		*s;
+ 			struct sockaddr_un	*sun;
++			int			 n;
++			struct bstr		*bs;
+ 
+ 			if (srv->srv_conf.ss.ss_family == AF_UNSPEC) {
+ 				yyerror("listen address not specified");
+@@ -542,25 +588,44 @@
+ 				YYACCEPT;
+ 			}
+ 
++			if ((n = expand_braces(&bstrq, $4)) == -1) {
++				yyerror("brace expansion error in location "
++				    "\"%s\"", $4);
++				free($4);
++				free($5);
++				YYERROR;
++			}
++			free($4);
++			if (last_server_id + n >= INT_MAX) {
++				yyerror("too many servers/locations defined");
++				free($5);
++				free_bstrq(&bstrq);
++				YYERROR;
++			}
++
+ 			if ((s = calloc(1, sizeof (*s))) == NULL)
+ 				fatal("out of memory");
+ 
+-			if (strlcpy(s->srv_conf.location, $4,
++			bs = TAILQ_FIRST(&bstrq);
++			if (strlcpy(s->srv_conf.location, bs->str,
+ 			    sizeof(s->srv_conf.location)) >=
+ 			    sizeof(s->srv_conf.location)) {
+ 				yyerror("server location truncated");
+-				free($4);
+ 				free($5);
++				free_bstrq(&bstrq);
+ 				free(s);
+ 				YYERROR;
+ 			}
+-			free($4);
++			TAILQ_REMOVE(&bstrq, bs, bstrs);
++			free(bs->str);
++			free(bs);
+ 
+ 			if (strlcpy(s->srv_conf.name, srv->srv_conf.name,
+ 			    sizeof(s->srv_conf.name)) >=
+ 			    sizeof(s->srv_conf.name)) {
+ 				yyerror("server name truncated");
+ 				free($5);
++				free_bstrq(&bstrq);
+ 				free(s);
+ 				YYERROR;
+ 			}
+@@ -592,6 +657,7 @@
+ 				if (build_clientfilter(&s->srv_conf,
+ 				    $5 + 1) == NULL) {
+ 					free($5);
++					free_bstrq(&bstrq);
+ 					free(s);
+ 					YYERROR;
+ 				}
+@@ -615,51 +681,22 @@
+ 			s->srv_conf.prefixlen = srv->srv_conf.prefixlen;
+ 			s->srv_conf.tls_flags = srv->srv_conf.tls_flags;
+ 
+-			if (last_server_id == INT_MAX) {
+-				yyerror("too many servers/locations defined");
+-				free(s);
+-				YYERROR;
+-			}
+ 			parentsrv = srv;
+ 			srv = s;
+ 			srv_conf = &srv->srv_conf;
+ 			SPLAY_INIT(&srv->srv_clients);
+ 		} '{' optnl serveropts_l '}'	{
+-			struct server	*s = NULL;
+-			uint32_t	 f;
++			struct bstr	*bs = NULL;
+ 
+-			f = SRVFLAG_CLIENT_FROM |
+-			    SRVFLAG_CLIENT_NOT_FROM |
+-			    SRVFLAG_LOCATION_FOUND |
+-			    SRVFLAG_LOCATION_NOT_FOUND;
++			do {
++				if (location_add(bs == NULL ?
++				    srv : location_cpy(srv, ++last_server_id),
++				    bs) == -1) {
++					free_bstrq(&bstrq);
++					YYABORT;
++				}
++			} while ((bs = TAILQ_FIRST(&bstrq)) != NULL);
+ 
+-			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
+-				/* Compare locations of same parent server */
+-				if ((s->srv_conf.flags & SRVFLAG_LOCATION) &&
+-				    s->srv_conf.parent_id ==
+-				    srv_conf->parent_id &&
+-				    (s->srv_conf.flags & f) ==
+-				    (srv_conf->flags & f) &&
+-				    strcmp(s->srv_conf.location,
+-				    srv_conf->location) == 0 &&
+-				    clientfilter_cmp(s->srv_conf.clientfilter,
+-				    srv_conf->clientfilter) == 0)
+-					break;
+-			}
+-			if (s != NULL) {
+-				yyerror("location \"%s\" defined twice",
+-				    srv->srv_conf.location);
+-				serverconfig_free(srv_conf);
+-				free(srv);
+-				YYABORT;
+-			}
+-
+-			DPRINTF("adding location \"%s\" for \"%s[%u]\"",
+-			    srv->srv_conf.location,
+-			    srv->srv_conf.name, srv->srv_conf.id);
+-
+-			TAILQ_INSERT_TAIL(conf->sc_servers, srv, srv_entry);
+-
+ 			srv = parentsrv;
+ 			srv_conf = &parentsrv->srv_conf;
+ 			parentsrv = NULL;
+@@ -1665,6 +1702,282 @@
+ 		}
+ 	}
+ 	return (0);
++}
++
++int
++expand_braces(struct bstrq *resq, const char *cstr)
++{
++	struct bstrq	 bsq, trq;
++	char		*sc, *str, *term, *end, *c, d, p;
++	int		 i, n;
++
++	if (cstr == NULL)
++		return (0);
++
++	if ((sc = str = strdup(cstr)) == NULL)
++		fatal("out of memory");
++
++	TAILQ_INIT(&bsq);
++	TAILQ_INIT(&trq);
++
++	for (n = 0, c = str;; c++) {
++		if ((d = *c) == '\0') {
++			n += append_bstr(resq, &trq, str);
++			break;
++		}
++		if (d == '}')
++			goto fail; /* opening brace missing */
++
++		if (d == '\\')
++			c++;
++		else if (d == ',' && resq != &bstrq) {
++			*c = '\0';
++			n += append_bstr(resq, &trq, str);
++			str = c + 1;
++		} else if (d == '{') {
++			for (end = term = c, i = 1; i > 0;) {
++				if ((p = *++end) == '\0')
++					goto fail; /* closing brace missing */
++
++				if (p == '\\')
++					end++;
++				else if (p == '{')
++					i++;
++				else if (p == '}')
++					i--;
++			}
++			*term = *(c = end) = '\0';
++			if ((i = expand_seq(&bsq, ++term)) == -1 ||
++			    (i == 0 && expand_braces(&bsq, term) == -1))
++				goto fail;
++
++			append_bexp(&trq, &bsq, str);
++			str = c + 1;
++		}
++	}
++
++	free(sc);
++	return (n);
++
++ fail:
++	free_bstrq(&trq);
++	free_bstrq(&bsq);
++	free(sc);
++	return (-1);
++}
++
++int
++expand_seq(struct bstrq *resq, const char *str)
++{
++	const char	*errstr, d[] = "..";
++	char		*sidx, *s, *c;
++	long long	 from, to, step;
++	struct bstr	*bs;
++	int		 n;
++
++	if (strpbrk(str, "{\\") != NULL || (sidx = strstr(str, d)) == NULL)
++		return (0); /* not applicable */
++
++	if (sidx == str || *(sidx + sizeof(d) - 1) == '\0')
++		return (-1);
++
++	if ((s = strdup(str)) == NULL)
++		fatal("out of memory");
++	*(c = &s[sidx - str]) = '\0';
++	from = strtonum(s, LLONG_MIN, LLONG_MAX, &errstr);
++	if (errstr != NULL)
++		goto fail;
++
++	to = strtonum(c + sizeof(d) - 1, LLONG_MIN, LLONG_MAX, &errstr);
++	if (errstr != NULL)
++		goto fail;
++
++	for (n = 0, step = from <= to ? 1 : -1;
++	    (step == 1 && from <= to) || (step == -1 && from >= to);
++	    from += step, n++) {
++		if ((bs = malloc(sizeof(*bs))) == NULL ||
++		    asprintf(&bs->str, "%lld", from) == -1)
++			fatal("out of memory");
++		TAILQ_INSERT_TAIL(resq, bs, bstrs);
++	}
++	free(s);
++	return (n);
++
++ fail:
++	free(s);
++	return (-1);
++}
++
++int
++append_bstr(struct bstrq *resq, struct bstrq *trq, const char *str)
++{
++	struct bstr	*bs;
++	char		*term;
++	int		 n;
++
++	if (TAILQ_EMPTY(trq)) {
++		if ((bs = malloc(sizeof(*bs))) == NULL ||
++		    (bs->str = unesc(strdup(str))) == NULL)
++			fatal("out of memory");
++		TAILQ_INSERT_TAIL(resq, bs, bstrs);
++		return (1);
++	}
++
++	n = 0;
++	TAILQ_FOREACH(bs, trq, bstrs) {
++		if (asprintf(&term, "%s%s", bs->str, str) == -1)
++			fatal("out of memory");
++		free(bs->str);
++		bs->str = unesc(term);
++		n++;
++	}
++	TAILQ_CONCAT(resq, trq, bstrs);
++	return (n);
++}
++
++void
++append_bexp(struct bstrq *trq, struct bstrq *exp, const char *str)
++{
++	struct bstr	*bs, *tbs, *rbs, *nbs, *lbs;
++	char		*term;
++
++	if (TAILQ_EMPTY(trq)) {
++		TAILQ_FOREACH_SAFE(bs, exp, bstrs, tbs) {
++			TAILQ_REMOVE(exp, bs, bstrs);
++			if (asprintf(&term, "%s%s", str, bs->str) == -1)
++				fatal("out of memory");
++			free(bs->str);
++			bs->str = unesc(term);
++			TAILQ_INSERT_TAIL(trq, bs, bstrs);
++		}
++		return;
++	}
++
++	lbs = TAILQ_LAST(trq, bstrq);
++	TAILQ_FOREACH_SAFE(rbs, trq, bstrs, tbs) {
++		TAILQ_FOREACH(bs, exp, bstrs) {
++			if ((nbs = malloc(sizeof(*nbs))) == NULL ||
++			    asprintf(&term, "%s%s%s", rbs->str, str,
++			    bs->str) == -1)
++				fatal("out of memory");
++			nbs->str = unesc(term);
++			TAILQ_INSERT_TAIL(trq, nbs, bstrs);
++		}
++		TAILQ_REMOVE(trq, rbs, bstrs);
++		free(rbs->str);
++		free(rbs);
++		if (rbs == lbs)
++			break;
++	}
++	free_bstrq(exp);
++}
++
++char *
++unesc(char *str)
++{
++	char	 *c, *s;
++
++	if (str != NULL)
++		for (s = str; *s != '\0'; s++)
++			if (*s == '\\')
++				for (c = s; *c != '\0'; c++)
++					*c = *(c + 1);
++	return (str);
++}
++
++void
++free_bstrq(struct bstrq *bsq)
++{
++	struct bstr	*bs;
++
++	while ((bs = TAILQ_FIRST(bsq)) != NULL) {
++		TAILQ_REMOVE(bsq, bs, bstrs);
++		free(bs->str);
++		free(bs);
++	}
++}
++
++struct server *
++location_cpy(struct server *src, int id)
++{
++	struct server		*dst;
++	struct server_config	*src_conf, *dst_conf;
++	struct fastcgi_param	*fparam, *nfparam;
++
++	if ((dst = calloc(1, sizeof(*dst))) == NULL)
++		fatal("out of memory");
++
++	dst->srv_s = -1;
++
++	dst_conf = &dst->srv_conf;
++	src_conf = &src->srv_conf;
++	memcpy(dst_conf, src_conf, sizeof(*dst_conf));
++
++	dst_conf->id = id;
++
++	if (src_conf->return_uri != NULL &&
++	    (dst_conf->return_uri = strdup(src_conf->return_uri)) == NULL)
++		fatal("out of memory");
++
++	TAILQ_INIT(&dst_conf->fcgiparams);
++	TAILQ_FOREACH(fparam, &src_conf->fcgiparams, entry) {
++		if ((nfparam = malloc(sizeof(*nfparam))) == NULL)
++			fatal("out of memory");
++		memcpy(nfparam, fparam, sizeof(*nfparam));
++		TAILQ_INSERT_TAIL(&dst_conf->fcgiparams, nfparam, entry);
++	}
++
++	SPLAY_INIT(&dst->srv_clients);
++
++	return (dst);
++}
++
++int
++location_add(struct server *nsrv, struct bstr *bs)
++{
++	struct server_config	*nsrv_conf = &nsrv->srv_conf;
++	struct server		*s;
++	const uint32_t		 f = SRVFLAG_CLIENT_FROM |
++				     SRVFLAG_CLIENT_NOT_FROM |
++				     SRVFLAG_LOCATION_FOUND |
++				     SRVFLAG_LOCATION_NOT_FOUND;
++
++	if (bs != NULL) {
++		if (strlcpy(nsrv->srv_conf.location, bs->str,
++		    sizeof(nsrv->srv_conf.location)) >=
++		    sizeof(nsrv->srv_conf.location)) {
++			yyerror("server location \"%s\" truncated", bs->str);
++			goto fail;
++		}
++		TAILQ_REMOVE(&bstrq, bs, bstrs);
++		free(bs->str);
++		free(bs);
++	}
++
++	TAILQ_FOREACH(s, conf->sc_servers, srv_entry)
++		/* Compare locations of same parent server */
++		if ((s->srv_conf.flags & SRVFLAG_LOCATION) &&
++		    s->srv_conf.parent_id == nsrv_conf->parent_id &&
++		    (s->srv_conf.flags & f) == (nsrv_conf->flags & f) &&
++		    strcmp(s->srv_conf.location, nsrv_conf->location) == 0 &&
++		    clientfilter_cmp(s->srv_conf.clientfilter,
++		    nsrv_conf->clientfilter) == 0)
++			break;
++	if (s != NULL) {
++		yyerror("location \"%s\" defined twice", nsrv_conf->location);
++		goto fail;
++	}
++
++	DPRINTF("adding location \"%s\" for \"%s[%u]\"", nsrv_conf->location,
++	    nsrv_conf->name, nsrv_conf->id);
++
++	TAILQ_INSERT_TAIL(conf->sc_servers, nsrv, srv_entry);
++	return (0);
++
++ fail:
++	serverconfig_free(nsrv_conf);
++	free(nsrv);
++	return (-1);
+ }
+ 
+ int
