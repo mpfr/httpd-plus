@@ -98,6 +98,25 @@ Index: usr.sbin/httpd/http.h
  
  	/* A tree of headers and attached lists for repeated headers. */
  	struct kv		*http_lastheader;
+Index: usr.sbin/httpd/httpd.8
+@@ -1,5 +1,6 @@
+ .\"	$OpenBSD: httpd.8,v 1.53 2016/09/15 20:57:07 jmc Exp $
+ .\"
++.\" Copyright (c) 2021 Matthias Pressfreund
+ .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
+ .\"
+ .\" Permission to use, copy, modify, and distribute this software for any
+@@ -41,6 +42,10 @@
+ .Dv SIGHUP
+ and reopens log files when it receives
+ .Dv SIGUSR1 .
++.Pp
++It is furthermore equipped with the additional functionality provided by the
++.Lk https://github.com/mpfr/httpd-plus httpd-plus
++add-on package.
+ .Pp
+ The options are as follows:
+ .Bl -tag -width Dssmacro=value
 Index: usr.sbin/httpd/httpd.c
 @@ -67,6 +67,8 @@
  	{ "logger",	PROC_LOGGER, parent_dispatch_logger, logger }
@@ -246,7 +265,7 @@ Index: usr.sbin/httpd/httpd.conf.5
 @@ -1,5 +1,6 @@
  .\"	$OpenBSD: httpd.conf.5,v 1.110 2020/04/23 21:10:53 jmc Exp $
  .\"
-+.\" Copyright (c) 2020 Matthias Pressfreund
++.\" Copyright (c) 2020, 2021 Matthias Pressfreund
  .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
  .\"
  .\" Permission to use, copy, modify, and distribute this software for any
@@ -259,7 +278,19 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Dt HTTPD.CONF 5
  .Os
  .Sh NAME
-@@ -284,12 +285,13 @@
+@@ -23,7 +24,10 @@
+ .Sh DESCRIPTION
+ .Nm
+ is the configuration file for the HTTP daemon,
+-.Xr httpd 8 .
++.Xr httpd 8 ,
++which is equipped with the additional functionality provided by the
++.Lk https://github.com/mpfr/httpd-plus httpd-plus
++add-on package.
+ .Pp
+ .Nm
+ is divided into the following main sections:
+@@ -284,12 +288,13 @@
  Enable FastCGI instead of serving files.
  Valid options are:
  .Bl -tag -width Ds
@@ -276,7 +307,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  If the FastCGI handler is listening on a UNIX domain socket,
  .Ar socket
  is a local path name within the
-@@ -301,7 +303,10 @@
+@@ -301,7 +306,10 @@
  Alternatively if
  the FastCGI handler is listening on a TCP socket,
  .Ar socket
@@ -288,7 +319,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .It Ic strip Ar number
  Strip
  .Ar number
-@@ -395,11 +400,16 @@
+@@ -395,11 +403,16 @@
  .It Ic listen on Ar address Oo Ic tls Oc Ic port Ar number
  Set the listen address and port.
  This statement can be specified multiple times.
@@ -306,7 +337,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  In case of multiple location statements in the same context, the
  first matching location statement will be put into effect, while all
  later ones will be ignored.
-@@ -415,7 +425,7 @@
+@@ -415,7 +428,7 @@
  .Ic tcp
  and
  .Ic tls .
@@ -315,7 +346,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  Like the
  .Ic location
  option,
-@@ -698,6 +708,11 @@
+@@ -698,6 +711,11 @@
  .It Ic include Ar file
  Include types definitions from an external file, for example
  .Pa /usr/share/misc/mime.types .

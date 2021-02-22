@@ -48,7 +48,7 @@ Index: usr.sbin/httpd/config.c
  		DPRINTF("%s: %s %d location \"%s\", "
  		    "parent \"%s[%u]\", flags: %s",
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -531,6 +531,121 @@
+@@ -534,6 +534,121 @@
  .Xr syslog 3
  instead of the log files.
  .El
