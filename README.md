@@ -117,14 +117,14 @@ target "www" {
 
 ### brace-expansion
 
-Simple brace expansion for `alias <name>`, `include <path>` and `location <path>` option parameters in [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/current/httpd.conf.5.html#BRACE_EXPANSION).
-Helps to minimize the configuration file size by avoiding unnecessary (mostly duplicate) content.
+Simple brace expansion for `alias <name>`, `include <path>` and `location <path>` option parameters in [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/6.8-stable/httpd.conf.5.html#BRACE_EXPANSION).
+Helps to minimize the configuration file size by avoiding duplicate content.
 
 ```
 include "/etc/httpd-{0..5}-incl.conf"
 ...
 server "www.example.com" {
-	alias "www.{a,b,c}.example.com
+	alias "www.{a,b,c}.example.com"
 	...
 	location "/*.{bmp,gif,ico,jpg,png}" { pass }
 	...
