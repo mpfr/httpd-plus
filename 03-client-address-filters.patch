@@ -14,15 +14,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -1,6 +1,6 @@
- .\"	$OpenBSD: httpd.conf.5,v 1.114 2020/10/29 12:30:52 denis Exp $
- .\"
--.\" Copyright (c) 2020 Matthias Pressfreund
-+.\" Copyright (c) 2020, 2021 Matthias Pressfreund
- .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
- .\"
- .\" Permission to use, copy, modify, and distribute this software for any
-@@ -403,7 +403,8 @@
+@@ -406,7 +406,8 @@
  .It Ic listen on Ar address Oo Ic tls Oc Ic port Ar number
  Set the listen address and port.
  This statement can be specified multiple times.
@@ -32,7 +24,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  Specify server configuration rules for a specific location.
  The
  .Ar path
-@@ -412,7 +413,29 @@
+@@ -415,7 +416,29 @@
  .Ic found
  (i.e. accessible) or
  .Ic not found
@@ -63,7 +55,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  In case of multiple location statements in the same context, the
  first matching location statement will be put into effect, while all
  later ones will be ignored.
-@@ -428,7 +451,8 @@
+@@ -431,7 +454,8 @@
  .Ic tcp
  and
  .Ic tls .

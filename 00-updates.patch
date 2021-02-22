@@ -28,6 +28,45 @@ Index: usr.sbin/httpd/config.c
  			(void)strlcpy(srv_conf->index, parent->index,
  			    sizeof(srv_conf->index));
  		}
+Index: usr.sbin/httpd/httpd.8
+@@ -1,5 +1,6 @@
+ .\"	$OpenBSD: httpd.8,v 1.53 2016/09/15 20:57:07 jmc Exp $
+ .\"
++.\" Copyright (c) 2021 Matthias Pressfreund
+ .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
+ .\"
+ .\" Permission to use, copy, modify, and distribute this software for any
+@@ -41,6 +42,10 @@
+ .Dv SIGHUP
+ and reopens log files when it receives
+ .Dv SIGUSR1 .
++.Pp
++It is furthermore equipped with the additional functionality provided by the
++.Lk https://github.com/mpfr/httpd-plus httpd-plus
++add-on package.
+ .Pp
+ The options are as follows:
+ .Bl -tag -width Dssmacro=value
+Index: usr.sbin/httpd/httpd.conf.5
+@@ -1,5 +1,6 @@
+ .\"	$OpenBSD: httpd.conf.5,v 1.114 2020/10/29 12:30:52 denis Exp $
+ .\"
++.\" Copyright (c) 2020, 2021 Matthias Pressfreund
+ .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
+ .\"
+ .\" Permission to use, copy, modify, and distribute this software for any
+@@ -23,7 +24,10 @@
+ .Sh DESCRIPTION
+ .Nm
+ is the configuration file for the HTTP daemon,
+-.Xr httpd 8 .
++.Xr httpd 8 ,
++which is equipped with the additional functionality provided by the
++.Lk https://github.com/mpfr/httpd-plus httpd-plus
++add-on package.
+ .Pp
+ .Nm
+ is divided into the following main sections:
 Index: usr.sbin/httpd/httpd.h
 @@ -666,6 +666,9 @@
  
