@@ -113,6 +113,22 @@ target "www" {
 }
 ```
 
+### brace-expansion
+
+Simple brace expansion for `alias <name>`, `include <path>` and `location <path>` option parameters in [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/current/httpd.conf.5.html#BRACE_EXPANSION).
+Helps to minimize the configuration file size by avoiding unnecessary (mostly duplicate) content.
+
+```
+include "/etc/httpd-{0..5}-incl.conf"
+...
+server "www.example.com" {
+	alias "www.{a,b,c}.example.com
+	...
+	location "/*.{bmp,gif,ico,jpg,png}" { pass }
+	...
+}
+```
+
 ## How to install
 
 `httpd-plus` is a series of consecutive patch files which may be applied easily by following the steps below.
@@ -138,6 +154,7 @@ httpd-plus-current/01-cache-control-headers.patch
 httpd-plus-current/02-fastcgi-script-overrides.patch
 httpd-plus-current/03-client-address-filters.patch
 httpd-plus-current/04-notify-on-block.patch
+httpd-plus-current/05-brace-expansion.patch
 httpd-plus-current/LICENSE
 httpd-plus-current/README.md
 httpd-plus-current/install
