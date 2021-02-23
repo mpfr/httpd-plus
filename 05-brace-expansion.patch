@@ -342,7 +342,7 @@ Index: usr.sbin/httpd/parse.y
  			srv = parentsrv;
  			srv_conf = &parentsrv->srv_conf;
  			parentsrv = NULL;
-@@ -1665,6 +1702,290 @@
+@@ -1665,6 +1702,292 @@
  		}
  	}
  	return (0);
@@ -552,9 +552,10 @@ Index: usr.sbin/httpd/parse.y
 +struct server *
 +location_cpy(struct server *src, int id)
 +{
-+	struct server		*dst;
-+	struct server_config	*src_conf, *dst_conf;
-+	struct fastcgi_param	*fparam, *nfparam;
++	struct server			*dst;
++	struct server_config		*src_conf, *dst_conf;
++	struct server_fcgiparams	*dst_fparams;
++	struct fastcgi_param		*src_fparam, *dst_fparam;
 +
 +	if ((dst = calloc(1, sizeof(*dst))) == NULL)
 +		fatal("out of memory");
@@ -571,12 +572,13 @@ Index: usr.sbin/httpd/parse.y
 +	    (dst_conf->return_uri = strdup(src_conf->return_uri)) == NULL)
 +		fatal("out of memory");
 +
-+	TAILQ_INIT(&dst_conf->fcgiparams);
-+	TAILQ_FOREACH(fparam, &src_conf->fcgiparams, entry) {
-+		if ((nfparam = malloc(sizeof(*nfparam))) == NULL)
++	dst_fparams = &dst_conf->fcgiparams;
++	TAILQ_INIT(dst_fparams);
++	TAILQ_FOREACH(src_fparam, &src_conf->fcgiparams, entry) {
++		if ((dst_fparam = malloc(sizeof(*dst_fparam))) == NULL)
 +			fatal("out of memory");
-+		memcpy(nfparam, fparam, sizeof(*nfparam));
-+		TAILQ_INSERT_TAIL(&dst_conf->fcgiparams, nfparam, entry);
++		memcpy(dst_fparam, src_fparam, sizeof(*dst_fparam));
++		TAILQ_INSERT_TAIL(dst_fparams, dst_fparam, entry);
 +	}
 +
 +	SPLAY_INIT(&dst->srv_clients);
