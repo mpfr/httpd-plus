@@ -14,7 +14,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -855,6 +855,81 @@
+@@ -855,6 +855,87 @@
  Include types definitions from an external file, for example
  .Pa /usr/share/misc/mime.types .
  .El
@@ -58,21 +58,27 @@ Index: usr.sbin/httpd/httpd.conf.5
 +include "/etc/httpd-47.conf"
 +.Ed
 +.Pp
-+In case a curly brace character is needed inside a brace extended parameter, a
-+preceding escape character
-+.Pq Sq \(rs
-+is required.
-+Escape characters inside number sequence braces are not allowed and would
-+result in the number sequence being handled as if it was a list.
++In case one of the special characters
++.Pq So \(lC Sc , So \(rC Sc or Sq \&,
++is needed inside a brace extended parameter, a preceding back-slash
++.Pq Sq \e
++serving as escape character is required.
++This also applies to the back-slash character itself, i.e. in case for some
++reason a back-slash character is needed inside the parameter, it must be
++passed as
++.Sq \e\e .
++Escaping a regular character will be silently ignored.
++Escape characters inside number sequence braces are not allowed and will make
++the number sequence silently being handled as if it was a list.
 +.Pp
-+In case there are multiple brace sections inside one parameter, the following
++In case there are multiple brace sections inside a parameter, the following
 +rules of thumb apply:
 +.Pp
 +.Bl -bullet -offset indent -compact
 +.It
 +Nested braces expand in depth first.
 +.It
-+For consecutive sections, the second will be fully traversed for each step of
++For consecutive sections, the second will be fully traversed for each item of
 +the first.
 +.El
 +.Pp
@@ -336,7 +342,7 @@ Index: usr.sbin/httpd/parse.y
  			srv = parentsrv;
  			srv_conf = &parentsrv->srv_conf;
  			parentsrv = NULL;
-@@ -1665,6 +1702,282 @@
+@@ -1665,6 +1702,290 @@
  		}
  	}
  	return (0);
@@ -450,25 +456,29 @@ Index: usr.sbin/httpd/parse.y
 +append_bstr(struct bstrq *resq, struct bstrq *trq, const char *str)
 +{
 +	struct bstr	*bs;
-+	char		*term;
++	char		*s, *term;
 +	int		 n;
 +
++	if ((s = unesc(strdup(str))) == NULL)
++		fatal("out of memory");
++
 +	if (TAILQ_EMPTY(trq)) {
-+		if ((bs = malloc(sizeof(*bs))) == NULL ||
-+		    (bs->str = unesc(strdup(str))) == NULL)
++		if ((bs = malloc(sizeof(*bs))) == NULL)
 +			fatal("out of memory");
++		bs->str = s;
 +		TAILQ_INSERT_TAIL(resq, bs, bstrs);
 +		return (1);
 +	}
 +
 +	n = 0;
 +	TAILQ_FOREACH(bs, trq, bstrs) {
-+		if (asprintf(&term, "%s%s", bs->str, str) == -1)
++		if (asprintf(&term, "%s%s", bs->str, s) == -1)
 +			fatal("out of memory");
 +		free(bs->str);
-+		bs->str = unesc(term);
++		bs->str = term;
 +		n++;
 +	}
++	free(s);
 +	TAILQ_CONCAT(resq, trq, bstrs);
 +	return (n);
 +}
@@ -477,17 +487,21 @@ Index: usr.sbin/httpd/parse.y
 +append_bexp(struct bstrq *trq, struct bstrq *exp, const char *str)
 +{
 +	struct bstr	*bs, *tbs, *rbs, *nbs, *lbs;
-+	char		*term;
++	char		*s, *term;
++
++	if ((s = unesc(strdup(str))) == NULL)
++		fatal("out of memory");
 +
 +	if (TAILQ_EMPTY(trq)) {
 +		TAILQ_FOREACH_SAFE(bs, exp, bstrs, tbs) {
 +			TAILQ_REMOVE(exp, bs, bstrs);
-+			if (asprintf(&term, "%s%s", str, bs->str) == -1)
++			if (asprintf(&term, "%s%s", s, bs->str) == -1)
 +				fatal("out of memory");
 +			free(bs->str);
-+			bs->str = unesc(term);
++			bs->str = term;
 +			TAILQ_INSERT_TAIL(trq, bs, bstrs);
 +		}
++		free(s);
 +		return;
 +	}
 +
@@ -495,10 +509,9 @@ Index: usr.sbin/httpd/parse.y
 +	TAILQ_FOREACH_SAFE(rbs, trq, bstrs, tbs) {
 +		TAILQ_FOREACH(bs, exp, bstrs) {
 +			if ((nbs = malloc(sizeof(*nbs))) == NULL ||
-+			    asprintf(&term, "%s%s%s", rbs->str, str,
++			    asprintf(&nbs->str, "%s%s%s", rbs->str, s,
 +			    bs->str) == -1)
 +				fatal("out of memory");
-+			nbs->str = unesc(term);
 +			TAILQ_INSERT_TAIL(trq, nbs, bstrs);
 +		}
 +		TAILQ_REMOVE(trq, rbs, bstrs);
@@ -507,6 +520,7 @@ Index: usr.sbin/httpd/parse.y
 +		if (rbs == lbs)
 +			break;
 +	}
++	free(s);
 +	free_bstrq(exp);
 +}
 +
