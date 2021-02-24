@@ -14,7 +14,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -855,6 +855,87 @@
+@@ -855,6 +855,71 @@
  Include types definitions from an external file, for example
  .Pa /usr/share/misc/mime.types .
  .El
@@ -30,14 +30,14 @@ Index: usr.sbin/httpd/httpd.conf.5
 +.Dl <list> ::= <text> | <text> ',' <list>
 +.Pp
 +expand according to the given list items, e.g.
-+.Dl alias \(dqserver-{AAA,BBB}-{XX,YY}\(dq
++.Dl alias \(dqserver-{AAA,BBB,CCC,DDD}\(dq
 +.Pp
 +expands to
 +.Bd -literal -offset indent -compact
-+alias "server-AAA-XX"
-+alias "server-AAA-YY"
-+alias "server-BBB-XX"
-+alias "server-BBB-YY"
++alias "server-AAA"
++alias "server-AAA"
++alias "server-CCC"
++alias "server-DDD"
 +.Ed
 +.Pp
 +Number sequences formatted as
@@ -82,26 +82,37 @@ Index: usr.sbin/httpd/httpd.conf.5
 +the first.
 +.El
 +.Pp
-+Here's an example:
-+.Dl location \(dq/chapter/{A_0{1,2,5},F_{17..49}}-{B,C}/*\(dq { block }
-+.Pp
-+expands to
-+.Bd -literal -offset indent -compact
-+location "/chapter/A_01-B/*" { block }
-+location "/chapter/A_01-C/*" { block }
-+location "/chapter/A_02-B/*" { block }
-+location "/chapter/A_02-C/*" { block }
-+location "/chapter/A_05-B/*" { block }
-+location "/chapter/A_05-C/*" { block }
-+location "/chapter/F_17-B/*" { block }
-+location "/chapter/F_17-C/*" { block }
-+\&...
-+location "/chapter/F_49-B/*" { block }
-+location "/chapter/F_49-C/*" { block }
-+.Ed
++Another example is available below.
  .Sh FILES
  .Bl -tag -width /etc/examples/httpd.conf -compact
  .It Pa /etc/examples/httpd.conf
+@@ -956,6 +1021,26 @@
+ 		request rewrite "/new/%1"
+ 	}
+ }
++.Ed
++.Pp
++Brace expansion can help clarify configuration files in which several
++.Ic location
++sections share the same content:
++.Dl location \(dq/chapter/{A_0{1,2,5},F_{17..49}}-{B,C}/*\(dq { ... }
++.Pp
++replaces
++.Bd -literal -offset indent -compact
++location "/chapter/A_01-B/*" { ... }
++location "/chapter/A_01-C/*" { ... }
++location "/chapter/A_02-B/*" { ... }
++location "/chapter/A_02-C/*" { ... }
++location "/chapter/A_05-B/*" { ... }
++location "/chapter/A_05-C/*" { ... }
++location "/chapter/F_17-B/*" { ... }
++location "/chapter/F_17-C/*" { ... }
++\&...
++location "/chapter/F_49-B/*" { ... }
++location "/chapter/F_49-C/*" { ... }
+ .Ed
+ .Sh SEE ALSO
+ .Xr htpasswd 1 ,
 Index: usr.sbin/httpd/parse.y
 @@ -86,6 +86,20 @@
  void		 lungetc(int);
