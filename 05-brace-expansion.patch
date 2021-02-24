@@ -35,7 +35,7 @@ Index: usr.sbin/httpd/httpd.conf.5
 +expands to
 +.Bd -literal -offset indent -compact
 +alias "server-AAA"
-+alias "server-AAA"
++alias "server-BBB"
 +alias "server-CCC"
 +alias "server-DDD"
 +.Ed
