@@ -692,7 +692,7 @@ Index: usr.sbin/httpd/server_http.c
 +	/* EV_WRITE */
 +	n = msg->n;
 +	size = msg->size;
-+	if ((nw = write(fd, &msg->str[n], size - n)) == -1) {
++	if ((nw = send(fd, &msg->str[n], size - n, MSG_NOSIGNAL)) == -1) {
 +		log_warn("failed writing to notify socket at '%s'", path);
 +		event_del(ev);
 +		return;
