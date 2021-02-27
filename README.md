@@ -1,6 +1,6 @@
 # httpd-plus
 
-Add-ons for the [OpenBSD](https://www.openbsd.org) [`httpd(8)`](http://man.openbsd.org/httpd) web server applicable to the lastest `-current` branch.
+Add-ons for the [OpenBSD](https://www.openbsd.org) [`httpd(8)`](http://man.openbsd.org/httpd) web server applicable to the latest `-current` branch.
 
 Other branches available:
 * [6.8-stable](https://github.com/mpfr/httpd-plus/tree/6.8-stable)
@@ -75,9 +75,9 @@ server "www.example.com" {
 
 ### notify-on-block
 
-Send notification messages to UNIX-domain sockets for `server` and/or `location` sections with a `block` option in [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/current/httpd.conf.5.html#message).
+Send notification messages to UNIX-domain sockets for `server` and/or `location` sections with a `block` directive in [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/current/httpd.conf.5.html#message).
 
-This cooperates perfectly with [pftbld(8)](https://github.com/mpfr/pftbld), offering an easy and straightforward means to effectively protect the web server from offensive clients and successively build customized firewall blocklists. The example below will make `httpd(8)` not only block clients from outside the `10.0.0/24` network requesting a `/restricted*` URL by sending a 403 return status, but also report their IP addresses to `pftbld(8)` (with its listening socket at `/var/www/run/pftbld-www.sock`) for further handling.
+This cooperates perfectly with [pftbld(8)](https://github.com/mpfr/pftbld), offering an easy and straightforward means to effectively protect the web server from offensive clients and successively build customized firewall blocklists. In the example below, access to `/restricted*` URLs from outside the `10.0.0/24` network is not just blocked, but `httpd(8)` also reports client IP addresses to `pftbld(8)` (with its listening socket at `/var/www/run/pftbld-www.sock`) for further handling.
 
 `httpd.conf`:
 
