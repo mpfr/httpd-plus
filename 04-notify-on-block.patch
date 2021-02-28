@@ -188,8 +188,8 @@ Index: usr.sbin/httpd/httpd.h
  
  #define MEDIATYPE_NAMEMAX	128	/* file name extension */
  #define MEDIATYPE_TYPEMAX	64	/* length of type/subtype */
-@@ -497,6 +500,26 @@
- 	unsigned char	 xff;
+@@ -502,6 +505,26 @@
+ 	struct client_addr	 xff;
  };
  
 +struct socket_notifier {
@@ -212,9 +212,9 @@ Index: usr.sbin/httpd/httpd.h
 +	struct event	*ev;
 +};
 +
- struct server_client_addr {
- 	struct client_addr	 srv;
- 	struct client_addr	 xff;
+ struct server_config {
+ 	uint32_t		 id;
+ 	uint32_t		 parent_id;
 @@ -575,6 +598,7 @@
  	int			 fcgistrip;
  
@@ -436,7 +436,7 @@ Index: usr.sbin/httpd/server_http.c
  		return (-1);
  	} else if (srv_conf->flags & SRVFLAG_AUTH &&
  	    server_http_authenticate(srv_conf, clt) == -1) {
-@@ -1390,6 +1406,272 @@
+@@ -1390,6 +1406,245 @@
  	srv_conf = clt->clt_srv_conf;
  	server_abort_http(clt, 500, srv_conf->root);
  	return (-1);
@@ -449,15 +449,12 @@ Index: usr.sbin/httpd/server_http.c
 +	size_t	 vlen;
 +
 +	if ((new = strdup(str)) == NULL)
-+		return (NULL);
-+
++		fatal("strdup");
 +	vlen = strlen(var);
 +	while ((iv = strstr(new, var)) != NULL) {
 +		*iv = '\0';
-+		if (asprintf(&r, "%s%s%s", new, repl, &iv[vlen]) == -1) {
-+			free(new);
-+			return (NULL);
-+		}
++		if (asprintf(&r, "%s%s%s", new, repl, &iv[vlen]) == -1)
++			fatal("asprintf");
 +		free(new);
 +		new = r;
 +	}
@@ -475,15 +472,12 @@ Index: usr.sbin/httpd/server_http.c
 +	struct kv		 key, *k;
 +
 +	if ((msg = strdup(notifier->message)) == NULL)
-+		goto err;
-+
++		fatal("strdup");
 +	desc = clt->clt_descreq;
 +	srv_conf = clt->clt_srv_conf;
 +	if (strstr(msg, "$HTTP_HOST") != NULL) {
-+		if ((buf = replace_var(msg, "$HTTP_HOST",
-+		    desc->http_host == NULL ? "" : desc->http_host)) == NULL)
-+			goto err;
-+
++		buf = replace_var(msg, "$HTTP_HOST",
++		    desc->http_host == NULL ? "" : desc->http_host);
 +		free(msg);
 +		msg = buf;
 +	}
@@ -495,11 +489,8 @@ Index: usr.sbin/httpd/server_http.c
 +				goto err;
 +
 +		} else if ((str = calloc(1, 1)) == NULL)
-+			goto err;
-+
-+		if ((buf = replace_var(msg, "$HTTP_REFERRER", str)) == NULL)
-+			goto err;
-+
++			fatal("calloc");
++		buf = replace_var(msg, "$HTTP_REFERRER", str);
 +		free(str);
 +		str = NULL;
 +		free(msg);
@@ -513,92 +504,76 @@ Index: usr.sbin/httpd/server_http.c
 +				goto err;
 +
 +		} else if ((str = calloc(1, 1)) == NULL)
-+			goto err;
-+
-+		if ((buf = replace_var(msg, "$HTTP_USER_AGENT", str)) == NULL)
-+			goto err;
-+
++			fatal("calloc");
++		buf = replace_var(msg, "$HTTP_USER_AGENT", str);
 +		free(str);
 +		str = NULL;
 +		free(msg);
 +		msg = buf;
 +	}
 +	if (strstr(msg, "$HTTP_VERSION") != NULL) {
-+		if (stravis(&str, desc->http_version, HTTPD_LOGVIS) == -1 ||
-+		    (buf = replace_var(msg, "$HTTP_VERSION", str)) == NULL)
-+			goto err;
++		if (stravis(&str, desc->http_version, HTTPD_LOGVIS) == -1)
++		       goto err;
 +
++		buf = replace_var(msg, "$HTTP_VERSION", str);
 +		free(str);
 +		str = NULL;
 +		free(msg);
 +		msg = buf;
 +	}
 +	if (strstr(msg, "$REMOTE_ADDR") != NULL) {
-+		if (print_host(&clt->clt_ss, hbuf, sizeof(hbuf)) == NULL ||
-+		    (buf = replace_var(msg, "$REMOTE_ADDR", hbuf)) == NULL)
-+			goto err;
++		if (print_host(&clt->clt_ss, hbuf, sizeof(hbuf)) == NULL)
++		       goto err;
 +
++		buf = replace_var(msg, "$REMOTE_ADDR", hbuf);
 +		free(msg);
 +		msg = buf;
 +	}
 +	if (strstr(msg, "$REMOTE_PORT") != NULL) {
-+		if (asprintf(&str, "%u", ntohs(clt->clt_port)) == -1 ||
-+		    (buf = replace_var(msg, "$REMOTE_PORT", str)) == NULL)
-+			goto err;
-+
++		if (asprintf(&str, "%u", ntohs(clt->clt_port)) == -1)
++			fatal("asprintf");
++		buf = replace_var(msg, "$REMOTE_PORT", str);
 +		free(str);
 +		str = NULL;
 +		free(msg);
 +		msg = buf;
 +	}
 +	if (strstr(msg, "$REMOTE_USER") != NULL) {
-+		if ((buf = replace_var(msg, "$REMOTE_USER",
++		buf = replace_var(msg, "$REMOTE_USER",
 +		    (srv_conf->flags & SRVFLAG_AUTH) &&
-+		    clt->clt_remote_user != NULL ?
-+		    clt->clt_remote_user : "")) == NULL)
-+			goto err;
-+
++		    clt->clt_remote_user != NULL ? clt->clt_remote_user : "");
 +		free(msg);
 +		msg = buf;
 +	}
 +	if (strstr(msg, "$REQUEST_METHOD") != NULL) {
-+		if ((buf = replace_var(msg, "$REQUEST_METHOD",
-+		    server_httpmethod_byid(desc->http_method))) == NULL)
-+			goto err;
-+
++		buf = replace_var(msg, "$REQUEST_METHOD",
++		    server_httpmethod_byid(desc->http_method));
 +		free(msg);
 +		msg = buf;
 +	}
 +	if (strstr(msg, "$REQUEST_SCHEME") != NULL) {
-+		if ((buf = replace_var(msg, "$REQUEST_SCHEME",
-+		    srv_conf->flags & SRVFLAG_TLS ? "https" : "http")) == NULL)
-+			goto err;
-+
++		buf = replace_var(msg, "$REQUEST_SCHEME",
++		    srv_conf->flags & SRVFLAG_TLS ? "https" : "http");
 +		free(msg);
 +		msg = buf;
 +	}
 +	if (strstr(msg, "$REQUEST_URI") != NULL) {
 +		if (desc->http_query == NULL) {
 +			if ((str = strdup(desc->http_path)) == NULL)
-+				goto err;
-+
++				fatal("strdup");
 +		} else if (asprintf(&str, "%s?%s", desc->http_path,
 +		    desc->http_query) == -1)
-+			goto err;
-+
-+		if ((buf = replace_var(msg, "$REQUEST_URI", str)) == NULL)
-+			goto err;
-+
++			fatal("asprintf");
++		buf = replace_var(msg, "$REQUEST_URI", str);
 +		free(str);
 +		str = NULL;
 +		free(msg);
 +		msg = buf;
 +	}
 +	if (strstr(msg, "$RESPONSE_CODE") != NULL) {
-+		if (asprintf(&str, "%03u", code) == -1 ||
-+		    (buf = replace_var(msg, "$RESPONSE_CODE", str)) == NULL)
-+			goto err;
-+
++		if (asprintf(&str, "%03u", code) == -1)
++			fatal("asprintf");
++		buf = replace_var(msg, "$RESPONSE_CODE", str);
 +		free(str);
 +		str = NULL;
 +		free(msg);
@@ -606,13 +581,11 @@ Index: usr.sbin/httpd/server_http.c
 +	}
 +	if (strstr(msg, "$RESPONSE_URI") != NULL) {
 +		memset(ibuf, 0, sizeof(ibuf));
-+		if (uri != NULL &&
-+		    server_expand_http(clt, uri, ibuf, sizeof(ibuf)) == NULL)
++		if (uri != NULL && server_expand_http(clt, uri, ibuf,
++		    sizeof(ibuf)) == NULL)
 +			goto err;
 +
-+		if ((buf = replace_var(msg, "$RESPONSE_URI", ibuf)) == NULL)
-+			goto err;
-+
++		buf = replace_var(msg, "$RESPONSE_URI", ibuf);
 +		free(msg);
 +		msg = buf;
 +	}

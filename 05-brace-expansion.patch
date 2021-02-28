@@ -353,7 +353,7 @@ Index: usr.sbin/httpd/parse.y
  			srv = parentsrv;
  			srv_conf = &parentsrv->srv_conf;
  			parentsrv = NULL;
-@@ -1665,6 +1702,292 @@
+@@ -1665,6 +1702,293 @@
  		}
  	}
  	return (0);
@@ -370,7 +370,7 @@ Index: usr.sbin/httpd/parse.y
 +		return (0);
 +
 +	if ((sc = str = strdup(cstr)) == NULL)
-+		fatal("out of memory");
++		fatal("strdup");
 +
 +	TAILQ_INIT(&bsq);
 +	TAILQ_INIT(&trq);
@@ -437,7 +437,7 @@ Index: usr.sbin/httpd/parse.y
 +		return (-1);
 +
 +	if ((s = strdup(str)) == NULL)
-+		fatal("out of memory");
++		fatal("strdup");
 +	*(c = &s[sidx - str]) = '\0';
 +	from = strtonum(s, LLONG_MIN, LLONG_MAX, &errstr);
 +	if (errstr != NULL)
@@ -452,7 +452,7 @@ Index: usr.sbin/httpd/parse.y
 +	    from += step, n++) {
 +		if ((bs = malloc(sizeof(*bs))) == NULL ||
 +		    asprintf(&bs->str, "%lld", from) == -1)
-+			fatal("out of memory");
++			fatal("asprintf");
 +		TAILQ_INSERT_TAIL(resq, bs, bstrs);
 +	}
 +	free(s);
@@ -471,11 +471,11 @@ Index: usr.sbin/httpd/parse.y
 +	int		 n;
 +
 +	if ((s = unesc(strdup(str))) == NULL)
-+		fatal("out of memory");
++		fatal("strdup");
 +
 +	if (TAILQ_EMPTY(trq)) {
 +		if ((bs = malloc(sizeof(*bs))) == NULL)
-+			fatal("out of memory");
++			fatal("malloc");
 +		bs->str = s;
 +		TAILQ_INSERT_TAIL(resq, bs, bstrs);
 +		return (1);
@@ -484,7 +484,7 @@ Index: usr.sbin/httpd/parse.y
 +	n = 0;
 +	TAILQ_FOREACH(bs, trq, bstrs) {
 +		if (asprintf(&term, "%s%s", bs->str, s) == -1)
-+			fatal("out of memory");
++			fatal("asprintf");
 +		free(bs->str);
 +		bs->str = term;
 +		n++;
@@ -501,13 +501,13 @@ Index: usr.sbin/httpd/parse.y
 +	char		*s, *term;
 +
 +	if ((s = unesc(strdup(str))) == NULL)
-+		fatal("out of memory");
++		fatal("strdup");
 +
 +	if (TAILQ_EMPTY(trq)) {
 +		TAILQ_FOREACH_SAFE(bs, exp, bstrs, tbs) {
 +			TAILQ_REMOVE(exp, bs, bstrs);
 +			if (asprintf(&term, "%s%s", s, bs->str) == -1)
-+				fatal("out of memory");
++				fatal("asprintf");
 +			free(bs->str);
 +			bs->str = term;
 +			TAILQ_INSERT_TAIL(trq, bs, bstrs);
@@ -519,10 +519,11 @@ Index: usr.sbin/httpd/parse.y
 +	lbs = TAILQ_LAST(trq, bstrq);
 +	TAILQ_FOREACH_SAFE(rbs, trq, bstrs, tbs) {
 +		TAILQ_FOREACH(bs, exp, bstrs) {
-+			if ((nbs = malloc(sizeof(*nbs))) == NULL ||
-+			    asprintf(&nbs->str, "%s%s%s", rbs->str, s,
++			if ((nbs = malloc(sizeof(*nbs))) == NULL)
++				fatal("malloc");
++			if (asprintf(&nbs->str, "%s%s%s", rbs->str, s,
 +			    bs->str) == -1)
-+				fatal("out of memory");
++				fatal("asprintf");
 +			TAILQ_INSERT_TAIL(trq, nbs, bstrs);
 +		}
 +		TAILQ_REMOVE(trq, rbs, bstrs);
@@ -569,7 +570,7 @@ Index: usr.sbin/httpd/parse.y
 +	struct fastcgi_param		*src_fparam, *dst_fparam;
 +
 +	if ((dst = calloc(1, sizeof(*dst))) == NULL)
-+		fatal("out of memory");
++		fatal("calloc");
 +
 +	dst->srv_s = -1;
 +
@@ -581,13 +582,13 @@ Index: usr.sbin/httpd/parse.y
 +
 +	if (src_conf->return_uri != NULL &&
 +	    (dst_conf->return_uri = strdup(src_conf->return_uri)) == NULL)
-+		fatal("out of memory");
++		fatal("strdup");
 +
 +	dst_fparams = &dst_conf->fcgiparams;
 +	TAILQ_INIT(dst_fparams);
 +	TAILQ_FOREACH(src_fparam, &src_conf->fcgiparams, entry) {
 +		if ((dst_fparam = malloc(sizeof(*dst_fparam))) == NULL)
-+			fatal("out of memory");
++			fatal("malloc");
 +		memcpy(dst_fparam, src_fparam, sizeof(*dst_fparam));
 +		TAILQ_INSERT_TAIL(dst_fparams, dst_fparam, entry);
 +	}
