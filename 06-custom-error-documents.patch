@@ -250,19 +250,18 @@ Index: usr.sbin/httpd/parse.y
  server		: SERVER optmatch STRING	{
  			struct server		*s;
  			struct sockaddr_un	*sun;
-@@ -321,6 +359,11 @@
+@@ -321,6 +359,10 @@
  
  			s->srv_conf.hsts_max_age = SERVER_HSTS_DEFAULT_AGE;
  
-+			if (conf->sc_custom_errdocs) {
-+				s->srv_conf.errdocs = conf->sc_errdocs;
++			s->srv_conf.errdocs = conf->sc_errdocs;
++			if (conf->sc_custom_errdocs)
 +				s->srv_conf.flags |= SRVFLAG_ERRDOCS;
-+			}
 +
  			if (last_server_id == INT_MAX) {
  				yyerror("too many servers defined");
  				free(s);
-@@ -525,6 +568,17 @@
+@@ -525,6 +567,17 @@
  				    entry);
  			}
  		}
@@ -280,7 +279,7 @@ Index: usr.sbin/httpd/parse.y
  		| tcpip			{
  			if (parentsrv != NULL) {
  				yyerror("tcp flags inside location");
-@@ -1705,6 +1759,29 @@
+@@ -1705,6 +1758,29 @@
  }
  
  int
@@ -310,7 +309,7 @@ Index: usr.sbin/httpd/parse.y
  expand_braces(struct bstrq *resq, const char *cstr)
  {
  	struct bstrq	 bsq, trq;
-@@ -2042,6 +2119,7 @@
+@@ -2042,6 +2118,7 @@
  		{ "directory",		DIRECTORY },
  		{ "drop",		DROP },
  		{ "ecdhe",		ECDHE },
@@ -318,7 +317,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "error",		ERR },
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
-@@ -2089,6 +2167,7 @@
+@@ -2089,6 +2166,7 @@
  		{ "subdomains",		SUBDOMAINS },
  		{ "syslog",		SYSLOG },
  		{ "tcp",		TCP },
