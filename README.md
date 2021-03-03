@@ -129,6 +129,23 @@ server "www.example.com" {
 }
 ```
 
+### custom-error-documents
+
+Replace the built-in error documents by customized ones provided as standalone `.html` files. Configurable via [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/current/httpd.conf.5.html#errdocs) on a global or per-server basis.
+
+```
+errdocs template "errdoc.html"
+...
+server "www.example.com" {
+	...
+	errdocs {
+		from "/errdocs/www.example.com"
+		template "errdoc.html"
+	}
+	...
+}
+```
+
 ## How to install
 
 `httpd-plus` is a series of consecutive patch files which may be applied easily by following the steps below.
@@ -155,6 +172,7 @@ httpd-plus-current/02-fastcgi-script-overrides.patch
 httpd-plus-current/03-client-address-filters.patch
 httpd-plus-current/04-notify-on-block.patch
 httpd-plus-current/05-brace-expansion.patch
+httpd-plus-current/06-custom-error-documents.patch
 httpd-plus-current/LICENSE
 httpd-plus-current/README.md
 httpd-plus-current/install
