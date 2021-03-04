@@ -133,10 +133,10 @@ server "www.example.com" {
 
 ### custom-error-documents
 
-Replace the built-in error documents by customized ones provided as standalone `.html` files. Configurable via [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/6.8-stable/httpd.conf.5.html#errdocs) on a global or per-server basis.
+Replace the built-in error documents by customized ones provided as standalone `.html` files such as a generic template named `err.html` or individual files named after specific response codes they are supposed to be used for (e.g. `404.html`). Configurable via [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/6.8-stable/httpd.conf.5.html#errdocs) on a global or per-server basis.
 
 ```
-errdocs
+errdocs from "/errdocs"
 ...
 server "www.example.com" {
 	...
