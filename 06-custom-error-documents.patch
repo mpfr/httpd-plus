@@ -18,8 +18,8 @@ Index: usr.sbin/httpd/config.c
  	    CONFIG_SERVERS|CONFIG_MEDIA|CONFIG_AUTH;
  	ps->ps_what[PROC_LOGGER] = CONFIG_SERVERS;
  
-+	(void)strlcpy(env->sc_errdocs.from, HTTPD_ERRROOT,
-+	    sizeof(env->sc_errdocs.from));
++	(void)strlcpy(env->sc_errdocroot, HTTPD_ERRDOCROOT,
++	    sizeof(env->sc_errdocroot));
 +
  	/* Other configuration */
  	what = ps->ps_what[privsep_process];
@@ -29,61 +29,42 @@ Index: usr.sbin/httpd/config.c
  		if (!timeval_isset(tv))
  			*tv = parent->notifier.timeout;
 +
-+		f = SRVFLAG_ERRDOCS;
-+		srv_conf->flags |= parent->flags & f;
-+		srv_conf->errdocs = parent->errdocs;
++		srv_conf->flags |= parent->flags & SRVFLAG_ERRDOCS;
++		(void)strlcpy(srv_conf->errdocroot, parent->errdocroot,
++		    sizeof(srv_conf->errdocroot));
  
  		DPRINTF("%s: %s %d location \"%s\", "
  		    "parent \"%s[%u]\", flags: %s",
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -125,6 +125,63 @@
+@@ -125,6 +125,44 @@
  section below.
  If not specified, the default type is set to
  .Ar application/octet-stream .
-+.It Ic errdocs Oo Ar option | Bro ... Brc Oc
++.It Ic errdocs Oo Ic from Ar directory Oc
 +Let
 +.Xr httpd 8
 +return custom error documents instead of the built-in ones.
-+The following options may be specified one at a time or enclosed by curly
-+braces:
-+.Bl -tag -width Ds
-+.It Ic from Ar directory
-+Specifies the
-+.Ar directory
-+in which to search for custom error documents and, if found, to load them from.
-+Defaults to
-+.Pa /errdocs .
-+.It Ic template Ar file
-+Specifies a
-+.Ar file
-+inside the
-+.Ic from Ar directory
-+to be commonly used as a template for all error documents not provided
-+otherwise.
-+The
-+.Sq Dv .html
-+extension of the
-+.Ar file
-+may be omitted.
-+.El
++The default location for these documents is
++.Pa /errdocs Pq below Ic chroot
++unless specified otherwise by the
++.Ic from
++option.
 +.Pp
-+In general, custom error documents should be provided as standalone
++In general, custom error documents are standalone
 +.Sq Dv .html
-+files in one of the following ways (sorted by priority):
-+.Bl -enum -offset indent -compact
++files provided in one of the following ways:
++.Bl -bullet -offset indent -compact
 +.It
-+As a dedicated file for a specific 3-digit HTTP response code after which it is
-+also named
++As dedicated files named after the 3-digit HTTP response code they are used for
 +.Pq e.g. Sq Dv 404.html .
 +.It
-+By means of a
-+.Ic template Ar file
-+specified as outlined above.
++As a generic template file named
++.Sq Dv err.html
++which is used for response codes no dedicated file is provided for.
 +.El
 +.Pp
-+In case the latter is not specified and there is no dedicated file available
-+for a certain response code, the built-in error document will be used as
-+fallback.
++In case the latter does not exist and there is no dedicated file available for
++a certain response code, the built-in error document will be used as fallback.
 +.Pp
 +A custom error document may contain the following macros that will be expanded
 +at runtime:
@@ -100,17 +81,20 @@ Index: usr.sbin/httpd/httpd.conf.5
  .It Ic logdir Ar directory
  Specifies the full path of the directory in which log files will be written.
  If not specified, it defaults to
-@@ -284,6 +341,9 @@
+@@ -284,6 +322,12 @@
  .Xr httpd 8
  will neither display nor generate a directory index.
  .El
-+.It Ic errdocs Oo Ar option | Bro ... Brc Oc
-+Overrides globally defined custom error documents for the current
++.It Oo Ic no Oc Ic errdocs Oo Ic from Ar directory Oc
++Overrides or, if the
++.Ic no
++keyword is given, disables globally defined custom error documents for the
++current
 +.Ic server .
  .It Oo Ic no Oc Ic fastcgi Oo Ar option Oc
  Enable FastCGI instead of serving files.
  Valid options are:
-@@ -448,6 +508,7 @@
+@@ -448,6 +492,7 @@
  except
  .Ic alias ,
  .Ic connection ,
@@ -119,15 +103,17 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Ic listen on ,
  .Ic location ,
 Index: usr.sbin/httpd/httpd.h
-@@ -50,6 +50,7 @@
+@@ -50,6 +50,9 @@
  #define HTTPD_USER		"www"
  #define HTTPD_SERVERNAME	"OpenBSD httpd"
  #define HTTPD_DOCROOT		"/htdocs"
-+#define HTTPD_ERRROOT		"/errdocs"
++#define HTTPD_ERRDOCROOT	"/errdocs"
++#define HTTPD_ERRDOCTEMPLATE	"err.html" /* 3-char name */
++#define HTTPD_ERRDOCROOT_MAX	(PATH_MAX - sizeof(HTTPD_ERRDOCTEMPLATE))
  #define HTTPD_INDEX		"index.html"
  #define HTTPD_FCGI_SOCKET	"/run/slowcgi.sock"
  #define HTTPD_LOGROOT		"/logs"
-@@ -384,6 +385,7 @@
+@@ -384,6 +387,7 @@
  #define SRVFLAG_NO_FCGI		0x00000080
  #define SRVFLAG_LOG		0x00000100
  #define SRVFLAG_NO_LOG		0x00000200
@@ -135,7 +121,7 @@ Index: usr.sbin/httpd/httpd.h
  #define SRVFLAG_SYSLOG		0x00000800
  #define SRVFLAG_NO_SYSLOG	0x00001000
  #define SRVFLAG_TLS		0x00002000
-@@ -406,7 +408,7 @@
+@@ -406,7 +410,7 @@
  
  #define SRVFLAG_BITS							\
  	"\10\01INDEX\02NO_INDEX\03AUTO_INDEX\04NO_AUTO_INDEX"		\
@@ -144,172 +130,114 @@ Index: usr.sbin/httpd/httpd.h
  	"\14SYSLOG\15NO_SYSLOG\16TLS\17ACCESS_LOG\20ERROR_LOG"		\
  	"\21AUTH\22NO_AUTH\23BLOCK\24NO_BLOCK\25LOCATION_MATCH"		\
  	"\26SERVER_MATCH\27SERVER_HSTS\30DEFAULT_TYPE\31PATH\32NO_PATH" \
-@@ -525,6 +527,11 @@
- 	struct event	*ev;
- };
- 
-+struct error_documents {
-+	char	 from[PATH_MAX];
-+	char	 tmpl[PATH_MAX];
-+};
-+
- struct server_config {
- 	uint32_t		 id;
- 	uint32_t		 parent_id;
-@@ -599,6 +606,7 @@
+@@ -599,6 +603,7 @@
  
  	struct addr_filter	 clientfilter[HTTPD_CLIENT_FILTER_MAX];
  	struct socket_notifier	 notifier;
-+	struct error_documents	 errdocs;
++	char			 errdocroot[HTTPD_ERRDOCROOT_MAX];
  
  	TAILQ_ENTRY(server_config) entry;
  };
-@@ -657,6 +665,9 @@
+@@ -657,6 +662,9 @@
  
  	struct privsep		*sc_ps;
  	int			 sc_reload;
 +
 +	int			 sc_custom_errdocs;
-+	struct error_documents	 sc_errdocs;
++	char			 sc_errdocroot[HTTPD_ERRDOCROOT_MAX];
  };
  
  #define HTTPD_OPT_VERBOSE		0x01
 Index: usr.sbin/httpd/parse.y
-@@ -76,6 +76,7 @@
- struct addr_filter
- 		*build_clientfilter(struct server_config *, char *);
- int		 clientfilter_cmp(struct addr_filter *, struct addr_filter *);
-+int		 process_errdocs(struct error_documents *);
- int		 yyerror(const char *, ...)
-     __attribute__((__format__ (printf, 1, 2)))
-     __attribute__((__nonnull__ (1)));
-@@ -121,6 +122,7 @@
- static struct server_config *srv_conf = NULL;
- struct serverlist	 servers;
- struct media_type	 media;
-+struct error_documents	*errdocs;
- 
- struct address	*host_v4(const char *);
- struct address	*host_v6(const char *);
-@@ -158,7 +160,7 @@
+@@ -158,14 +158,14 @@
  %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
  %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
  %token	CA CLIENT CRL OPTIONAL PARAM FORWARDED FOUND NOT CACHE SCRIPT FROM
 -%token	NOTIFY MESSAGE CR LF
-+%token	NOTIFY MESSAGE CR LF ERRDOCS TEMPLATE
++%token	NOTIFY MESSAGE CR LF ERRDOCS
  %token	<v.string>	STRING
  %token  <v.number>	NUMBER
  %type	<v.port>	port
-@@ -245,6 +247,13 @@
+ %type	<v.string>	fcgiport
+ %type	<v.number>	opttls optmatch optfound
+ %type	<v.tv>		timeout
+-%type	<v.string>	numberstring optstring stringornl
++%type	<v.string>	numberstring optstring stringornl optfrom
+ %type	<v.string>	optclientfilter clientfilters_l msgopts_l
+ %type	<v.auth>	authopts
+ 
+@@ -245,6 +245,17 @@
  		| CHROOT STRING		{
  			conf->sc_chroot = $2;
  		}
-+		| ERRDOCS		{
-+			errdocs = &conf->sc_errdocs;
-+		} errdocsopts 		{
-+			if (process_errdocs(errdocs) == -1)
++		| ERRDOCS optfrom	{
++			if ($2 != NULL && strlcpy(conf->sc_errdocroot, $2,
++			    sizeof(conf->sc_errdocroot)) >=
++			    sizeof(conf->sc_errdocroot)) {
++				yyerror("errdoc root path too long");
++				free($2);
 +				YYERROR;
++			}
++			free($2);
 +			conf->sc_custom_errdocs = 1;
 +		}
  		| LOGDIR STRING		{
  			conf->sc_logdir = $2;
  		}
-@@ -254,6 +263,35 @@
+@@ -254,6 +265,10 @@
  		}
  		;
  
-+errdocsopts	: '{' optnl errdocsopt_l '}'
-+		| errdocsopt
-+		| /* empty */
-+		;
-+
-+errdocsopt_l	: errdocsopt optcommanl errdocsopt_l
-+		| errdocsopt optnl
-+		;
-+
-+errdocsopt	: FROM STRING		{
-+			if (strlcpy(errdocs->from, $2,
-+			    sizeof(errdocs->from)) >= sizeof(errdocs->from)) {
-+				yyerror("errdocs root path truncated");
-+				free($2);
-+				YYERROR;
-+			}
-+			free($2);
-+		}
-+		| TEMPLATE STRING	{
-+			if (strlcpy(errdocs->tmpl, $2,
-+			    sizeof(errdocs->tmpl)) >= sizeof(errdocs->tmpl)) {
-+				yyerror("errdocs template truncated");
-+				free($2);
-+				YYERROR;
-+			}
-+			free($2);
-+		}
++optfrom		: /* empty */	{ $$ = NULL; }
++		| FROM STRING	{ $$ = $2; }
 +		;
 +
  server		: SERVER optmatch STRING	{
  			struct server		*s;
  			struct sockaddr_un	*sun;
-@@ -321,6 +359,10 @@
+@@ -321,6 +336,12 @@
  
  			s->srv_conf.hsts_max_age = SERVER_HSTS_DEFAULT_AGE;
  
-+			s->srv_conf.errdocs = conf->sc_errdocs;
++			(void)strlcpy(s->srv_conf.errdocroot,
++			    conf->sc_errdocroot,
++			    sizeof(s->srv_conf.errdocroot));
 +			if (conf->sc_custom_errdocs)
 +				s->srv_conf.flags |= SRVFLAG_ERRDOCS;
 +
  			if (last_server_id == INT_MAX) {
  				yyerror("too many servers defined");
  				free(s);
-@@ -525,6 +567,17 @@
+@@ -525,6 +546,28 @@
  				    entry);
  			}
  		}
-+		| ERRDOCS		{
++		| ERRDOCS optfrom	{
 +			if (parentsrv != NULL) {
 +				yyerror("errdocs inside location");
 +				YYERROR;
 +			}
-+			errdocs = &srv->srv_conf.errdocs;
-+		} errdocsopts		{
-+			if (process_errdocs(errdocs) == -1)
++			if ($2 != NULL && strlcpy(srv->srv_conf.errdocroot, $2,
++			    sizeof(srv->srv_conf.errdocroot)) >=
++			    sizeof(srv->srv_conf.errdocroot)) {
++				yyerror("errdoc root path too long");
++				free($2);
 +				YYERROR;
++			}
++			free($2);
 +			srv->srv_conf.flags |= SRVFLAG_ERRDOCS;
++		}
++		| NO ERRDOCS		{
++			if (parentsrv != NULL) {
++				yyerror("errdocs inside location");
++				YYERROR;
++			}
++			srv->srv_conf.flags &= ~SRVFLAG_ERRDOCS;
 +		}
  		| tcpip			{
  			if (parentsrv != NULL) {
  				yyerror("tcp flags inside location");
-@@ -1705,6 +1758,29 @@
- }
- 
- int
-+process_errdocs(struct error_documents *edocs)
-+{
-+	char	*c, *p;
-+
-+	if (*edocs->tmpl == '\0')
-+		return (0);
-+
-+	if ((c = strrchr(edocs->tmpl, '.')) != NULL && strcmp(c, ".html"))
-+		c = NULL;
-+	if (asprintf(&p, "%s/%s%s", edocs->from, edocs->tmpl,
-+	    c == NULL ? ".html" : "") == -1)
-+		fatal("asprintf");
-+	if (strlcpy(edocs->tmpl, p,
-+	    sizeof(edocs->tmpl)) >= sizeof(edocs->tmpl)) {
-+		yyerror("final errdocs template path too long: '%s'", p);
-+		free(p);
-+		return (-1);
-+	}
-+	free(p);
-+	return (0);
-+}
-+
-+int
- expand_braces(struct bstrq *resq, const char *cstr)
- {
- 	struct bstrq	 bsq, trq;
-@@ -2042,6 +2118,7 @@
+@@ -2042,6 +2085,7 @@
  		{ "directory",		DIRECTORY },
  		{ "drop",		DROP },
  		{ "ecdhe",		ECDHE },
@@ -317,14 +245,6 @@ Index: usr.sbin/httpd/parse.y
  		{ "error",		ERR },
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
-@@ -2089,6 +2166,7 @@
- 		{ "subdomains",		SUBDOMAINS },
- 		{ "syslog",		SYSLOG },
- 		{ "tcp",		TCP },
-+		{ "template",		TEMPLATE },
- 		{ "ticket",		TICKET },
- 		{ "timeout",		TIMEOUT },
- 		{ "tls",		TLS },
 Index: usr.sbin/httpd/server_http.c
 @@ -22,6 +22,7 @@
  #include <sys/socket.h>
@@ -334,33 +254,26 @@ Index: usr.sbin/httpd/server_http.c
  
  #include <netinet/in.h>
  #include <arpa/inet.h>
-@@ -857,7 +858,10 @@
- 	char			*clenheader = NULL;
+@@ -858,6 +859,9 @@
  	char			 buf[IBUF_READ_SIZE];
  	char			*escapedmsg = NULL;
--	int			 bodylen;
-+	int			 bodylen, pathlen;
+ 	int			 bodylen;
 +	char			*errpath, *errfile, *str;
 +	struct stat		 errsb;
 +	int			 errfd;
  
  	if (code == 0) {
  		server_close(clt, "dropped");
-@@ -933,6 +937,69 @@
+@@ -933,6 +937,67 @@
  
  	free(escapedmsg);
  
 +	if ((srv_conf->flags & SRVFLAG_ERRDOCS) == 0)
 +		goto builtin; /* errdocs not enabled */
 +
-+	if ((pathlen = asprintf(&errpath, "%s/%03d.html",
-+	    srv_conf->errdocs.from, code)) == -1)
++	if (asprintf(&errpath, "%s/%03d.html", srv_conf->errdocroot,
++	    code) == -1)
 +		fatal("asprintf");
-+	if (pathlen >= PATH_MAX) {
-+		log_warn("errdocs path too long: %s", errpath);
-+		free(errpath);
-+		goto builtin; /* final path too long */
-+	}
 +	if (access(errpath, R_OK) == 0 && stat(errpath, &errsb) == 0 &&
 +	    (errfd = open(errpath, O_RDONLY)) != -1) {
 +		free(errpath);
@@ -370,12 +283,15 @@ Index: usr.sbin/httpd/server_http.c
 +
 +	/* no dedicated file found */
 +
-+	if (*(errpath = srv_conf->errdocs.tmpl) == '\0')
-+		goto builtin; /* no template specified */
-+
++	if (asprintf(&errpath, "%s/%s", srv_conf->errdocroot,
++	    HTTPD_ERRDOCTEMPLATE) == -1)
++		fatal("asprintf");
 +	if (access(errpath, R_OK) == 0 && stat(errpath, &errsb) == 0 &&
-+	    (errfd = open(errpath, O_RDONLY)) != -1)
++	    (errfd = open(errpath, O_RDONLY)) != -1) {
++		free(errpath);
 +		goto custom; /* template found and opened */
++	}
++	free(errpath);
 +
 +	goto builtin; /* no template found */
 +
@@ -416,7 +332,7 @@ Index: usr.sbin/httpd/server_http.c
  	/* A CSS stylesheet allows minimal customization by the user */
  	style = "body { background-color: white; color: black; font-family: "
  	    "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif; }\n"
-@@ -960,6 +1027,7 @@
+@@ -960,6 +1025,7 @@
  		goto done;
  	}
  
