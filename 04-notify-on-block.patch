@@ -216,8 +216,8 @@ Index: usr.sbin/httpd/httpd.h
  	uint32_t		 id;
  	uint32_t		 parent_id;
 @@ -575,6 +598,7 @@
- 	int			 fcgistrip;
  
+ 	char			 script[PATH_MAX];
  	struct addr_filter	 clientfilter[HTTPD_CLIENT_FILTER_MAX];
 +	struct socket_notifier	 notifier;
  

@@ -132,11 +132,10 @@ Index: usr.sbin/httpd/httpd.h
  struct server_config {
  	uint32_t		 id;
  	uint32_t		 parent_id;
-@@ -546,6 +573,8 @@
- 
- 	struct server_fcgiparams fcgiparams;
+@@ -547,6 +574,7 @@
  	int			 fcgistrip;
-+
+ 
+ 	char			 script[PATH_MAX];
 +	struct addr_filter	 clientfilter[HTTPD_CLIENT_FILTER_MAX];
  
  	TAILQ_ENTRY(server_config) entry;
