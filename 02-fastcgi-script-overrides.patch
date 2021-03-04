@@ -25,15 +25,24 @@ Index: usr.sbin/httpd/httpd.conf.5
  Strip
  .Ar number
 Index: usr.sbin/httpd/httpd.h
-@@ -546,6 +546,8 @@
+@@ -1,7 +1,7 @@
+ /*	$OpenBSD: httpd.h,v 1.154 2021/01/27 07:21:52 deraadt Exp $	*/
+ 
+ /*
+- * Copyright (c) 2020 Matthias Pressfreund
++ * Copyright (c) 2020, 2021 Matthias Pressfreund
+  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
+  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
+  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
+@@ -545,6 +545,8 @@
+ 
  	struct server_fcgiparams fcgiparams;
  	int			 fcgistrip;
- 
-+	char			 script[PATH_MAX];
 +
++	char			 fcgiscript[PATH_MAX];
+ 
  	TAILQ_ENTRY(server_config) entry;
  };
- TAILQ_HEAD(serverhosts, server_config);
 Index: usr.sbin/httpd/parse.y
 @@ -140,7 +140,7 @@
  %token	PROTOCOLS REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TICKET
@@ -49,10 +58,10 @@ Index: usr.sbin/httpd/parse.y
  			TAILQ_INSERT_HEAD(&srv_conf->fcgiparams, param, entry);
  		}
 +		| SCRIPT STRING {
-+			if (strlcpy(srv_conf->script, $2,
-+			    sizeof(srv_conf->script)) >=
-+			    sizeof(srv_conf->script)) {
-+				yyerror("script too long");
++			if (strlcpy(srv_conf->fcgiscript, $2,
++			    sizeof(srv_conf->fcgiscript)) >=
++			    sizeof(srv_conf->fcgiscript)) {
++				yyerror("fastcgi script override too long");
 +				free($2);
 +				YYERROR;
 +			}
@@ -74,7 +83,7 @@ Index: usr.sbin/httpd/server_fcgi.c
  /*	$OpenBSD: server_fcgi.c,v 1.84 2020/09/12 07:34:17 yasuoka Exp $	*/
  
  /*
-+ * Copyright (c) 2020 Matthias Pressfreund
++ * Copyright (c) 2020, 2021 Matthias Pressfreund
   * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
   *
   * Permission to use, copy, modify, and distribute this software for any
@@ -85,12 +94,12 @@ Index: usr.sbin/httpd/server_fcgi.c
 -	alias = desc->http_path_alias != NULL
 -	    ? desc->http_path_alias
 -	    : desc->http_path;
-+	if (*srv_conf->script == '\0') {
++	if (*srv_conf->fcgiscript == '\0') {
 +		alias = desc->http_path_alias != NULL
 +		    ? desc->http_path_alias
 +		    : desc->http_path;
 +	} else
-+		alias = srv_conf->script;
++		alias = srv_conf->fcgiscript;
  
  	query_alias = desc->http_query_alias != NULL
  	    ? desc->http_query_alias

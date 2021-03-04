@@ -66,15 +66,6 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Ic location
  option,
 Index: usr.sbin/httpd/httpd.h
-@@ -1,7 +1,7 @@
- /*	$OpenBSD: httpd.h,v 1.154 2021/01/27 07:21:52 deraadt Exp $	*/
- 
- /*
-- * Copyright (c) 2020 Matthias Pressfreund
-+ * Copyright (c) 2020, 2021 Matthias Pressfreund
-  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
-  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
-  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 @@ -57,6 +57,7 @@
  #define HTTPD_MAX_ALIAS_IP	16
  #define HTTPD_REALM_MAX		255
@@ -135,7 +126,7 @@ Index: usr.sbin/httpd/httpd.h
 @@ -547,6 +574,7 @@
  	int			 fcgistrip;
  
- 	char			 script[PATH_MAX];
+ 	char			 fcgiscript[PATH_MAX];
 +	struct addr_filter	 clientfilter[HTTPD_CLIENT_FILTER_MAX];
  
  	TAILQ_ENTRY(server_config) entry;
