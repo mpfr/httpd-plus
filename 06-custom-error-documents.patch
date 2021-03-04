@@ -131,7 +131,7 @@ Index: usr.sbin/httpd/httpd.h
  	"\21AUTH\22NO_AUTH\23BLOCK\24NO_BLOCK\25LOCATION_MATCH"		\
  	"\26SERVER_MATCH\27SERVER_HSTS\30DEFAULT_TYPE\31PATH\32NO_PATH" \
 @@ -599,6 +603,7 @@
- 	char			 script[PATH_MAX];
+ 	char			 fcgiscript[PATH_MAX];
  	struct addr_filter	 clientfilter[HTTPD_CLIENT_FILTER_MAX];
  	struct socket_notifier	 notifier;
 +	char			 errdocroot[HTTPD_ERRDOCROOT_MAX];
