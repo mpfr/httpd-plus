@@ -25,14 +25,15 @@ Index: usr.sbin/httpd/httpd.conf.5
  Strip
  .Ar number
 Index: usr.sbin/httpd/httpd.h
-@@ -480,6 +480,7 @@
- 	uint32_t		 parent_id;
- 	char			 name[HOST_NAME_MAX+1];
- 	char			 location[HTTPD_LOCATION_MAX];
+@@ -546,6 +546,8 @@
+ 	struct server_fcgiparams fcgiparams;
+ 	int			 fcgistrip;
+ 
 +	char			 script[PATH_MAX];
- 	char			 root[PATH_MAX];
- 	char			 path[PATH_MAX];
- 	char			 index[PATH_MAX];
++
+ 	TAILQ_ENTRY(server_config) entry;
+ };
+ TAILQ_HEAD(serverhosts, server_config);
 Index: usr.sbin/httpd/parse.y
 @@ -140,7 +140,7 @@
  %token	PROTOCOLS REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TICKET
