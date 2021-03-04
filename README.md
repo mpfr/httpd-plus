@@ -136,14 +136,11 @@ server "www.example.com" {
 Replace the built-in error documents by customized ones provided as standalone `.html` files. Configurable via [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/6.8-stable/httpd.conf.5.html#errdocs) on a global or per-server basis.
 
 ```
-errdocs template "errdoc.html"
+errdocs
 ...
 server "www.example.com" {
 	...
-	errdocs {
-		from "/errdocs/www.example.com"
-		template "errdoc.html"
-	}
+	errdocs from "/errdocs/www.example.com"
 	...
 }
 ```
