@@ -130,7 +130,7 @@ Index: usr.sbin/httpd/httpd.h
  	"\14SYSLOG\15NO_SYSLOG\16TLS\17ACCESS_LOG\20ERROR_LOG"		\
  	"\21AUTH\22NO_AUTH\23BLOCK\24NO_BLOCK\25LOCATION_MATCH"		\
  	"\26SERVER_MATCH\27SERVER_HSTS\30DEFAULT_TYPE\31PATH\32NO_PATH" \
-@@ -599,6 +603,7 @@
+@@ -598,6 +602,7 @@
  	char			 fcgiscript[PATH_MAX];
  	struct addr_filter	 clientfilter[HTTPD_CLIENT_FILTER_MAX];
  	struct socket_notifier	 notifier;
@@ -138,7 +138,7 @@ Index: usr.sbin/httpd/httpd.h
  
  	TAILQ_ENTRY(server_config) entry;
  };
-@@ -657,6 +662,9 @@
+@@ -656,6 +661,9 @@
  
  	struct privsep		*sc_ps;
  	int			 sc_reload;
