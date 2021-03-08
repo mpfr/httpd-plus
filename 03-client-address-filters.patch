@@ -93,7 +93,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define TCPFLAG_NODELAY		0x01
  #define TCPFLAG_NNODELAY	0x02
-@@ -475,6 +479,29 @@
+@@ -475,6 +479,28 @@
  };
  TAILQ_HEAD(server_fcgiparams, fastcgi_param);
  
@@ -101,17 +101,16 @@ Index: usr.sbin/httpd/httpd.h
 +	struct in_addr	 ipv4;
 +	struct in6_addr	 ipv6;
 +};
-+enum addrtype { ADDR_IPV4 = 1, ADDR_IPV6 };
 +
 +struct client_addr {
 +	union addrvalue	 value;
-+	enum addrtype	 type;
++	unsigned char	 family;
 +};
 +
 +struct addr_filter {
 +	union addrvalue	 first;
 +	union addrvalue	 last;
-+	enum addrtype	 type;
++	unsigned char	 family;
 +	unsigned char	 xff;
 +};
 +
@@ -123,7 +122,7 @@ Index: usr.sbin/httpd/httpd.h
  struct server_config {
  	uint32_t		 id;
  	uint32_t		 parent_id;
-@@ -547,6 +574,7 @@
+@@ -547,6 +573,7 @@
  	int			 fcgistrip;
  
  	char			 fcgiscript[PATH_MAX];
@@ -339,13 +338,13 @@ Index: usr.sbin/httpd/parse.y
 +		cstr[span] = '\0';
 +		if ((bits = inet_net_pton(AF_INET, cstr, &rbuf.first.ipv4,
 +		    sizeof(rbuf.first.ipv4))) != -1) {
-+			rbuf.type = ADDR_IPV4;
++			rbuf.family = AF_INET;
 +			first = (unsigned char *)&rbuf.first.ipv4.s_addr;
 +			last = (unsigned char *)&rbuf.last.ipv4.s_addr;
 +			nbyte = sizeof(struct in_addr);
 +		} else if ((bits = inet_net_pton(AF_INET6, cstr,
 +		    &rbuf.first.ipv6, sizeof(rbuf.first.ipv6))) != -1) {
-+			rbuf.type = ADDR_IPV6;
++			rbuf.family = AF_INET6;
 +			first = (unsigned char *)&rbuf.first.ipv6.s6_addr;
 +			last = (unsigned char *)&rbuf.last.ipv6.s6_addr;
 +			nbyte = sizeof(struct in6_addr);
@@ -370,16 +369,16 @@ Index: usr.sbin/httpd/parse.y
 +				goto next;
 +			}
 +#if DEBUG
-+		if (rbuf.type == ADDR_IPV4)
-+			DPRINTF("%s: adding \"%s\" xff:%u type:%d bits:%d "
++		if (rbuf.family == AF_INET)
++			DPRINTF("%s: adding \"%s\" xff:%u family:%d bits:%d "
 +			    "range:%08X...%08X",
-+			    __func__, cstr, rbuf.xff, rbuf.type, bits,
++			    __func__, cstr, rbuf.xff, rbuf.family, bits,
 +			    be32toh(rbuf.first.ipv4.s_addr),
 +			    be32toh(rbuf.last.ipv4.s_addr));
 +		else
-+			DPRINTF("%s: adding \"%s\" xff:%u type:%d bits:%d "
++			DPRINTF("%s: adding \"%s\" xff:%u family:%d bits:%d "
 +			    "range:%016llX%016llX...%016llX%016llX",
-+			    __func__, cstr, rbuf.xff, rbuf.type, bits,
++			    __func__, cstr, rbuf.xff, rbuf.family, bits,
 +			    be64toh(*(uint64_t *)rbuf.first.ipv6.s6_addr),
 +			    be64toh(*(uint64_t *)&rbuf.first.ipv6.s6_addr[8]),
 +			    be64toh(*(uint64_t *)rbuf.last.ipv6.s6_addr),
@@ -402,7 +401,7 @@ Index: usr.sbin/httpd/parse.y
 +	int	 i, j, c;
 +
 +	for (i = 0; i < HTTPD_CLIENT_FILTER_MAX; i++) {
-+		if (!a[i].type)
++		if (!a[i].family)
 +			return (memcmp(&a[i], &b[i],
 +			    sizeof(struct addr_filter)));
 +
@@ -411,7 +410,7 @@ Index: usr.sbin/httpd/parse.y
 +			c = memcmp(&a[i], &b[j], sizeof(struct addr_filter));
 +			if (c == 0)
 +				break;
-+			if (!b[j].type || ++j == HTTPD_CLIENT_FILTER_MAX)
++			if (!b[j].family || ++j == HTTPD_CLIENT_FILTER_MAX)
 +				return (c);
 +		}
 +	}
@@ -470,10 +469,10 @@ Index: usr.sbin/httpd/server_http.c
 +	    xff->kv_value != NULL) {
 +		if (inet_pton(AF_INET, xff->kv_value,
 +		    &clt_addr.xff.value.ipv4) == 1)
-+			clt_addr.xff.type = ADDR_IPV4;
++			clt_addr.xff.family = AF_INET;
 +		else if (inet_pton(AF_INET6, xff->kv_value,
 +		    &clt_addr.xff.value.ipv6) == 1)
-+			clt_addr.xff.type = ADDR_IPV6;
++			clt_addr.xff.family = AF_INET6;
 +		else
 +			return (NULL);
 +	}
@@ -481,18 +480,18 @@ Index: usr.sbin/httpd/server_http.c
 +	case AF_INET:
 +		sin = (struct sockaddr_in *)&clt->clt_ss;
 +		clt_addr.srv.value.ipv4 = sin->sin_addr;
-+		clt_addr.srv.type = ADDR_IPV4;
++		clt_addr.srv.family = AF_INET;
 +		break;
 +	case AF_INET6:
 +		sin6 = (struct sockaddr_in6 *)&clt->clt_ss;
 +		clt_addr.srv.value.ipv6 = sin6->sin6_addr;
-+		clt_addr.srv.type = ADDR_IPV6;
++		clt_addr.srv.family = AF_INET6;
 +		break;
 +	default:
 +		return (NULL);
 +	}
-+	if (!clt_addr.xff.type)
-+		clt_addr.xff.type = clt_addr.srv.type;
++	if (!clt_addr.xff.family)
++		clt_addr.xff.family = clt_addr.srv.family;
 +
  	/* Now search for the location */
  	TAILQ_FOREACH(location, &srv->srv_hosts, entry) {
@@ -526,25 +525,25 @@ Index: usr.sbin/httpd/server_http.c
 +		return (0);
 +
 +	for (clt_fltr = srv_conf->clientfilter, i = 0;
-+	    i < HTTPD_CLIENT_FILTER_MAX && clt_fltr[i].type; i++) {
++	    i < HTTPD_CLIENT_FILTER_MAX && clt_fltr[i].family; i++) {
 +		caddr = clt_fltr[i].xff ? &clt_addr->xff : &clt_addr->srv;
-+		if (clt_fltr[i].type != caddr->type) {
-+			DPRINTF("%s: type-mismatch: client:%d <-> range:%d",
-+			    __func__, caddr->type, clt_fltr[i].type);
++		if (clt_fltr[i].family != caddr->family) {
++			DPRINTF("%s: family-mismatch: client:%u <-> range:%u",
++			    __func__, caddr->family, clt_fltr[i].family);
 +			continue;
 +		}
 +#if DEBUG
-+		if (caddr->type == ADDR_IPV4)
-+			DPRINTF("%s: xff:%u type:%d client:%08X "
++		if (caddr->family == AF_INET)
++			DPRINTF("%s: xff:%u family:%u client:%08X "
 +			    "range:%08X...%08X",
-+			    __func__, clt_fltr[i].xff, clt_fltr[i].type,
++			    __func__, clt_fltr[i].xff, clt_fltr[i].family,
 +			    be32toh(caddr->value.ipv4.s_addr),
 +			    be32toh(clt_fltr[i].first.ipv4.s_addr),
 +			    be32toh(clt_fltr[i].last.ipv4.s_addr));
 +		else
-+			DPRINTF("%s: xff:%u type:%d client:%016llX%016llX "
++			DPRINTF("%s: xff:%u family:%u client:%016llX%016llX "
 +			    "range:%016llX%016llX...%016llX%016llX",
-+			    __func__, clt_fltr[i].xff, clt_fltr[i].type,
++			    __func__, clt_fltr[i].xff, clt_fltr[i].family,
 +			    be64toh(*(uint64_t *)
 +			    caddr->value.ipv6.s6_addr),
 +			    be64toh(*(uint64_t *)
@@ -558,12 +557,12 @@ Index: usr.sbin/httpd/server_http.c
 +			    be64toh(*(uint64_t *)
 +			    &clt_fltr[i].last.ipv6.s6_addr[8]));
 +#endif
-+		if ((caddr->type == ADDR_IPV4 &&
++		if ((caddr->family == AF_INET &&
 +		    memcmp(&caddr->value.ipv4, &clt_fltr[i].first.ipv4,
 +		    sizeof(struct in_addr)) >= 0 &&
 +		    memcmp(&caddr->value.ipv4, &clt_fltr[i].last.ipv4,
 +		    sizeof(struct in_addr)) <= 0) ||
-+		    (caddr->type == ADDR_IPV6 &&
++		    (caddr->family == AF_INET6 &&
 +		    memcmp(&caddr->value.ipv6, &clt_fltr[i].first.ipv6,
 +		    sizeof(struct in6_addr)) >= 0 &&
 +		    memcmp(&caddr->value.ipv6, &clt_fltr[i].last.ipv6,
