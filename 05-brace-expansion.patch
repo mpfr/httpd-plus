@@ -14,7 +14,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -857,6 +857,71 @@
+@@ -858,6 +858,71 @@
  Include types definitions from an external file, for example
  .Pa /usr/share/misc/mime.types .
  .El
@@ -86,7 +86,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Sh FILES
  .Bl -tag -width /etc/examples/httpd.conf -compact
  .It Pa /etc/examples/httpd.conf
-@@ -958,6 +1023,26 @@
+@@ -959,6 +1024,26 @@
  		request rewrite "/new/%1"
  	}
  }
@@ -114,7 +114,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Sh SEE ALSO
  .Xr htpasswd 1 ,
 Index: usr.sbin/httpd/parse.y
-@@ -86,6 +86,20 @@
+@@ -87,6 +87,20 @@
  void		 lungetc(int);
  int		 findeol(void);
  
@@ -135,7 +135,7 @@ Index: usr.sbin/httpd/parse.y
  TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
  struct sym {
  	TAILQ_ENTRY(sym)	 entry;
-@@ -168,17 +182,31 @@
+@@ -169,17 +183,31 @@
  		;
  
  include		: INCLUDE STRING		{
@@ -171,7 +171,7 @@ Index: usr.sbin/httpd/parse.y
  		}
  		;
  
-@@ -456,6 +484,7 @@
+@@ -457,6 +485,7 @@
  			free($3);
  		}
  		| ALIAS optmatch STRING		{
@@ -179,7 +179,7 @@ Index: usr.sbin/httpd/parse.y
  			struct server_config	*alias;
  
  			if (parentsrv != NULL) {
-@@ -464,22 +493,37 @@
+@@ -465,22 +494,37 @@
  				YYERROR;
  			}
  
@@ -227,7 +227,7 @@ Index: usr.sbin/httpd/parse.y
  		}
  		| tcpip			{
  			if (parentsrv != NULL) {
-@@ -521,6 +565,8 @@
+@@ -522,6 +566,8 @@
  		| LOCATION optfound optmatch STRING optclientfilter	{
  			struct server		*s;
  			struct sockaddr_un	*sun;
@@ -236,7 +236,7 @@ Index: usr.sbin/httpd/parse.y
  
  			if (srv->srv_conf.ss.ss_family == AF_UNSPEC) {
  				yyerror("listen address not specified");
-@@ -542,25 +588,44 @@
+@@ -543,25 +589,44 @@
  				YYACCEPT;
  			}
  
@@ -284,7 +284,7 @@ Index: usr.sbin/httpd/parse.y
  				free(s);
  				YYERROR;
  			}
-@@ -592,6 +657,7 @@
+@@ -593,6 +658,7 @@
  				if (build_clientfilter(&s->srv_conf,
  				    $5 + 1) == NULL) {
  					free($5);
@@ -292,7 +292,7 @@ Index: usr.sbin/httpd/parse.y
  					free(s);
  					YYERROR;
  				}
-@@ -615,51 +681,22 @@
+@@ -616,51 +682,22 @@
  			s->srv_conf.prefixlen = srv->srv_conf.prefixlen;
  			s->srv_conf.tls_flags = srv->srv_conf.tls_flags;
  
@@ -353,7 +353,7 @@ Index: usr.sbin/httpd/parse.y
  			srv = parentsrv;
  			srv_conf = &parentsrv->srv_conf;
  			parentsrv = NULL;
-@@ -1665,6 +1702,293 @@
+@@ -1721,6 +1758,293 @@
  		}
  	}
  	return (0);
