@@ -94,7 +94,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .It Oo Ic no Oc Ic fastcgi Oo Ar option Oc
  Enable FastCGI instead of serving files.
  Valid options are:
-@@ -448,6 +492,7 @@
+@@ -449,6 +493,7 @@
  except
  .Ic alias ,
  .Ic connection ,
@@ -149,7 +149,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define HTTPD_OPT_VERBOSE		0x01
 Index: usr.sbin/httpd/parse.y
-@@ -158,14 +158,14 @@
+@@ -159,14 +159,14 @@
  %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
  %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
  %token	CA CLIENT CRL OPTIONAL PARAM FORWARDED FOUND NOT CACHE SCRIPT FROM
@@ -166,7 +166,7 @@ Index: usr.sbin/httpd/parse.y
  %type	<v.string>	optclientfilter clientfilters_l msgopts_l
  %type	<v.auth>	authopts
  
-@@ -245,6 +245,17 @@
+@@ -246,6 +246,17 @@
  		| CHROOT STRING		{
  			conf->sc_chroot = $2;
  		}
@@ -184,7 +184,7 @@ Index: usr.sbin/httpd/parse.y
  		| LOGDIR STRING		{
  			conf->sc_logdir = $2;
  		}
-@@ -254,6 +265,10 @@
+@@ -255,6 +266,10 @@
  		}
  		;
  
@@ -195,7 +195,7 @@ Index: usr.sbin/httpd/parse.y
  server		: SERVER optmatch STRING	{
  			struct server		*s;
  			struct sockaddr_un	*sun;
-@@ -321,6 +336,12 @@
+@@ -322,6 +337,12 @@
  
  			s->srv_conf.hsts_max_age = SERVER_HSTS_DEFAULT_AGE;
  
@@ -208,7 +208,7 @@ Index: usr.sbin/httpd/parse.y
  			if (last_server_id == INT_MAX) {
  				yyerror("too many servers defined");
  				free(s);
-@@ -525,6 +546,28 @@
+@@ -526,6 +547,28 @@
  				    entry);
  			}
  		}
@@ -237,7 +237,7 @@ Index: usr.sbin/httpd/parse.y
  		| tcpip			{
  			if (parentsrv != NULL) {
  				yyerror("tcp flags inside location");
-@@ -2042,6 +2085,7 @@
+@@ -2098,6 +2141,7 @@
  		{ "directory",		DIRECTORY },
  		{ "drop",		DROP },
  		{ "ecdhe",		ECDHE },
