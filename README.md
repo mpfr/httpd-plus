@@ -21,7 +21,7 @@ The former [`location-access-tests`](https://github.com/mpfr/httpd-plus/blob/900
 	* Failing location access test in case `server`/`location` `root` is empty (see on [tech@](https://marc.info/?l=openbsd-tech&m=160468404614852&w=2))
 	* Inconsistent handling of inaccessible `server`/`location` `root` (regular file access still returns status `404` instead of `500`)
 
-* [Commits](https://github.com/openbsd/src/commits/master/usr.sbin/httpd) to `-current` backported to `6.8-stable` until January 27, 2021
+* [Commits](https://github.com/openbsd/src/commits/master/usr.sbin/httpd) to `-current` backported to `6.8-stable` until March 16, 2021
 
 ### cache-control-headers
 
