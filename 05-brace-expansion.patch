@@ -353,7 +353,7 @@ Index: usr.sbin/httpd/parse.y
  			srv = parentsrv;
  			srv_conf = &parentsrv->srv_conf;
  			parentsrv = NULL;
-@@ -1721,6 +1758,293 @@
+@@ -1717,6 +1754,293 @@
  		}
  	}
  	return (0);

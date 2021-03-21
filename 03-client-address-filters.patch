@@ -306,7 +306,7 @@ Index: usr.sbin/httpd/parse.y
  hsts		: HSTS '{' optnl hstsflags_l '}'
  		| HSTS hstsflags
  		| HSTS
-@@ -1375,6 +1454,170 @@
+@@ -1375,6 +1454,166 @@
  };
  
  int
@@ -366,17 +366,13 @@ Index: usr.sbin/httpd/parse.y
 +struct addr_filter *
 +build_clientfilter(struct server_config *sc, char *cfgstr)
 +{
-+	struct addr_filter	*clt_fltr, rbuf;
-+	size_t			 cfglen, span;
++	struct addr_filter	*clt_fltr = sc->clientfilter, rbuf;
++	size_t			 cfglen = strlen(cfgstr), span;
 +	char			*cstr, buf[INET6_ADDRSTRLEN];
 +	int			 i, bits, c, bytes, range;
 +	unsigned char		*first, *last, b;
 +
-+	cfglen = strlen(cfgstr);
 +	DPRINTF("%s: received \"%s\" len:%zu", __func__, cfgstr, cfglen);
-+
-+	clt_fltr = sc->clientfilter;
-+	memset(clt_fltr, 0, sizeof(*clt_fltr) * HTTPD_CLIENT_FILTER_MAX);
 +
 +	for (cstr = cfgstr, i = 0, cfgstr += cfglen; cstr <= cfgstr &&
 +	    (cstr = strpbrk(cstr, "0123456789AaBbCcDdEeFf:>")) != NULL;) {
@@ -477,7 +473,7 @@ Index: usr.sbin/httpd/parse.y
  yyerror(const char *fmt, ...)
  {
  	va_list		 ap;
-@@ -1428,6 +1671,7 @@
+@@ -1428,6 +1667,7 @@
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
  		{ "found",		FOUND },
