@@ -274,7 +274,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  .\"
 -.Dd $Mdocdate: April 23 2020 $
-+.Dd $Mdocdate: October 29 2020 $
++.Dd $Mdocdate: April 6 2021 $
  .Dt HTTPD.CONF 5
  .Os
  .Sh NAME
@@ -290,8 +290,20 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Pp
  .Nm
  is divided into the following main sections:
-@@ -284,12 +288,13 @@
+@@ -155,7 +159,7 @@
+ .Xr patterns 7 .
+ .El
+ .Pp
+-Followed by a block of options that is enclosed in curly brackets:
++Followed by a block of options enclosed in curly braces:
+ .Bl -tag -width Ds
+ .It Ic alias Ar name
+ Specify an additional alias
+@@ -282,14 +286,16 @@
+ .El
+ .It Oo Ic no Oc Ic fastcgi Oo Ar option Oc
  Enable FastCGI instead of serving files.
++Multiple options may be specified within curly braces.
  Valid options are:
  .Bl -tag -width Ds
 -.It Ic socket Ar socket
@@ -307,7 +319,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  If the FastCGI handler is listening on a UNIX domain socket,
  .Ar socket
  is a local path name within the
-@@ -301,7 +306,10 @@
+@@ -301,7 +307,10 @@
  Alternatively if
  the FastCGI handler is listening on a TCP socket,
  .Ar socket
@@ -319,7 +331,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .It Ic strip Ar number
  Strip
  .Ar number
-@@ -395,11 +403,16 @@
+@@ -395,11 +404,16 @@
  .It Ic listen on Ar address Oo Ic tls Oc Ic port Ar number
  Set the listen address and port.
  This statement can be specified multiple times.
@@ -337,7 +349,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  In case of multiple location statements in the same context, the
  first matching location statement will be put into effect, while all
  later ones will be ignored.
-@@ -415,7 +428,7 @@
+@@ -415,7 +429,7 @@
  .Ic tcp
  and
  .Ic tls .
@@ -346,7 +358,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  Like the
  .Ic location
  option,
-@@ -698,6 +711,11 @@
+@@ -698,6 +712,11 @@
  .It Ic include Ar file
  Include types definitions from an external file, for example
  .Pa /usr/share/misc/mime.types .

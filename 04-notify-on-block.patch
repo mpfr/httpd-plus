@@ -48,7 +48,7 @@ Index: usr.sbin/httpd/config.c
  		DPRINTF("%s: %s %d location \"%s\", "
  		    "parent \"%s[%u]\", flags: %s",
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -535,6 +535,121 @@
+@@ -536,6 +536,120 @@
  .Xr syslog 3
  instead of the log files.
  .El
@@ -70,8 +70,7 @@ Index: usr.sbin/httpd/httpd.conf.5
 +transmission error or timeout), a corresponding warning will be written into
 +the system log.
 +.Pp
-+Options may be specified either one at a time or bundled between curly
-+brackets.
++Options may be specified either one at a time or enclosed in curly braces.
 +Valid options are:
 +.Bl -tag -width Ds
 +.It Ic message Ar string ... | Ic drop

@@ -93,8 +93,8 @@ Index: usr.sbin/httpd/httpd.conf.5
 +.Ic server .
  .It Oo Ic no Oc Ic fastcgi Oo Ar option Oc
  Enable FastCGI instead of serving files.
- Valid options are:
-@@ -449,6 +493,7 @@
+ Multiple options may be specified within curly braces.
+@@ -450,6 +494,7 @@
  except
  .Ic alias ,
  .Ic connection ,
