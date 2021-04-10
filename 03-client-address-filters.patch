@@ -160,7 +160,7 @@ Index: usr.sbin/httpd/parse.y
  %type	<v.auth>	authopts
  
  %%
-@@ -513,24 +518,27 @@
+@@ -514,24 +519,27 @@
  		| fastcgi
  		| authenticate
  		| filter
@@ -189,7 +189,7 @@ Index: usr.sbin/httpd/parse.y
  				YYACCEPT;
  			}
  
-@@ -542,6 +550,7 @@
+@@ -543,6 +551,7 @@
  			    sizeof(s->srv_conf.location)) {
  				yyerror("server location truncated");
  				free($4);
@@ -197,7 +197,7 @@ Index: usr.sbin/httpd/parse.y
  				free(s);
  				YYERROR;
  			}
-@@ -551,6 +560,7 @@
+@@ -552,6 +561,7 @@
  			    sizeof(s->srv_conf.name)) >=
  			    sizeof(s->srv_conf.name)) {
  				yyerror("server name truncated");
@@ -205,7 +205,7 @@ Index: usr.sbin/httpd/parse.y
  				free(s);
  				YYERROR;
  			}
-@@ -578,6 +588,26 @@
+@@ -579,6 +589,26 @@
  			}
  			if ($3)
  				s->srv_conf.flags |= SRVFLAG_LOCATION_MATCH;
@@ -232,7 +232,7 @@ Index: usr.sbin/httpd/parse.y
  			s->srv_s = -1;
  			memcpy(&s->srv_conf.ss, &srv->srv_conf.ss,
  			    sizeof(s->srv_conf.ss));
-@@ -598,7 +628,9 @@
+@@ -599,7 +629,9 @@
  			struct server	*s = NULL;
  			uint32_t	 f;
  
@@ -243,7 +243,7 @@ Index: usr.sbin/httpd/parse.y
  			    SRVFLAG_LOCATION_NOT_FOUND;
  
  			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
-@@ -609,7 +641,9 @@
+@@ -610,7 +642,9 @@
  				    (s->srv_conf.flags & f) ==
  				    (srv_conf->flags & f) &&
  				    strcmp(s->srv_conf.location,
@@ -254,7 +254,7 @@ Index: usr.sbin/httpd/parse.y
  					break;
  			}
  			if (s != NULL) {
-@@ -650,6 +684,51 @@
+@@ -651,6 +685,51 @@
  		| NOT FOUND	{ $$ = -1; }
  		;
  
@@ -306,7 +306,7 @@ Index: usr.sbin/httpd/parse.y
  hsts		: HSTS '{' optnl hstsflags_l '}'
  		| HSTS hstsflags
  		| HSTS
-@@ -1375,6 +1454,166 @@
+@@ -1376,6 +1455,166 @@
  };
  
  int
@@ -473,7 +473,7 @@ Index: usr.sbin/httpd/parse.y
  yyerror(const char *fmt, ...)
  {
  	va_list		 ap;
-@@ -1428,6 +1667,7 @@
+@@ -1429,6 +1668,7 @@
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
  		{ "found",		FOUND },

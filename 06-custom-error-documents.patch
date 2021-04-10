@@ -208,7 +208,7 @@ Index: usr.sbin/httpd/parse.y
  			if (last_server_id == INT_MAX) {
  				yyerror("too many servers defined");
  				free(s);
-@@ -526,6 +547,28 @@
+@@ -527,6 +548,28 @@
  				    entry);
  			}
  		}
@@ -237,7 +237,7 @@ Index: usr.sbin/httpd/parse.y
  		| tcpip			{
  			if (parentsrv != NULL) {
  				yyerror("tcp flags inside location");
-@@ -2094,6 +2137,7 @@
+@@ -2095,6 +2138,7 @@
  		{ "directory",		DIRECTORY },
  		{ "drop",		DROP },
  		{ "ecdhe",		ECDHE },

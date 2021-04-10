@@ -78,7 +78,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Pp
 Index: usr.sbin/httpd/httpd.h
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: httpd.h,v 1.154 2021/01/27 07:21:52 deraadt Exp $	*/
+ /*	$OpenBSD: httpd.h,v 1.155 2021/04/10 10:10:07 claudio Exp $	*/
  
  /*
 + * Copyright (c) 2020 Matthias Pressfreund
@@ -121,7 +121,7 @@ Index: usr.sbin/httpd/parse.y
  %token	<v.string>	STRING
  %token  <v.number>	NUMBER
  %type	<v.port>	port
-@@ -1234,7 +1234,7 @@
+@@ -1235,7 +1235,7 @@
  		| mediaoptsl nl
  		;
  
@@ -130,7 +130,7 @@ Index: usr.sbin/httpd/parse.y
  		| include
  		;
  
-@@ -1255,6 +1255,24 @@
+@@ -1256,6 +1256,24 @@
  		}
  		;
  
@@ -155,7 +155,7 @@ Index: usr.sbin/httpd/parse.y
  medianames_l	: medianames_l medianamesl
  		| medianamesl
  		;
-@@ -1382,6 +1400,7 @@
+@@ -1383,6 +1401,7 @@
  		{ "body",		BODY },
  		{ "buffer",		BUFFER },
  		{ "ca",			CA },
@@ -163,7 +163,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "certificate",	CERTIFICATE },
  		{ "chroot",		CHROOT },
  		{ "ciphers",		CIPHERS },
-@@ -1896,6 +1915,7 @@
+@@ -1897,6 +1916,7 @@
  			(void)strlcpy(m.media_subtype,
  			    mediatypes[i].media_subtype,
  			    sizeof(m.media_subtype));
