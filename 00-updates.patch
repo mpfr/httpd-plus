@@ -67,6 +67,48 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Pp
  .Nm
  is divided into the following main sections:
+@@ -808,6 +812,41 @@
+ 		request rewrite "/new/%1"
+ 	}
+ }
++.Ed
++The
++.Ic location not found
++option may be used to enable
++.Lk https://wordpress.org/support/article/using-permalinks/ WordPress Pretty Permalinks
++just like on an Apache web server with
++.Pa mod_rewrite
++installed.
++.Bd -literal -offset indent
++server "www.example.com" {
++	listen on * port www
++	directory index "index.php"
++
++	location not found "/*" {
++		request rewrite "/index.php"
++	}
++	location "/*.php" {
++		fastcgi socket "/run/php-fpm.sock"
++	}
++}
++.Ed
++WordPress, however, is unable to discover that
++.Xr httpd 8
++is now capable to perform required URL rewrites.
++This will make the
++.Lk https://wordpress.org/support/article/settings-permalinks-screen/ Permalink Settings Screen
++not behave as expected.
++Luckily, and for this case exactly, the
++.Lk https://developer.wordpress.org/reference/hooks/got_url_rewrite/ got_url_rewrite hook
++exists.
++Adding the following line of code into the current theme's
++.Pa functions.php
++file will straighten things out.
++.Bd -literal -offset indent
++add_filter('got_url_rewrite', '__return_true');
+ .Ed
+ .Sh SEE ALSO
+ .Xr htpasswd 1 ,
 Index: usr.sbin/httpd/httpd.h
 @@ -666,6 +666,9 @@
  

@@ -8,18 +8,15 @@ Other branches available:
 
 ## List of add-ons
 
-The former [`location-access-tests`](https://github.com/mpfr/httpd-plus/blob/cb4a396d7fa8426a353e6a1b91887fc544f525f8/02-location-access-tests.patch) add-on has been removed as it was [imported](https://github.com/openbsd/src/commit/e96b74b9e3e44aa22060826006547b90ccc38faa#diff-ed9bfab4d87ea6df040a9696cb1860f82d56e70486351f950b3fca91eab7175d) into `-current`. The note regarding its usage with [WordPress](https://wordpress.org), however, still applies:
-> Even with this add-on installed, WordPress is unable to discover that the OpenBSD web server is now capable to perform required URL rewrites.  This will make the [Permalink Settings Screen](https://wordpress.org/support/article/settings-permalinks-screen/) not behave as expected. Luckily, and for this case exactly, the [got_url_rewrite hook](https://developer.wordpress.org/reference/hooks/got_url_rewrite/) exists.  Adding the following line of code into the current theme's `functions.php` file will straighten things out:
-> ```
-> add_filter('got_url_rewrite', '__return_true');
-> ```
-
 ### updates
 
 Bug fixes:
 * Failing `directory auto index` of `location` in case enclosing `server` specifies `directory no index` (see on [tech@](https://marc.info/?l=openbsd-tech&m=160293921708844&w=2))
 * Failing location access test in case `server`/`location` `root` is empty (see on [tech@](https://marc.info/?l=openbsd-tech&m=160468404614852&w=2))
 * Inconsistent handling of inaccessible `server`/`location` `root` (regular file access still returns status `404` instead of `500`)
+
+Amendments:
+* As the former [`location-access-tests`](https://github.com/mpfr/httpd-plus/blob/cb4a396d7fa8426a353e6a1b91887fc544f525f8/02-location-access-tests.patch) add-on has been [imported](https://github.com/openbsd/src/commit/e96b74b9e3e44aa22060826006547b90ccc38faa#diff-ed9bfab4d87ea6df040a9696cb1860f82d56e70486351f950b3fca91eab7175d) into `-current`, the info regarding its usage with [WordPress](https://wordpress.org) was moved from this website to [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/current/httpd.conf.5.html#EXAMPLES).
 
 ### cache-control-headers
 

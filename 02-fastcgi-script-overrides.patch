@@ -24,6 +24,29 @@ Index: usr.sbin/httpd/httpd.conf.5
  .It Ic strip Ar number
  Strip
  .Ar number
+@@ -818,7 +821,9 @@
+ .Ed
+ The
+ .Ic location not found
+-option may be used to enable
++option (here in combination with the
++.Ic fastcgi script
++override directive) may be used to enable
+ .Lk https://wordpress.org/support/article/using-permalinks/ WordPress Pretty Permalinks
+ just like on an Apache web server with
+ .Pa mod_rewrite
+@@ -829,7 +834,10 @@
+ 	directory index "index.php"
+ 
+ 	location not found "/*" {
+-		request rewrite "/index.php"
++		fastcgi {
++			socket "/run/php-fpm.sock"
++			script "/index.php"
++		}
+ 	}
+ 	location "/*.php" {
+ 		fastcgi socket "/run/php-fpm.sock"
 Index: usr.sbin/httpd/httpd.h
 @@ -1,7 +1,7 @@
  /*	$OpenBSD: httpd.h,v 1.154 2021/01/27 07:21:52 deraadt Exp $	*/
