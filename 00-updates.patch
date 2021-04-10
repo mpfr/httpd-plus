@@ -227,6 +227,15 @@ Index: usr.sbin/httpd/httpd.h
  
  struct media_type {
  	char			 media_name[MEDIATYPE_NAMEMAX];
+@@ -618,7 +623,7 @@
+ 
+ /* server.c */
+ void	 server(struct privsep *, struct privsep_proc *);
+-int	 server_tls_cmp(struct server *, struct server *, int);
++int	 server_tls_cmp(struct server *, struct server *);
+ int	 server_tls_load_ca(struct server *);
+ int	 server_tls_load_crl(struct server *);
+ int	 server_tls_load_keypair(struct server *);
 @@ -661,6 +666,9 @@
  	 server_match(struct server *, int);
  
@@ -298,7 +307,17 @@ Index: usr.sbin/httpd/parse.y
  %type	<v.tv>		timeout
  %type	<v.string>	numberstring optstring
  %type	<v.auth>	authopts
-@@ -355,11 +353,20 @@
+@@ -335,7 +333,8 @@
+ 					free(srv);
+ 					YYERROR;
+ 				}
+-				if (server_tls_cmp(s, srv, 0) != 0) {
++				if (srv->srv_conf.flags & SRVFLAG_TLS &&
++				    server_tls_cmp(s, srv) != 0) {
+ 					yyerror("server \"%s\": tls "
+ 					    "configuration mismatch on same "
+ 					    "address/port",
+@@ -355,11 +354,20 @@
  				YYERROR;
  			}
  
@@ -320,7 +339,7 @@ Index: usr.sbin/httpd/parse.y
  			if (server_tls_load_ca(srv) == -1) {
  				yyerror("server \"%s\": failed to load "
  				    "ca cert(s)", srv->srv_conf.name);
-@@ -506,39 +513,39 @@
+@@ -506,39 +514,39 @@
  		| fastcgi
  		| authenticate
  		| filter
@@ -368,7 +387,7 @@ Index: usr.sbin/httpd/parse.y
  
  			if (strlcpy(s->srv_conf.name, srv->srv_conf.name,
  			    sizeof(s->srv_conf.name)) >=
-@@ -558,7 +565,18 @@
+@@ -558,7 +566,18 @@
  			/* A location entry uses the parent id */
  			s->srv_conf.parent_id = srv->srv_conf.id;
  			s->srv_conf.flags = SRVFLAG_LOCATION;
@@ -388,7 +407,7 @@ Index: usr.sbin/httpd/parse.y
  				s->srv_conf.flags |= SRVFLAG_LOCATION_MATCH;
  			s->srv_s = -1;
  			memcpy(&s->srv_conf.ss, &srv->srv_conf.ss,
-@@ -578,10 +596,18 @@
+@@ -578,10 +597,18 @@
  			SPLAY_INIT(&srv->srv_clients);
  		} '{' optnl serveropts_l '}'	{
  			struct server	*s = NULL;
@@ -408,7 +427,7 @@ Index: usr.sbin/httpd/parse.y
  				    strcmp(s->srv_conf.location,
  				    srv_conf->location) == 0)
  					break;
-@@ -619,6 +645,11 @@
+@@ -619,6 +646,11 @@
  		}
  		;
  
@@ -420,7 +439,7 @@ Index: usr.sbin/httpd/parse.y
  hsts		: HSTS '{' optnl hstsflags_l '}'
  		| HSTS hstsflags
  		| HSTS
-@@ -1367,6 +1398,7 @@
+@@ -1367,6 +1399,7 @@
  		{ "error",		ERR },
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
@@ -428,7 +447,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "hsts",		HSTS },
  		{ "include",		INCLUDE },
  		{ "index",		INDEX },
-@@ -1382,6 +1414,7 @@
+@@ -1382,6 +1415,7 @@
  		{ "max-age",		MAXAGE },
  		{ "no",			NO },
  		{ "nodelay",		NODELAY },
@@ -436,7 +455,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "ocsp",		OCSP },
  		{ "on",			ON },
  		{ "optional",		OPTIONAL },
-@@ -2094,7 +2127,8 @@
+@@ -2094,7 +2128,8 @@
  
   nextaf:
  	for (p = ifap; p != NULL && cnt < max; p = p->ifa_next) {
@@ -446,7 +465,7 @@ Index: usr.sbin/httpd/parse.y
  		    (strcmp(s, p->ifa_name) != 0 &&
  		    !is_if_in_group(p->ifa_name, s)))
  			continue;
-@@ -2109,6 +2143,7 @@
+@@ -2109,6 +2144,7 @@
  				log_warnx("%s: interface name truncated",
  				    __func__);
  			freeifaddrs(ifap);
@@ -454,7 +473,7 @@ Index: usr.sbin/httpd/parse.y
  			return (-1);
  		}
  		if (ipproto != -1)
-@@ -2458,4 +2493,19 @@
+@@ -2458,4 +2494,19 @@
  	freeaddrinfo(res);
  
  	return (0);
@@ -489,7 +508,30 @@ Index: usr.sbin/httpd/server.c
  	if ((srv->srv_s = server_socket_listen(&srv->srv_conf.ss,
  	    srv->srv_conf.port, &srv->srv_conf)) == -1)
  		return (-1);
-@@ -257,10 +250,6 @@
+@@ -134,7 +127,7 @@
+ }
+ 
+ int
+-server_tls_cmp(struct server *s1, struct server *s2, int match_keypair)
++server_tls_cmp(struct server *s1, struct server *s2)
+ {
+ 	struct server_config	*sc1, *sc2;
+ 
+@@ -154,13 +147,6 @@
+ 	if (strcmp(sc1->tls_ecdhe_curves, sc2->tls_ecdhe_curves) != 0)
+ 		return (-1);
+ 
+-	if (match_keypair) {
+-		if (strcmp(sc1->tls_cert_file, sc2->tls_cert_file) != 0)
+-			return (-1);
+-		if (strcmp(sc1->tls_key_file, sc2->tls_key_file) != 0)
+-			return (-1);
+-	}
+-
+ 	return (0);
+ }
+ 
+@@ -257,10 +243,6 @@
  	if ((srv->srv_conf.flags & SRVFLAG_TLS) == 0)
  		return (0);
  
@@ -500,7 +542,7 @@ Index: usr.sbin/httpd/server.c
  	log_debug("%s: setting up tls for %s", __func__, srv->srv_conf.name);
  
  	if (tls_init() != 0) {
-@@ -1160,7 +1149,7 @@
+@@ -1160,7 +1142,7 @@
  	if (srv->srv_conf.flags & SRVFLAG_TLS) {
  		if (tls_accept_socket(srv->srv_tls_ctx, &clt->clt_tls_ctx,
  		    clt->clt_s) != 0) {
@@ -509,7 +551,7 @@ Index: usr.sbin/httpd/server.c
  			return;
  		}
  		event_again(&clt->clt_ev, clt->clt_s, EV_TIMEOUT|EV_READ,
-@@ -1262,12 +1251,14 @@
+@@ -1262,12 +1244,14 @@
  	iov[0].iov_base = &srv_conf->id;
  	iov[0].iov_len = sizeof(srv_conf->id);
  	iov[1].iov_base = msg;
@@ -525,7 +567,7 @@ Index: usr.sbin/httpd/server.c
  }
  
  void
-@@ -1325,6 +1316,11 @@
+@@ -1325,6 +1309,11 @@
  	/* free the HTTP descriptors incl. headers */
  	server_close_http(clt);
  
@@ -537,7 +579,7 @@ Index: usr.sbin/httpd/server.c
  	event_del(&clt->clt_ev);
  	if (clt->clt_bev != NULL)
  		bufferevent_disable(clt->clt_bev, EV_READ|EV_WRITE);
-@@ -1342,14 +1338,11 @@
+@@ -1342,14 +1331,11 @@
  
  	if (clt->clt_srvbev != NULL)
  		bufferevent_free(clt->clt_srvbev);
