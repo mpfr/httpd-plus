@@ -89,6 +89,16 @@ Index: usr.sbin/httpd/config.c
  	}
  
  	return (0);
+Index: usr.sbin/httpd/control.c
+@@ -34,7 +34,7 @@
+ 
+ #define	CONTROL_BACKLOG	5
+ 
+-struct ctl_connlist ctl_conns;
++struct ctl_connlist ctl_conns = TAILQ_HEAD_INITIALIZER(ctl_conns);
+ 
+ void		 control_accept(int, short, void *);
+ void		 control_close(int, struct control_sock *);
 Index: usr.sbin/httpd/http.h
 @@ -246,6 +246,7 @@
  	/* Rewritten path and query remain NULL if not used */
@@ -524,7 +534,16 @@ Index: usr.sbin/httpd/httpd.h
  	in_port_t		 port;
  	struct sockaddr_storage	 ss;
  	int			 prefixlen;
-@@ -629,7 +623,7 @@
+@@ -620,8 +614,6 @@
+ struct ctl_conn	*
+ 	 control_connbyfd(int);
+ 
+-extern  struct ctl_connlist ctl_conns;
+-
+ /* parse.y */
+ int	 parse_config(const char *, struct httpd *);
+ int	 load_config(const char *, struct httpd *);
+@@ -629,7 +621,7 @@
  
  /* server.c */
  void	 server(struct privsep *, struct privsep_proc *);
@@ -533,7 +552,7 @@ Index: usr.sbin/httpd/httpd.h
  int	 server_tls_load_ca(struct server *);
  int	 server_tls_load_crl(struct server *);
  int	 server_tls_load_keypair(struct server *);
-@@ -673,6 +667,9 @@
+@@ -673,6 +665,9 @@
  
  SPLAY_PROTOTYPE(client_tree, client, clt_nodes, server_client_cmp);
  
@@ -543,7 +562,7 @@ Index: usr.sbin/httpd/httpd.h
  /* server_http.c */
  void	 server_http_init(struct server *);
  void	 server_http(void);
-@@ -722,7 +719,6 @@
+@@ -722,7 +717,6 @@
  int		 expand_string(char *, size_t, const char *, const char *);
  const char	*url_decode(char *);
  char		*url_encode(const char *);
@@ -551,7 +570,7 @@ Index: usr.sbin/httpd/httpd.h
  const char	*canonicalize_path(const char *, char *, size_t);
  size_t		 path_info(char *);
  char		*escape_html(const char *);
-@@ -744,8 +740,6 @@
+@@ -744,8 +738,6 @@
  struct kv	*kv_extend(struct kvtree *, struct kv *, char *);
  void		 kv_purge(struct kvtree *);
  void		 kv_free(struct kv *);
@@ -560,7 +579,7 @@ Index: usr.sbin/httpd/httpd.h
  struct kv	*kv_find(struct kvtree *, struct kv *);
  int		 kv_cmp(struct kv *, struct kv *);
  struct media_type
-@@ -764,7 +758,6 @@
+@@ -764,7 +756,6 @@
  struct auth	*auth_byid(struct serverauth *, uint32_t);
  void		 auth_free(struct serverauth *, struct auth *);
  const char	*print_host(struct sockaddr_storage *, char *, size_t);
@@ -976,6 +995,14 @@ Index: usr.sbin/httpd/proc.c
  }
  
  void
+@@ -588,7 +588,6 @@
+ 	proc_setup(ps, procs, nproc);
+ 	proc_accept(ps, PROC_PARENT_SOCK_FILENO, PROC_PARENT, 0);
+ 	if (p->p_id == PROC_CONTROL && ps->ps_instance == 0) {
+-		TAILQ_INIT(&ctl_conns);
+ 		if (control_listen(&ps->ps_csock) == -1)
+ 			fatalx("%s: control_listen", __func__);
+ 		TAILQ_FOREACH(rcs, &ps->ps_rcsocks, cs_entry)
 Index: usr.sbin/httpd/server.c
 @@ -119,13 +119,6 @@
  	}
