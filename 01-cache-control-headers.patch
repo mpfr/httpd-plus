@@ -78,7 +78,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Pp
 Index: usr.sbin/httpd/httpd.h
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: httpd.h,v 1.155 2021/04/10 10:10:07 claudio Exp $	*/
+ /*	$OpenBSD: httpd.h,v 1.156 2021/04/20 21:11:56 dv Exp $	*/
  
  /*
 + * Copyright (c) 2020 Matthias Pressfreund
