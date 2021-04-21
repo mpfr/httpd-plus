@@ -28,6 +28,16 @@ Index: usr.sbin/httpd/config.c
  			(void)strlcpy(srv_conf->index, parent->index,
  			    sizeof(srv_conf->index));
  		}
+Index: usr.sbin/httpd/control.c
+@@ -34,7 +34,7 @@
+ 
+ #define	CONTROL_BACKLOG	5
+ 
+-struct ctl_connlist ctl_conns;
++struct ctl_connlist ctl_conns = TAILQ_HEAD_INITIALIZER(ctl_conns);
+ 
+ void		 control_accept(int, short, void *);
+ void		 control_close(int, struct control_sock *);
 Index: usr.sbin/httpd/httpd.8
 @@ -1,5 +1,6 @@
  .\"	$OpenBSD: httpd.8,v 1.53 2016/09/15 20:57:07 jmc Exp $
@@ -227,7 +237,16 @@ Index: usr.sbin/httpd/httpd.h
  
  struct media_type {
  	char			 media_name[MEDIATYPE_NAMEMAX];
-@@ -618,7 +623,7 @@
+@@ -609,8 +614,6 @@
+ struct ctl_conn	*
+ 	 control_connbyfd(int);
+ 
+-extern  struct ctl_connlist ctl_conns;
+-
+ /* parse.y */
+ int	 parse_config(const char *, struct httpd *);
+ int	 load_config(const char *, struct httpd *);
+@@ -618,7 +621,7 @@
  
  /* server.c */
  void	 server(struct privsep *, struct privsep_proc *);
@@ -236,7 +255,7 @@ Index: usr.sbin/httpd/httpd.h
  int	 server_tls_load_ca(struct server *);
  int	 server_tls_load_crl(struct server *);
  int	 server_tls_load_keypair(struct server *);
-@@ -661,6 +666,9 @@
+@@ -661,6 +664,9 @@
  	 server_match(struct server *, int);
  
  SPLAY_PROTOTYPE(client_tree, client, clt_nodes, server_client_cmp);
@@ -493,6 +512,15 @@ Index: usr.sbin/httpd/parse.y
 +		free(s);
 +	}
  }
+Index: usr.sbin/httpd/proc.c
+@@ -588,7 +588,6 @@
+ 	proc_setup(ps, procs, nproc);
+ 	proc_accept(ps, PROC_PARENT_SOCK_FILENO, PROC_PARENT, 0);
+ 	if (p->p_id == PROC_CONTROL && ps->ps_instance == 0) {
+-		TAILQ_INIT(&ctl_conns);
+ 		if (control_listen(&ps->ps_csock) == -1)
+ 			fatalx("%s: control_listen", __func__);
+ 		TAILQ_FOREACH(rcs, &ps->ps_rcsocks, cs_entry)
 Index: usr.sbin/httpd/server.c
 @@ -119,13 +119,6 @@
  	}
