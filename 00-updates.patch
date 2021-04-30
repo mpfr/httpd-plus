@@ -1185,7 +1185,18 @@ Index: usr.sbin/httpd/server_fcgi.c
  	    kv_add(&resp->http_headers, "Date", tmbuf) == NULL))
  		return (-1);
 Index: usr.sbin/httpd/server_file.c
-@@ -167,11 +167,18 @@
+@@ -85,9 +85,7 @@
+ 		if (path[strlen(path) - 1] != '/') {
+ 			if ((encodedpath = url_encode(desc->http_path)) == NULL)
+ 				return (500);
+-			if (asprintf(&newpath, "http%s://%s%s/",
+-			    srv_conf->flags & SRVFLAG_TLS ? "s" : "",
+-			    desc->http_host, encodedpath) == -1) {
++			if (asprintf(&newpath, "%s/", encodedpath) == -1) {
+ 				free(encodedpath);
+ 				return (500);
+ 			}
+@@ -167,11 +165,18 @@
  	struct server_config	*srv_conf = clt->clt_srv_conf;
  	char			 path[PATH_MAX];
  	const char		*stripped, *errstr = NULL;
@@ -1205,7 +1216,7 @@ Index: usr.sbin/httpd/server_file.c
  	/* Request path is already canonicalized */
  	stripped = server_root_strip(
  	    desc->http_path_alias != NULL ?
-@@ -224,6 +231,7 @@
+@@ -224,6 +229,7 @@
  	struct media_type	*media;
  	const char		*errstr = NULL;
  	int			 fd = -1, ret, code = 500;
@@ -1213,7 +1224,7 @@ Index: usr.sbin/httpd/server_file.c
  
  	if ((ret = server_file_method(clt)) != 0) {
  		code = ret;
-@@ -269,9 +277,10 @@
+@@ -269,9 +275,10 @@
  		goto fail;
  	}
  
@@ -1226,7 +1237,7 @@ Index: usr.sbin/httpd/server_file.c
  
  	bufferevent_settimeout(clt->clt_srvbev,
  	    srv_conf->timeout.tv_sec, srv_conf->timeout.tv_sec);
-@@ -304,7 +313,7 @@
+@@ -304,7 +311,7 @@
  	struct media_type	*media, multipart_media;
  	struct range_data	*r = &clt->clt_ranges;
  	struct range		*range;
@@ -1235,7 +1246,7 @@ Index: usr.sbin/httpd/server_file.c
  	int			 code = 500, fd = -1, i, nranges, ret;
  	char			 content_range[64];
  	const char		*errstr = NULL;
-@@ -403,9 +412,10 @@
+@@ -403,9 +410,10 @@
  		goto fail;
  	}
  
@@ -1248,7 +1259,7 @@ Index: usr.sbin/httpd/server_file.c
  
  	bufferevent_settimeout(clt->clt_srvbev,
  	    srv_conf->timeout.tv_sec, srv_conf->timeout.tv_sec);
-@@ -477,14 +487,17 @@
+@@ -477,14 +485,17 @@
  
  	/* A CSS stylesheet allows minimal customization by the user */
  	style = "body { background-color: white; color: black; font-family: "
