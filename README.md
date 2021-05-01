@@ -1,4 +1,4 @@
-| :warning: With the release of OpenBSD version 6.9, this branch will reach its end of life and will no longer be maintained.
+| :warning: With the release of OpenBSD version 6.9 on May 1, 2021, this branch has reached its end of life and is no longer being maintained.
 | --- |
 
 # httpd-plus
