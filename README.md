@@ -17,7 +17,7 @@ Bug fixes:
 
 Amendments:
 * As the former [`location-access-tests`](https://github.com/mpfr/httpd-plus/blob/9008ba17c6d0cfd70df8ec89ff577fe791bda8b9/02-location-access-tests.patch) add-on has been [imported](https://github.com/openbsd/src/commit/e96b74b9e3e44aa22060826006547b90ccc38faa#diff-ed9bfab4d87ea6df040a9696cb1860f82d56e70486351f950b3fca91eab7175d) into `-current`, the info regarding its usage with [WordPress](https://wordpress.org) was moved from this website to [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/6.9-stable/httpd.conf.5.html#EXAMPLES).
-* [Commits](https://github.com/openbsd/src/commits/master/usr.sbin/httpd) to `-current` backported to `6.9-stable` until April 29, 2021
+* [Commits](https://github.com/openbsd/src/commits/master/usr.sbin/httpd) to `-current` backported to `6.9-stable` until May 15, 2021
 
 ### cache-control-headers
 

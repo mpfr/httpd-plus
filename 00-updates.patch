@@ -156,6 +156,15 @@ Index: usr.sbin/httpd/proc.c
  		if (control_listen(&ps->ps_csock) == -1)
  			fatalx("%s: control_listen", __func__);
  		TAILQ_FOREACH(rcs, &ps->ps_rcsocks, cs_entry)
+Index: usr.sbin/httpd/server_fcgi.c
+@@ -660,7 +660,6 @@
+ 	    kv_add(&resp->http_headers, "Date", tmbuf) == NULL))
+ 		return (-1);
+ 
+-	/* Write initial header (fcgi might append more) */
+ 	if (server_writeresponse_http(clt) == -1 ||
+ 	    server_bufferevent_print(clt, "\r\n") == -1 ||
+ 	    server_headers(clt, resp, server_writeheader_http, NULL) == -1 ||
 Index: usr.sbin/httpd/server_file.c
 @@ -85,9 +85,7 @@
  		if (path[strlen(path) - 1] != '/') {
