@@ -17,7 +17,7 @@
 
 srcroot='/usr/src'
 srcdir=${srcroot}/usr.sbin/httpd
-chksum='45e9e7f34abac8b4275bb3e5498520d5d1c144649c93e53fb1fed923f9432b95'
+chksum='ec9f69b3cdde6a80380327e790f15f3d561027c49390effdc9b76f35fb012728'
 
 restore()
 {
