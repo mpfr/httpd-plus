@@ -57,7 +57,7 @@ Index: usr.sbin/httpd/httpd.h
   * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
   * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
   * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
-@@ -545,6 +545,8 @@
+@@ -546,6 +546,8 @@
  
  	struct server_fcgiparams fcgiparams;
  	int			 fcgistrip;
@@ -110,7 +110,7 @@ Index: usr.sbin/httpd/server_fcgi.c
   * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
   *
   * Permission to use, copy, modify, and distribute this software for any
-@@ -161,9 +162,12 @@
+@@ -162,9 +163,12 @@
  	h->type = FCGI_PARAMS;
  	h->content_len = param.total_len = 0;
  
