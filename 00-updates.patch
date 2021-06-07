@@ -80,7 +80,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  .\"
 -.Dd $Mdocdate: September 5 2020 $
-+.Dd $Mdocdate: April 6 2021 $
++.Dd $Mdocdate: June 6 2021 $
  .Dt HTTPD.CONF 5
  .Os
  .Sh NAME
@@ -105,6 +105,15 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Bl -tag -width Ds
  .It Ic alias Ar name
  Specify an additional alias
+@@ -195,7 +199,7 @@
+ The optional
+ .Ar uri
+ argument can be used with return codes in the 3xx range to send a
+-.Sq Location:
++.Sq Location :
+ header for redirection to a specified URI.
+ .Pp
+ It is possible to rewrite the request to redirect it to a different
 @@ -282,6 +286,7 @@
  .El
  .It Oo Ic no Oc Ic fastcgi Oo Ar option Oc
@@ -140,7 +149,15 @@ Index: usr.sbin/httpd/httpd.conf.5
  Like the
  .Ic location
  option,
-@@ -802,6 +812,41 @@
+@@ -792,6 +802,7 @@
+ 	listen on 10.0.0.1 tls port 443
+ }
+ .Ed
++.Pp
+ The request can also be rewritten with the
+ .Ic request rewrite
+ directive:
+@@ -802,6 +813,41 @@
  		request rewrite "/new/%1"
  	}
  }
