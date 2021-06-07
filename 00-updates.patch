@@ -49,7 +49,7 @@ Index: usr.sbin/httpd/httpd.8
  .Bl -tag -width Dssmacro=value
 Index: usr.sbin/httpd/httpd.conf.5
 @@ -1,5 +1,6 @@
- .\"	$OpenBSD: httpd.conf.5,v 1.117 2021/06/06 22:00:35 tb Exp $
+ .\"	$OpenBSD: httpd.conf.5,v 1.118 2021/06/07 10:53:59 tb Exp $
  .\"
 +.\" Copyright (c) 2020, 2021 Matthias Pressfreund
  .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
@@ -67,7 +67,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Pp
  .Nm
  is divided into the following main sections:
-@@ -809,6 +813,41 @@
+@@ -808,6 +812,41 @@
  		request rewrite "/new/%1"
  	}
  }

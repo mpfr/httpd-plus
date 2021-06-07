@@ -14,7 +14,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -311,6 +311,9 @@
+@@ -310,6 +310,9 @@
  If the
  .Ar port
  is not specified, it defaults to port 9000.
@@ -24,7 +24,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .It Ic strip Ar number
  Strip
  .Ar number
-@@ -819,7 +822,9 @@
+@@ -818,7 +821,9 @@
  .Ed
  The
  .Ic location not found
@@ -35,7 +35,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Lk https://wordpress.org/support/article/using-permalinks/ WordPress Pretty Permalinks
  just like on an Apache web server with
  .Pa mod_rewrite
-@@ -830,7 +835,10 @@
+@@ -829,7 +834,10 @@
  	directory index "index.php"
  
  	location not found "/*" {

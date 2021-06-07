@@ -14,7 +14,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -856,6 +856,71 @@
+@@ -855,6 +855,71 @@
  Include types definitions from an external file, for example
  .Pa /usr/share/misc/mime.types .
  .El
@@ -86,7 +86,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Sh FILES
  .Bl -tag -width /etc/examples/httpd.conf -compact
  .It Pa /etc/examples/httpd.conf
-@@ -998,6 +1063,26 @@
+@@ -997,6 +1062,26 @@
  file will straighten things out.
  .Bd -literal -offset indent
  add_filter('got_url_rewrite', '__return_true');

@@ -81,7 +81,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .It Ic logdir Ar directory
  Specifies the full path of the directory in which log files will be written.
  If not specified, it defaults to
-@@ -284,6 +322,12 @@
+@@ -283,6 +321,12 @@
  .Xr httpd 8
  will neither display nor generate a directory index.
  .El
@@ -94,7 +94,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .It Oo Ic no Oc Ic fastcgi Oo Ar option Oc
  Enable FastCGI instead of serving files.
  Multiple options may be specified within curly braces.
-@@ -450,6 +494,7 @@
+@@ -449,6 +493,7 @@
  except
  .Ic alias ,
  .Ic connection ,
