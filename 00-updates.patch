@@ -65,6 +65,15 @@ Index: usr.sbin/httpd/httpd.conf.5
  .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
  .\"
  .\" Permission to use, copy, modify, and distribute this software for any
+@@ -14,7 +15,7 @@
+ .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ .\"
+-.Dd $Mdocdate: April 6 2021 $
++.Dd $Mdocdate: June 6 2021 $
+ .Dt HTTPD.CONF 5
+ .Os
+ .Sh NAME
 @@ -23,7 +24,10 @@
  .Sh DESCRIPTION
  .Nm
@@ -77,7 +86,24 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Pp
  .Nm
  is divided into the following main sections:
-@@ -808,6 +812,41 @@
+@@ -195,7 +199,7 @@
+ The optional
+ .Ar uri
+ argument can be used with return codes in the 3xx range to send a
+-.Sq Location:
++.Sq Location :
+ header for redirection to a specified URI.
+ .Pp
+ It is possible to rewrite the request to redirect it to a different
+@@ -798,6 +802,7 @@
+ 	listen on 10.0.0.1 tls port 443
+ }
+ .Ed
++.Pp
+ The request can also be rewritten with the
+ .Ic request rewrite
+ directive:
+@@ -808,6 +813,41 @@
  		request rewrite "/new/%1"
  	}
  }

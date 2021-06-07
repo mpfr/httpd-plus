@@ -86,7 +86,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Sh FILES
  .Bl -tag -width /etc/examples/httpd.conf -compact
  .It Pa /etc/examples/httpd.conf
-@@ -997,6 +1062,26 @@
+@@ -998,6 +1063,26 @@
  file will straighten things out.
  .Bd -literal -offset indent
  add_filter('got_url_rewrite', '__return_true');
