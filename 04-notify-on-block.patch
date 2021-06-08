@@ -197,9 +197,9 @@ Index: usr.sbin/httpd/httpd.h
 +	struct timeval		 timeout;
 +};
 +#define timeval_isset(t)	((t)->tv_sec != 0 || (t)->tv_usec != 0)
-+#define timeval_setmillis(t, m)	do {	\
-+	(t)->tv_sec = m / 1000;		\
-+	(t)->tv_usec = m % 1000 * 1000;	\
++#define timeval_setmillis(t, m)	do {		\
++	(t)->tv_sec = (m) / 1000;		\
++	(t)->tv_usec = (m) % 1000 * 1000;	\
 +} while (0)
 +
 +struct notify_message {
