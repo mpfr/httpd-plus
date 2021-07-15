@@ -587,7 +587,7 @@ Index: usr.sbin/httpd/server.c
  	return (0);
  }
  
-@@ -257,10 +243,6 @@
+@@ -257,16 +243,8 @@
  	if ((srv->srv_conf.flags & SRVFLAG_TLS) == 0)
  		return (0);
  
@@ -597,8 +597,14 @@ Index: usr.sbin/httpd/server.c
 -
  	log_debug("%s: setting up tls for %s", __func__, srv->srv_conf.name);
  
- 	if (tls_init() != 0) {
-@@ -1160,7 +1142,7 @@
+-	if (tls_init() != 0) {
+-		log_warnx("%s: failed to initialise tls", __func__);
+-		return (-1);
+-	}
+ 	if ((srv->srv_tls_config = tls_config_new()) == NULL) {
+ 		log_warnx("%s: failed to get tls config", __func__);
+ 		return (-1);
+@@ -1160,7 +1138,7 @@
  	if (srv->srv_conf.flags & SRVFLAG_TLS) {
  		if (tls_accept_socket(srv->srv_tls_ctx, &clt->clt_tls_ctx,
  		    clt->clt_s) != 0) {
@@ -607,7 +613,7 @@ Index: usr.sbin/httpd/server.c
  			return;
  		}
  		event_again(&clt->clt_ev, clt->clt_s, EV_TIMEOUT|EV_READ,
-@@ -1262,12 +1244,14 @@
+@@ -1262,12 +1240,14 @@
  	iov[0].iov_base = &srv_conf->id;
  	iov[0].iov_len = sizeof(srv_conf->id);
  	iov[1].iov_base = msg;
@@ -623,7 +629,7 @@ Index: usr.sbin/httpd/server.c
  }
  
  void
-@@ -1325,6 +1309,11 @@
+@@ -1325,6 +1305,11 @@
  	/* free the HTTP descriptors incl. headers */
  	server_close_http(clt);
  
@@ -635,7 +641,7 @@ Index: usr.sbin/httpd/server.c
  	event_del(&clt->clt_ev);
  	if (clt->clt_bev != NULL)
  		bufferevent_disable(clt->clt_bev, EV_READ|EV_WRITE);
-@@ -1342,14 +1331,11 @@
+@@ -1342,14 +1327,11 @@
  
  	if (clt->clt_srvbev != NULL)
  		bufferevent_free(clt->clt_srvbev);
