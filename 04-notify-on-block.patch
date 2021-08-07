@@ -48,7 +48,7 @@ Index: usr.sbin/httpd/config.c
  		DPRINTF("%s: %s %d location \"%s\", "
  		    "parent \"%s[%u]\", flags: %s",
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -535,6 +535,120 @@
+@@ -535,6 +535,117 @@
  .Xr syslog 3
  instead of the log files.
  .El
@@ -126,9 +126,6 @@ Index: usr.sbin/httpd/httpd.conf.5
 +header.
 +.El
 +.Pp
-+In order to not be forced to place the whole message in a single line, multiple
-+.Ic message
-+parameter lines may be specified.
 +The following example defines a two line message, line 1 containing the client
 +IP address, line 2 the requested URI, using
 +.Sq Dv \en
@@ -136,14 +133,14 @@ Index: usr.sbin/httpd/httpd.conf.5
 +.Bd -literal -offset indent
 +notify-on-block {
 +	socket "/run/example.sock"
-+	message "$REMOTE_ADDR" lf
-+	message "$REQUEST_URI"
++	message "$REMOTE_ADDR" lf \(rs
++		"$REQUEST_URI"
 +}
 +.Ed
 +.Pp
-+Here, the two
++Here, the two string parts of the
 +.Ic message
-+parameter lines internally concatenate and transform to
++internally concatenate and transform to
 +.Pp
 +.Dl message \(dq$REMOTE_ADDR\en$REQUEST_URI\(dq
 +.Pp
@@ -283,7 +280,7 @@ Index: usr.sbin/httpd/parse.y
 +			*srv_conf->notifier.message = '\0';
 +		}
 +		| MESSAGE msgopts_l	{
-+			if (strlcat(srv_conf->notifier.message, $2,
++			if (strlcpy(srv_conf->notifier.message, $2,
 +			    sizeof(srv_conf->notifier.message)) >=
 +			    sizeof(srv_conf->notifier.message)) {
 +				yyerror("notify message too long");
