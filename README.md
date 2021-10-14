@@ -4,7 +4,7 @@ Add-ons for the [OpenBSD](https://www.openbsd.org) [`httpd(8)`](http://man.openb
 
 Other branches available:
 * [current](https://github.com/mpfr/httpd-plus)
-* [6.8-stable](https://github.com/mpfr/httpd-plus/tree/6.8-stable)
+* [7.0-stable](https://github.com/mpfr/httpd-plus/tree/7.0-stable)
 
 ## List of add-ons
 
