@@ -184,6 +184,42 @@ Index: usr.sbin/httpd/httpd.h
  const char *
  	 server_http_host(struct sockaddr_storage *, char *, size_t);
  char	*server_http_parsehost(char *, char *, size_t, int *);
+Index: usr.sbin/httpd/parse.y
+@@ -1564,10 +1564,10 @@
+ int
+ yylex(void)
+ {
+-	unsigned char	 buf[8096];
+-	unsigned char	*p, *val;
+-	int		 quotec, next, c;
+-	int		 token;
++	char	 buf[8096];
++	char	*p, *val;
++	int	 quotec, next, c;
++	int	 token;
+ 
+ top:
+ 	p = buf;
+@@ -1603,7 +1603,7 @@
+ 		p = val + strlen(val) - 1;
+ 		lungetc(DONE_EXPAND);
+ 		while (p >= val) {
+-			lungetc(*p);
++			lungetc((unsigned char)*p);
+ 			p--;
+ 		}
+ 		lungetc(START_EXPAND);
+@@ -1679,8 +1679,8 @@
+ 		} else {
+ nodigits:
+ 			while (p > buf + 1)
+-				lungetc(*--p);
+-			c = *--p;
++				lungetc((unsigned char)*--p);
++			c = (unsigned char)*--p;
+ 			if (c == '-')
+ 				return (c);
+ 		}
 Index: usr.sbin/httpd/proc.c
 @@ -588,7 +588,6 @@
  	proc_setup(ps, procs, nproc);
