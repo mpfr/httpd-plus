@@ -491,7 +491,7 @@ Index: usr.sbin/httpd/server_http.c
  
  static struct http_method	 http_methods[] = HTTP_METHODS;
  static struct http_error	 http_errors[] = HTTP_ERRORS;
-@@ -1408,11 +1410,47 @@
+@@ -1414,11 +1416,47 @@
  struct server_config *
  server_getlocation(struct client *clt, const char *path)
  {
@@ -539,7 +539,7 @@ Index: usr.sbin/httpd/server_http.c
  	/* Now search for the location */
  	TAILQ_FOREACH(location, &srv->srv_hosts, entry) {
  #ifdef DEBUG
-@@ -1436,7 +1474,8 @@
+@@ -1442,7 +1480,8 @@
  				    path)) == -1)
  					return (NULL);
  
@@ -549,7 +549,7 @@ Index: usr.sbin/httpd/server_http.c
  					continue;
  				/* Replace host configuration */
  				clt->clt_srv_conf = srv_conf = location;
-@@ -1468,6 +1507,66 @@
+@@ -1474,6 +1513,66 @@
  	close(rootfd);
  	return ((ret == -1 && SRVFLAG_LOCATION_FOUND & srv_conf->flags) ||
  	    (ret == 0 && SRVFLAG_LOCATION_NOT_FOUND & srv_conf->flags));
