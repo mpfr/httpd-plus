@@ -482,8 +482,8 @@ Index: usr.sbin/httpd/parse.y
  		{ "include",		INCLUDE },
  		{ "index",		INDEX },
 Index: usr.sbin/httpd/server_http.c
-@@ -53,6 +53,8 @@
- 		    char *, size_t);
+@@ -54,6 +54,8 @@
+ int		 http_version_num(char *);
  int		 server_locationaccesstest(struct server_config *,
  		    const char *);
 +int		 server_clientfilter(struct server_config *,
@@ -491,7 +491,7 @@ Index: usr.sbin/httpd/server_http.c
  
  static struct http_method	 http_methods[] = HTTP_METHODS;
  static struct http_error	 http_errors[] = HTTP_ERRORS;
-@@ -1414,11 +1416,47 @@
+@@ -1446,11 +1448,47 @@
  struct server_config *
  server_getlocation(struct client *clt, const char *path)
  {
@@ -539,7 +539,7 @@ Index: usr.sbin/httpd/server_http.c
  	/* Now search for the location */
  	TAILQ_FOREACH(location, &srv->srv_hosts, entry) {
  #ifdef DEBUG
-@@ -1442,7 +1480,8 @@
+@@ -1474,7 +1512,8 @@
  				    path)) == -1)
  					return (NULL);
  
@@ -549,7 +549,7 @@ Index: usr.sbin/httpd/server_http.c
  					continue;
  				/* Replace host configuration */
  				clt->clt_srv_conf = srv_conf = location;
-@@ -1474,6 +1513,66 @@
+@@ -1506,6 +1545,66 @@
  	close(rootfd);
  	return ((ret == -1 && SRVFLAG_LOCATION_FOUND & srv_conf->flags) ||
  	    (ret == 0 && SRVFLAG_LOCATION_NOT_FOUND & srv_conf->flags));
