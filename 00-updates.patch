@@ -149,16 +149,16 @@ Index: usr.sbin/httpd/server_file.c
  	/* Request path is already canonicalized */
  	stripped = server_root_strip(
 Index: usr.sbin/httpd/server_http.c
-@@ -51,6 +51,8 @@
- 		    struct client *);
+@@ -52,6 +52,8 @@
  char		*server_expand_http(struct client *, const char *,
  		    char *, size_t);
+ int		 http_version_num(char *);
 +int		 server_locationaccesstest(struct server_config *,
 +		    const char *);
  
  static struct http_method	 http_methods[] = HTTP_METHODS;
  static struct http_error	 http_errors[] = HTTP_ERRORS;
-@@ -1326,10 +1328,8 @@
+@@ -1358,10 +1360,8 @@
  		goto fail;
  
  	/* Now search for the location */
@@ -171,7 +171,7 @@ Index: usr.sbin/httpd/server_http.c
  
  	/* Optional rewrite */
  	if (srv_conf->flags & SRVFLAG_PATH_REWRITE) {
-@@ -1366,10 +1366,8 @@
+@@ -1398,10 +1398,8 @@
  
  		/* Now search for the updated location */
  		if ((srv_conf = server_getlocation(clt,
@@ -184,7 +184,7 @@ Index: usr.sbin/httpd/server_http.c
  	}
  
  	if (clt->clt_toread > 0 && (size_t)clt->clt_toread >
-@@ -1391,6 +1389,11 @@
+@@ -1423,6 +1421,11 @@
   fail:
  	server_abort_http(clt, 400, "bad request");
  	return (-1);
@@ -196,7 +196,7 @@ Index: usr.sbin/httpd/server_http.c
  }
  
  const char *
-@@ -1461,7 +1464,8 @@
+@@ -1493,7 +1496,8 @@
  	    srv_conf->flags) == 0)
  		return (0);
  
