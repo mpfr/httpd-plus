@@ -262,7 +262,7 @@ Index: usr.sbin/httpd/server_http.c
  
  static struct http_method	 http_methods[] = HTTP_METHODS;
  static struct http_error	 http_errors[] = HTTP_ERRORS;
-@@ -858,6 +860,9 @@
+@@ -864,6 +866,9 @@
  	char			 buf[IBUF_READ_SIZE];
  	char			*escapedmsg = NULL;
  	int			 bodylen;
@@ -272,7 +272,7 @@ Index: usr.sbin/httpd/server_http.c
  
  	if (code == 0) {
  		server_close(clt, "dropped");
-@@ -933,6 +938,54 @@
+@@ -939,6 +944,54 @@
  
  	free(escapedmsg);
  
@@ -327,7 +327,7 @@ Index: usr.sbin/httpd/server_http.c
  	/* A CSS stylesheet allows minimal customization by the user */
  	style = "body { background-color: white; color: black; font-family: "
  	    "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif; }\n"
-@@ -960,6 +1013,7 @@
+@@ -966,6 +1019,7 @@
  		goto done;
  	}
  
@@ -335,7 +335,7 @@ Index: usr.sbin/httpd/server_http.c
  	if (srv_conf->flags & SRVFLAG_SERVER_HSTS &&
  	    srv_conf->flags & SRVFLAG_TLS) {
  		if (asprintf(&hstsheader, "Strict-Transport-Security: "
-@@ -1822,6 +1876,23 @@
+@@ -1828,6 +1882,23 @@
  			return ((SRVFLAG_CLIENT_FROM & srv_conf->flags) == 0);
  	}
  	return ((SRVFLAG_CLIENT_NOT_FROM & srv_conf->flags) == 0);
