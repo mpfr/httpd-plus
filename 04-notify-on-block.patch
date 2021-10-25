@@ -394,10 +394,10 @@ Index: usr.sbin/httpd/server_http.c
  
  #include "httpd.h"
  #include "http.h"
-@@ -52,6 +53,11 @@
+@@ -51,6 +52,11 @@
+ 		    struct client *);
  char		*server_expand_http(struct client *, const char *,
  		    char *, size_t);
- int		 http_version_num(char *);
 +char		*replace_var(const char *, const char *, const char *);
 +char		*server_notify_init(struct client *, struct socket_notifier *,
 +		    unsigned int, const char *);
@@ -406,7 +406,7 @@ Index: usr.sbin/httpd/server_http.c
  int		 server_locationaccesstest(struct server_config *,
  		    const char *);
  int		 server_clientfilter(struct server_config *,
-@@ -1250,6 +1256,7 @@
+@@ -1212,6 +1218,7 @@
  	int			 portval = -1, ret;
  	char			*hostval, *query;
  	const char		*errstr = NULL;
@@ -414,7 +414,7 @@ Index: usr.sbin/httpd/server_http.c
  
  	/* Preserve original path */
  	if (desc->http_path == NULL ||
-@@ -1411,8 +1418,17 @@
+@@ -1373,8 +1380,17 @@
  	}
  
  	if (srv_conf->flags & SRVFLAG_BLOCK) {
@@ -432,7 +432,7 @@ Index: usr.sbin/httpd/server_http.c
  		return (-1);
  	} else if (srv_conf->flags & SRVFLAG_AUTH &&
  	    server_http_authenticate(srv_conf, clt) == -1) {
-@@ -1428,6 +1444,245 @@
+@@ -1390,6 +1406,245 @@
  	srv_conf = clt->clt_srv_conf;
  	server_abort_http(clt, 500, srv_conf->root);
  	return (-1);
