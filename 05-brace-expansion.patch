@@ -14,7 +14,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -852,6 +852,71 @@
+@@ -897,6 +897,71 @@
  Include types definitions from an external file, for example
  .Pa /usr/share/misc/mime.types .
  .El
@@ -86,7 +86,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Sh FILES
  .Bl -tag -width /etc/examples/httpd.conf -compact
  .It Pa /etc/examples/httpd.conf
-@@ -994,6 +1059,26 @@
+@@ -1039,6 +1104,26 @@
  file will straighten things out.
  .Bd -literal -offset indent
  add_filter('got_url_rewrite', '__return_true');
@@ -171,7 +171,7 @@ Index: usr.sbin/httpd/parse.y
  		}
  		;
  
-@@ -458,6 +486,7 @@
+@@ -475,6 +503,7 @@
  			free($3);
  		}
  		| ALIAS optmatch STRING		{
@@ -179,7 +179,7 @@ Index: usr.sbin/httpd/parse.y
  			struct server_config	*alias;
  
  			if (parentsrv != NULL) {
-@@ -466,22 +495,37 @@
+@@ -483,22 +512,37 @@
  				YYERROR;
  			}
  
@@ -225,9 +225,9 @@ Index: usr.sbin/httpd/parse.y
 +				    entry);
 +			}
  		}
- 		| tcpip			{
+ 		| ERRDOCS STRING	{
  			if (parentsrv != NULL) {
-@@ -523,6 +567,8 @@
+@@ -562,6 +606,8 @@
  		| LOCATION optfound optmatch STRING optclientfilter	{
  			struct server		*s;
  			struct sockaddr_un	*sun;
@@ -236,7 +236,7 @@ Index: usr.sbin/httpd/parse.y
  
  			if (srv->srv_conf.ss.ss_family == AF_UNSPEC) {
  				yyerror("listen address not specified");
-@@ -544,25 +590,44 @@
+@@ -583,25 +629,44 @@
  				YYACCEPT;
  			}
  
@@ -284,7 +284,7 @@ Index: usr.sbin/httpd/parse.y
  				free(s);
  				YYERROR;
  			}
-@@ -594,6 +659,7 @@
+@@ -633,6 +698,7 @@
  				if (build_clientfilter(&s->srv_conf,
  				    $5 + 1) == NULL) {
  					free($5);
@@ -292,7 +292,7 @@ Index: usr.sbin/httpd/parse.y
  					free(s);
  					YYERROR;
  				}
-@@ -617,51 +683,22 @@
+@@ -656,51 +722,22 @@
  			s->srv_conf.prefixlen = srv->srv_conf.prefixlen;
  			s->srv_conf.tls_flags = srv->srv_conf.tls_flags;
  
@@ -353,7 +353,7 @@ Index: usr.sbin/httpd/parse.y
  			srv = parentsrv;
  			srv_conf = &parentsrv->srv_conf;
  			parentsrv = NULL;
-@@ -1718,6 +1755,293 @@
+@@ -1757,6 +1794,293 @@
  		}
  	}
  	return (0);

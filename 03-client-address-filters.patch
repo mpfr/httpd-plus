@@ -14,7 +14,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -406,7 +406,8 @@
+@@ -450,7 +450,8 @@
  .It Ic listen on Ar address Oo Ic tls Oc Ic port Ar number
  Set the listen address and port.
  This statement can be specified multiple times.
@@ -24,7 +24,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  Specify server configuration rules for a specific location.
  The
  .Ar path
-@@ -415,7 +416,30 @@
+@@ -459,7 +460,30 @@
  .Ic found
  (i.e. accessible) or
  .Ic not found
@@ -56,7 +56,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  In case of multiple location statements in the same context, the
  first matching location statement will be put into effect, while all
  later ones will be ignored.
-@@ -431,7 +455,8 @@
+@@ -476,7 +500,8 @@
  .Ic tcp
  and
  .Ic tls .
@@ -67,7 +67,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Ic location
  option,
 Index: usr.sbin/httpd/httpd.h
-@@ -57,6 +57,7 @@
+@@ -59,6 +59,7 @@
  #define HTTPD_MAX_ALIAS_IP	16
  #define HTTPD_REALM_MAX		255
  #define HTTPD_LOCATION_MAX	255
@@ -75,7 +75,7 @@ Index: usr.sbin/httpd/httpd.h
  #define HTTPD_DEFAULT_TYPE	{ \
  	"bin", "application", "octet-stream", "", NULL }
  #define HTTPD_LOGVIS		VIS_NL|VIS_TAB|VIS_CSTYLE
-@@ -396,6 +397,8 @@
+@@ -399,6 +400,8 @@
  #define SRVFLAG_DEFAULT_TYPE	0x00800000
  #define SRVFLAG_PATH_REWRITE	0x01000000
  #define SRVFLAG_NO_PATH_REWRITE	0x02000000
@@ -84,7 +84,7 @@ Index: usr.sbin/httpd/httpd.h
  #define SRVFLAG_LOCATION_FOUND	0x40000000
  #define SRVFLAG_LOCATION_NOT_FOUND 0x80000000
  
-@@ -405,7 +408,8 @@
+@@ -408,7 +411,8 @@
  	"\14SYSLOG\15NO_SYSLOG\16TLS\17ACCESS_LOG\20ERROR_LOG"		\
  	"\21AUTH\22NO_AUTH\23BLOCK\24NO_BLOCK\25LOCATION_MATCH"		\
  	"\26SERVER_MATCH\27SERVER_HSTS\30DEFAULT_TYPE\31PATH\32NO_PATH" \
@@ -94,7 +94,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define TCPFLAG_NODELAY		0x01
  #define TCPFLAG_NNODELAY	0x02
-@@ -476,6 +480,28 @@
+@@ -479,6 +483,28 @@
  };
  TAILQ_HEAD(server_fcgiparams, fastcgi_param);
  
@@ -123,8 +123,8 @@ Index: usr.sbin/httpd/httpd.h
  struct server_config {
  	uint32_t		 id;
  	uint32_t		 parent_id;
-@@ -548,6 +574,7 @@
- 	int			 fcgistrip;
+@@ -552,6 +578,7 @@
+ 	char			 errdocroot[HTTPD_ERRDOCROOT_MAX];
  
  	char			 fcgiscript[PATH_MAX];
 +	struct addr_filter	 clientfilter[HTTPD_CLIENT_FILTER_MAX];
@@ -143,16 +143,16 @@ Index: usr.sbin/httpd/parse.y
  int		 yyerror(const char *, ...)
      __attribute__((__format__ (printf, 1, 2)))
      __attribute__((__nonnull__ (1)));
-@@ -140,7 +144,7 @@
- %token	PROTOCOLS REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TICKET
+@@ -141,7 +145,7 @@
  %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
  %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
--%token	CA CLIENT CRL OPTIONAL PARAM FORWARDED FOUND NOT CACHE SCRIPT
-+%token	CA CLIENT CRL OPTIONAL PARAM FORWARDED FOUND NOT CACHE SCRIPT FROM
+ %token	CA CLIENT CRL OPTIONAL PARAM FORWARDED FOUND NOT
+-%token	ERRDOCS CACHE SCRIPT
++%token	ERRDOCS CACHE SCRIPT FROM
  %token	<v.string>	STRING
  %token  <v.number>	NUMBER
  %type	<v.port>	port
-@@ -148,6 +152,7 @@
+@@ -149,6 +153,7 @@
  %type	<v.number>	opttls optmatch optfound
  %type	<v.tv>		timeout
  %type	<v.string>	numberstring optstring
@@ -160,7 +160,7 @@ Index: usr.sbin/httpd/parse.y
  %type	<v.auth>	authopts
  
  %%
-@@ -514,24 +519,27 @@
+@@ -554,24 +559,27 @@
  		| fastcgi
  		| authenticate
  		| filter
@@ -189,7 +189,7 @@ Index: usr.sbin/httpd/parse.y
  				YYACCEPT;
  			}
  
-@@ -543,6 +551,7 @@
+@@ -583,6 +591,7 @@
  			    sizeof(s->srv_conf.location)) {
  				yyerror("server location truncated");
  				free($4);
@@ -197,7 +197,7 @@ Index: usr.sbin/httpd/parse.y
  				free(s);
  				YYERROR;
  			}
-@@ -552,6 +561,7 @@
+@@ -592,6 +601,7 @@
  			    sizeof(s->srv_conf.name)) >=
  			    sizeof(s->srv_conf.name)) {
  				yyerror("server name truncated");
@@ -205,7 +205,7 @@ Index: usr.sbin/httpd/parse.y
  				free(s);
  				YYERROR;
  			}
-@@ -579,6 +589,26 @@
+@@ -619,6 +629,26 @@
  			}
  			if ($3)
  				s->srv_conf.flags |= SRVFLAG_LOCATION_MATCH;
@@ -232,7 +232,7 @@ Index: usr.sbin/httpd/parse.y
  			s->srv_s = -1;
  			memcpy(&s->srv_conf.ss, &srv->srv_conf.ss,
  			    sizeof(s->srv_conf.ss));
-@@ -599,7 +629,9 @@
+@@ -639,7 +669,9 @@
  			struct server	*s = NULL;
  			uint32_t	 f;
  
@@ -243,7 +243,7 @@ Index: usr.sbin/httpd/parse.y
  			    SRVFLAG_LOCATION_NOT_FOUND;
  
  			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
-@@ -610,7 +642,9 @@
+@@ -650,7 +682,9 @@
  				    (s->srv_conf.flags & f) ==
  				    (srv_conf->flags & f) &&
  				    strcmp(s->srv_conf.location,
@@ -254,7 +254,7 @@ Index: usr.sbin/httpd/parse.y
  					break;
  			}
  			if (s != NULL) {
-@@ -651,6 +685,51 @@
+@@ -691,6 +725,51 @@
  		| NOT FOUND	{ $$ = -1; }
  		;
  
@@ -306,7 +306,7 @@ Index: usr.sbin/httpd/parse.y
  hsts		: HSTS '{' optnl hstsflags_l '}'
  		| HSTS hstsflags
  		| HSTS
-@@ -1376,6 +1455,166 @@
+@@ -1416,6 +1495,166 @@
  };
  
  int
@@ -473,7 +473,7 @@ Index: usr.sbin/httpd/parse.y
  yyerror(const char *fmt, ...)
  {
  	va_list		 ap;
-@@ -1429,6 +1668,7 @@
+@@ -1470,6 +1709,7 @@
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
  		{ "found",		FOUND },
@@ -482,8 +482,8 @@ Index: usr.sbin/httpd/parse.y
  		{ "include",		INCLUDE },
  		{ "index",		INDEX },
 Index: usr.sbin/httpd/server_http.c
-@@ -54,6 +54,8 @@
- int		 http_version_num(char *);
+@@ -56,6 +56,8 @@
+ char		*read_errdoc(const char *, const char *);
  int		 server_locationaccesstest(struct server_config *,
  		    const char *);
 +int		 server_clientfilter(struct server_config *,
@@ -491,7 +491,7 @@ Index: usr.sbin/httpd/server_http.c
  
  static struct http_method	 http_methods[] = HTTP_METHODS;
  static struct http_error	 http_errors[] = HTTP_ERRORS;
-@@ -1446,11 +1448,47 @@
+@@ -1467,11 +1469,47 @@
  struct server_config *
  server_getlocation(struct client *clt, const char *path)
  {
@@ -539,7 +539,7 @@ Index: usr.sbin/httpd/server_http.c
  	/* Now search for the location */
  	TAILQ_FOREACH(location, &srv->srv_hosts, entry) {
  #ifdef DEBUG
-@@ -1474,7 +1512,8 @@
+@@ -1495,7 +1533,8 @@
  				    path)) == -1)
  					return (NULL);
  
@@ -549,7 +549,7 @@ Index: usr.sbin/httpd/server_http.c
  					continue;
  				/* Replace host configuration */
  				clt->clt_srv_conf = srv_conf = location;
-@@ -1506,6 +1545,66 @@
+@@ -1527,6 +1566,66 @@
  	close(rootfd);
  	return ((ret == -1 && SRVFLAG_LOCATION_FOUND & srv_conf->flags) ||
  	    (ret == 0 && SRVFLAG_LOCATION_NOT_FOUND & srv_conf->flags));
