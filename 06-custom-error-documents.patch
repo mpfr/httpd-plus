@@ -262,17 +262,19 @@ Index: usr.sbin/httpd/server_http.c
  
  static struct http_method	 http_methods[] = HTTP_METHODS;
  static struct http_error	 http_errors[] = HTTP_ERRORS;
-@@ -858,6 +860,9 @@
+@@ -858,6 +860,11 @@
  	char			 buf[IBUF_READ_SIZE];
  	char			*escapedmsg = NULL;
  	int			 bodylen;
-+	char			*errfile, *cstr;
++	char			*cstr, *errfile;
 +	struct stat		 errsb;
 +	int			 errfd;
++	long			 pagesize;
++	size_t			 mapsize;
  
  	if (code == 0) {
  		server_close(clt, "dropped");
-@@ -933,6 +938,54 @@
+@@ -933,6 +940,47 @@
  
  	free(escapedmsg);
  
@@ -295,31 +297,24 @@ Index: usr.sbin/httpd/server_http.c
 +		bodylen = 0;
 +		goto send; /* file is empty, nothing more to do */
 +	}
-+	if ((errfile = mmap(NULL, errsb.st_size, PROT_READ, MAP_PRIVATE, errfd,
++	if ((pagesize = sysconf(_SC_PAGESIZE)) == -1)
++		fatal("sysconf");
++	mapsize = errsb.st_size / pagesize + (errsb.st_size % pagesize > 0);
++	mapsize *= pagesize;
++	if ((errfile = mmap(NULL, mapsize, PROT_READ, MAP_PRIVATE, errfd,
 +	    0)) == MAP_FAILED)
 +		fatal("mmap");
-+	if ((body = strdup(errfile)) == NULL)
-+		fatal("strdup");
-+	if (munmap(errfile, errsb.st_size) == -1)
++	if ((body = malloc(errsb.st_size + 1)) == NULL)
++		fatal("malloc");
++	memcpy(body, errfile, errsb.st_size);
++	if (munmap(errfile, mapsize) == -1)
 +		fatal("munmap");
 +	close(errfd);
-+	if (strstr(body, "$HTTP_ERROR") != NULL) {
-+		errfile = replace_var(body, "$HTTP_ERROR", httperr);
-+		free(body);
-+		body = errfile;
-+	}
-+	if (strstr(body, "$RESPONSE_CODE") != NULL) {
-+		errfile = replace_var(body, "$RESPONSE_CODE", cstr);
-+		free(body);
-+		body = errfile;
-+	}
++	body[errsb.st_size] = '\0';
++	body = replace_var(body, "$HTTP_ERROR", httperr);
++	body = replace_var(body, "$RESPONSE_CODE", cstr);
 +	free(cstr);
-+	if (strstr(body, "$SERVER_SOFTWARE") != NULL) {
-+		errfile = replace_var(body, "$SERVER_SOFTWARE",
-+		    HTTPD_SERVERNAME);
-+		free(body);
-+		body = errfile;
-+	}
++	body = replace_var(body, "$SERVER_SOFTWARE", HTTPD_SERVERNAME);
 +	bodylen = strlen(body);
 +	goto send;
 +
@@ -327,7 +322,7 @@ Index: usr.sbin/httpd/server_http.c
  	/* A CSS stylesheet allows minimal customization by the user */
  	style = "body { background-color: white; color: black; font-family: "
  	    "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif; }\n"
-@@ -960,6 +1013,7 @@
+@@ -960,6 +1008,7 @@
  		goto done;
  	}
  
@@ -335,7 +330,7 @@ Index: usr.sbin/httpd/server_http.c
  	if (srv_conf->flags & SRVFLAG_SERVER_HSTS &&
  	    srv_conf->flags & SRVFLAG_TLS) {
  		if (asprintf(&hstsheader, "Strict-Transport-Security: "
-@@ -1822,6 +1876,23 @@
+@@ -1788,6 +1837,23 @@
  			return ((SRVFLAG_CLIENT_FROM & srv_conf->flags) == 0);
  	}
  	return ((SRVFLAG_CLIENT_NOT_FROM & srv_conf->flags) == 0);
