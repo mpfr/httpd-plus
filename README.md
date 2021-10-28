@@ -7,7 +7,7 @@ Other branches available:
 * [6.9-stable](https://github.com/mpfr/httpd-plus/tree/6.9-stable)
 
 Notes:
-* The former [`location-access-tests`](https://github.com/mpfr/httpd-plus/blob/cb4a396d7fa8426a353e6a1b91887fc544f525f8/02-location-access-tests.patch) add-on has been [imported](https://github.com/openbsd/src/commit/e96b74b9e3e44aa22060826006547b90ccc38faa#diff-ed9bfab4d87ea6df040a9696cb1860f82d56e70486351f950b3fca91eab7175d) into `-current`. The info regarding its usage with [WordPress](https://wordpress.org) was moved from this website to [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/current/httpd.conf.5.html#EXAMPLES).
+* The former [`location-access-tests`](https://github.com/mpfr/httpd-plus/blob/cb4a396d7fa8426a353e6a1b91887fc544f525f8/02-location-access-tests.patch) add-on has been [imported](https://github.com/openbsd/src/commit/e96b74b9e3e44aa22060826006547b90ccc38faa#diff-ed9bfab4d87ea6df040a9696cb1860f82d56e70486351f950b3fca91eab7175d) into `-current`.
 * Based on the former [`custom-error-documents`](https://github.com/mpfr/httpd-plus/blob/ed8d5e2eed2236cf3f7d3043992a924aeee81475/06-custom-error-documents.patch) add-on, the named functionality has been [added](https://github.com/openbsd/src/commit/cbced0bd4e14972a40a5dcfce5bb001f5654350f#diff-ed9bfab4d87ea6df040a9696cb1860f82d56e70486351f950b3fca91eab7175d) to `-current`.
 
 ## List of add-ons
@@ -18,6 +18,9 @@ Bug fixes:
 * Failing `directory auto index` of `location` in case enclosing `server` specifies `directory no index` (see on [tech@](https://marc.info/?l=openbsd-tech&m=160293921708844&w=2))
 * Failing location access test in case `server`/`location` `root` is empty (see on [tech@](https://marc.info/?l=openbsd-tech&m=160468404614852&w=2))
 * Inconsistent handling of inaccessible `server`/`location` `root` (regular file access still returns status `404` instead of `500`)
+
+Amendments:
+* The info regarding the usage of the former `location-access-tests` add-on with [WordPress](https://wordpress.org) was moved from this website to [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/current/httpd.conf.5.html#EXAMPLES).
 
 ### cache-control-headers
 
