@@ -237,7 +237,7 @@ Index: usr.sbin/httpd/parse.y
  		| tcpip			{
  			if (parentsrv != NULL) {
  				yyerror("tcp flags inside location");
-@@ -2095,6 +2138,7 @@
+@@ -2096,6 +2139,7 @@
  		{ "directory",		DIRECTORY },
  		{ "drop",		DROP },
  		{ "ecdhe",		ECDHE },
