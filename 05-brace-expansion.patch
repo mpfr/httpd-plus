@@ -353,7 +353,7 @@ Index: usr.sbin/httpd/parse.y
  			srv = parentsrv;
  			srv_conf = &parentsrv->srv_conf;
  			parentsrv = NULL;
-@@ -1718,6 +1755,293 @@
+@@ -1718,6 +1755,294 @@
  		}
  	}
  	return (0);
@@ -450,8 +450,9 @@ Index: usr.sbin/httpd/parse.y
 +	for (n = 0, step = from <= to ? 1 : -1;
 +	    (step == 1 && from <= to) || (step == -1 && from >= to);
 +	    from += step, n++) {
-+		if ((bs = malloc(sizeof(*bs))) == NULL ||
-+		    asprintf(&bs->str, "%lld", from) == -1)
++		if ((bs = malloc(sizeof(*bs))) == NULL)
++			fatal("malloc");
++		if (asprintf(&bs->str, "%lld", from) == -1)
 +			fatal("asprintf");
 +		TAILQ_INSERT_TAIL(resq, bs, bstrs);
 +	}
