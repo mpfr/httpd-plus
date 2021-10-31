@@ -24,10 +24,10 @@ restore()
 	echo -n 'Restoring original sources ... '
 	cd ${srcdir}/..
 	rm -rf ${srcdir} && mv $1 ${srcdir}
-	[[ $? -eq 0 ]] && echo 'Done.' || echo 'Failed.'
+	(($? == 0)) && echo 'Done.' || echo 'Failed.'
 }
 
-if [[ $(id -u) != 0 ]]; then
+if (($(id -u) != 0)); then
 	echo 'Need root privileges.'
 	exit 1
 fi
@@ -38,7 +38,7 @@ fi
 
 chksum0=$(find ${srcdir} \( -name '*.[chy578]' -o -name 'Makefile' \) \
 	-type f -maxdepth 1 -exec sha256 -q {} \; | sort | sha256)
-if [[ ${chksum0} != ${chksum} ]]; then
+if [[ "${chksum0}" != "${chksum}" ]]; then
 	echo 'Sources and patches do not match. Make sure ...'
 	echo '  ... the 7.0-stable branch is in use.'
 	echo '  ... both are up-to-date.'
@@ -60,7 +60,7 @@ do
 	[[ -d ${bakdir} ]] || break
 done
 cp -a ${srcdir} ${bakdir}
-if [[ $? -eq 0 ]]; then
+if (($? == 0)); then
 	echo 'Done.'
 else
 	echo 'Failed.'
@@ -71,7 +71,7 @@ echo 'Applying patch files ...'
 for f in $(find $(pwd)/$(dirname $0) -type f -name '*.patch' | sort); do
 	echo "... $(basename ${f} .patch) ..."
 	patch -d ${srcroot} -f -i ${f} -p0 --posix
-	if [[ $? -ne 0 ]]; then
+	if (($? != 0)); then
 		restore ${bakdir}
 		exit 1
 	fi
@@ -80,12 +80,12 @@ done
 cd ${srcdir}
 
 echo 'Building and installing httpd-plus binary and manpage ...'
-make obj && make && make install
+make clean && make obj && make && make install
 ret=$?
 
 restore ${bakdir}
 
-if [[ ${ret} -ne 0 ]]; then
+if ((${ret} != 0)); then
 	echo "\nInstalling httpd-plus failed (exitcode: ${ret})."
 	exit 1
 fi
