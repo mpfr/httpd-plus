@@ -18,6 +18,7 @@ Bug fixes:
 * Failing `directory auto index` of `location` in case enclosing `server` specifies `directory no index` (see on [tech@](https://marc.info/?l=openbsd-tech&m=160293921708844&w=2))
 * Failing location access test in case `server`/`location` `root` is empty (see on [tech@](https://marc.info/?l=openbsd-tech&m=160468404614852&w=2))
 * Inconsistent handling of inaccessible `server`/`location` `root` (regular file access still returns status `404` instead of `500`)
+* Inappropriate `log_warn` in case of missing custom error documents and cleanup of `read_errdoc` function (see on [misc@](https://marc.info/?l=openbsd-misc&m=163869316928263&w=2))
 
 Amendments:
 * The info regarding the usage of the former `location-access-tests` add-on with [WordPress](https://wordpress.org) was moved from this website to [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/current/httpd.conf.5.html#EXAMPLES).
