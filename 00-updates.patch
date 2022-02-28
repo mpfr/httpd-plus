@@ -1,5 +1,5 @@
 
-Copyright (c) 2020, 2021 Matthias Pressfreund
+Copyright (c) 2020 - 2022 Matthias Pressfreund
 
 Permission to use, copy, modify, and distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
@@ -49,7 +49,7 @@ Index: usr.sbin/httpd/httpd.8
  .Bl -tag -width Dssmacro=value
 Index: usr.sbin/httpd/httpd.conf.5
 @@ -1,5 +1,6 @@
- .\"	$OpenBSD: httpd.conf.5,v 1.119 2021/10/24 16:01:04 ian Exp $
+ .\"	$OpenBSD: httpd.conf.5,v 1.120 2022/02/27 20:30:30 bluhm Exp $
  .\"
 +.\" Copyright (c) 2020, 2021 Matthias Pressfreund
  .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
@@ -67,7 +67,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Pp
  .Nm
  is divided into the following main sections:
-@@ -853,6 +857,41 @@
+@@ -859,6 +863,41 @@
  		request rewrite "/new/%1"
  	}
  }
@@ -110,7 +110,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Sh SEE ALSO
  .Xr htpasswd 1 ,
 Index: usr.sbin/httpd/httpd.h
-@@ -672,6 +672,9 @@
+@@ -673,6 +673,9 @@
  
  SPLAY_PROTOTYPE(client_tree, client, clt_nodes, server_client_cmp);
  
@@ -120,7 +120,7 @@ Index: usr.sbin/httpd/httpd.h
  /* server_http.c */
  void	 server_http_init(struct server *);
  void	 server_http(void);
-@@ -700,7 +703,6 @@
+@@ -701,7 +704,6 @@
  	 server_root_strip(const char *, int);
  struct server_config *
  	 server_getlocation(struct client *, const char *);

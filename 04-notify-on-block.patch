@@ -1,5 +1,5 @@
 
-Copyright (c) 2021 Matthias Pressfreund
+Copyright (c) 2021, 2022 Matthias Pressfreund
 
 Permission to use, copy, modify, and distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
@@ -48,7 +48,7 @@ Index: usr.sbin/httpd/config.c
  		DPRINTF("%s: %s %d location \"%s\", "
  		    "parent \"%s[%u]\", flags: %s",
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -580,6 +580,117 @@
+@@ -586,6 +586,117 @@
  .Xr syslog 3
  instead of the log files.
  .El
@@ -184,7 +184,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define MEDIATYPE_NAMEMAX	128	/* file name extension */
  #define MEDIATYPE_TYPEMAX	64	/* length of type/subtype */
-@@ -505,6 +508,26 @@
+@@ -506,6 +509,26 @@
  	struct client_addr	 xff;
  };
  
@@ -211,7 +211,7 @@ Index: usr.sbin/httpd/httpd.h
  struct server_config {
  	uint32_t		 id;
  	uint32_t		 parent_id;
-@@ -579,6 +602,7 @@
+@@ -580,6 +603,7 @@
  
  	char			 fcgiscript[PATH_MAX];
  	struct addr_filter	 clientfilter[HTTPD_CLIENT_FILTER_MAX];
@@ -224,8 +224,8 @@ Index: usr.sbin/httpd/parse.y
  %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
  %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
  %token	CA CLIENT CRL OPTIONAL PARAM FORWARDED FOUND NOT
--%token	ERRDOCS CACHE SCRIPT FROM
-+%token	ERRDOCS CACHE SCRIPT FROM NOTIFY MESSAGE CR LF
+-%token	ERRDOCS GZIPSTATIC CACHE SCRIPT FROM
++%token	ERRDOCS GZIPSTATIC CACHE SCRIPT FROM NOTIFY MESSAGE CR LF
  %token	<v.string>	STRING
  %token  <v.number>	NUMBER
  %type	<v.port>	port
@@ -239,7 +239,7 @@ Index: usr.sbin/httpd/parse.y
  %type	<v.auth>	authopts
  
  %%
-@@ -1269,6 +1269,25 @@
+@@ -1270,6 +1270,25 @@
  			srv_conf->flags &= ~SRVFLAG_BLOCK;
  			srv_conf->flags |= SRVFLAG_NO_BLOCK;
  		}
@@ -265,7 +265,7 @@ Index: usr.sbin/httpd/parse.y
  		;
  
  block		: BLOCK				{
-@@ -1277,6 +1296,92 @@
+@@ -1278,6 +1297,92 @@
  		}
  		;
  
@@ -358,7 +358,7 @@ Index: usr.sbin/httpd/parse.y
  optmatch	: /* empty */		{ $$ = 0; }
  		| MATCH			{ $$ = 1; }
  		;
-@@ -1698,6 +1803,7 @@
+@@ -1707,6 +1812,7 @@
  		{ "combined",		COMBINED },
  		{ "common",		COMMON },
  		{ "connection",		CONNECTION },
@@ -366,7 +366,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "crl",		CRL },
  		{ "default",		DEFAULT },
  		{ "dhe",		DHE },
-@@ -1715,6 +1821,7 @@
+@@ -1725,6 +1831,7 @@
  		{ "index",		INDEX },
  		{ "ip",			IP },
  		{ "key",		KEY },
@@ -374,7 +374,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "lifetime",		LIFETIME },
  		{ "listen",		LISTEN },
  		{ "location",		LOCATION },
-@@ -1723,9 +1830,11 @@
+@@ -1733,9 +1840,11 @@
  		{ "match",		MATCH },
  		{ "max",		MAXIMUM },
  		{ "max-age",		MAXAGE },

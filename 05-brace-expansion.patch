@@ -1,5 +1,5 @@
 
-Copyright (c) 2021 Matthias Pressfreund
+Copyright (c) 2021, 2022 Matthias Pressfreund
 
 Permission to use, copy, modify, and distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -897,6 +897,71 @@
+@@ -903,6 +903,71 @@
  Include types definitions from an external file, for example
  .Pa /usr/share/misc/mime.types .
  .El
@@ -86,7 +86,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Sh FILES
  .Bl -tag -width /etc/examples/httpd.conf -compact
  .It Pa /etc/examples/httpd.conf
-@@ -1039,6 +1104,26 @@
+@@ -1045,6 +1110,26 @@
  file will straighten things out.
  .Bd -literal -offset indent
  add_filter('got_url_rewrite', '__return_true');
@@ -227,7 +227,7 @@ Index: usr.sbin/httpd/parse.y
  		}
  		| ERRDOCS STRING	{
  			if (parentsrv != NULL) {
-@@ -562,6 +606,8 @@
+@@ -563,6 +607,8 @@
  		| LOCATION optfound optmatch STRING optclientfilter	{
  			struct server		*s;
  			struct sockaddr_un	*sun;
@@ -236,7 +236,7 @@ Index: usr.sbin/httpd/parse.y
  
  			if (srv->srv_conf.ss.ss_family == AF_UNSPEC) {
  				yyerror("listen address not specified");
-@@ -583,25 +629,44 @@
+@@ -584,25 +630,44 @@
  				YYACCEPT;
  			}
  
@@ -284,7 +284,7 @@ Index: usr.sbin/httpd/parse.y
  				free(s);
  				YYERROR;
  			}
-@@ -633,6 +698,7 @@
+@@ -634,6 +699,7 @@
  				if (build_clientfilter(&s->srv_conf,
  				    $5 + 1) == NULL) {
  					free($5);
@@ -292,7 +292,7 @@ Index: usr.sbin/httpd/parse.y
  					free(s);
  					YYERROR;
  				}
-@@ -656,51 +722,22 @@
+@@ -657,51 +723,22 @@
  			s->srv_conf.prefixlen = srv->srv_conf.prefixlen;
  			s->srv_conf.tls_flags = srv->srv_conf.tls_flags;
  
@@ -353,7 +353,7 @@ Index: usr.sbin/httpd/parse.y
  			srv = parentsrv;
  			srv_conf = &parentsrv->srv_conf;
  			parentsrv = NULL;
-@@ -1757,6 +1794,294 @@
+@@ -1766,6 +1803,294 @@
  		}
  	}
  	return (0);

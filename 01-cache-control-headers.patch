@@ -1,5 +1,5 @@
 
-Copyright (c) 2020, 2021 Matthias Pressfreund
+Copyright (c) 2020 - 2022 Matthias Pressfreund
 
 Permission to use, copy, modify, and distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
@@ -31,7 +31,7 @@ Index: usr.sbin/httpd/http.h
  /*
   * Some default media types based on (2014-08-04 version):
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -742,15 +742,18 @@
+@@ -748,15 +748,18 @@
  section must include one or more lines of the following syntax,
  enclosed in curly braces:
  .Bl -tag -width Ds
@@ -53,7 +53,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .It Ic include Ar file
  Include types definitions from an external file, for example
  .Pa /usr/share/misc/mime.types .
-@@ -781,14 +784,14 @@
+@@ -787,14 +790,14 @@
  }
  
  types {
@@ -78,7 +78,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Pp
 Index: usr.sbin/httpd/httpd.h
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: httpd.h,v 1.158 2021/10/24 16:01:04 ian Exp $	*/
+ /*	$OpenBSD: httpd.h,v 1.159 2022/02/27 20:30:30 bluhm Exp $	*/
  
  /*
 + * Copyright (c) 2020 Matthias Pressfreund
@@ -103,7 +103,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define CONFIG_RELOAD		0x00
  #define CONFIG_MEDIA		0x01
-@@ -449,6 +452,7 @@
+@@ -450,6 +453,7 @@
  	char			 media_name[MEDIATYPE_NAMEMAX];
  	char			 media_type[MEDIATYPE_TYPEMAX];
  	char			 media_subtype[MEDIATYPE_TYPEMAX];
@@ -116,12 +116,12 @@ Index: usr.sbin/httpd/parse.y
  %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
  %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
  %token	CA CLIENT CRL OPTIONAL PARAM FORWARDED FOUND NOT
--%token	ERRDOCS
-+%token	ERRDOCS CACHE
+-%token	ERRDOCS GZIPSTATIC
++%token	ERRDOCS GZIPSTATIC CACHE
  %token	<v.string>	STRING
  %token  <v.number>	NUMBER
  %type	<v.port>	port
-@@ -1275,7 +1275,7 @@
+@@ -1284,7 +1284,7 @@
  		| mediaoptsl nl
  		;
  
@@ -130,7 +130,7 @@ Index: usr.sbin/httpd/parse.y
  		| include
  		;
  
-@@ -1296,6 +1296,24 @@
+@@ -1305,6 +1305,24 @@
  		}
  		;
  
@@ -155,7 +155,7 @@ Index: usr.sbin/httpd/parse.y
  medianames_l	: medianames_l medianamesl
  		| medianamesl
  		;
-@@ -1423,6 +1441,7 @@
+@@ -1432,6 +1450,7 @@
  		{ "body",		BODY },
  		{ "buffer",		BUFFER },
  		{ "ca",			CA },
@@ -163,7 +163,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "certificate",	CERTIFICATE },
  		{ "chroot",		CHROOT },
  		{ "ciphers",		CIPHERS },
-@@ -1938,6 +1957,7 @@
+@@ -1948,6 +1967,7 @@
  			(void)strlcpy(m.media_subtype,
  			    mediatypes[i].media_subtype,
  			    sizeof(m.media_subtype));

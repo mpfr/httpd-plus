@@ -1,5 +1,5 @@
 
-Copyright (c) 2020, 2021 Matthias Pressfreund
+Copyright (c) 2020 - 2022 Matthias Pressfreund
 
 Permission to use, copy, modify, and distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -450,7 +450,8 @@
+@@ -456,7 +456,8 @@
  .It Ic listen on Ar address Oo Ic tls Oc Ic port Ar number
  Set the listen address and port.
  This statement can be specified multiple times.
@@ -24,7 +24,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  Specify server configuration rules for a specific location.
  The
  .Ar path
-@@ -459,7 +460,30 @@
+@@ -465,7 +466,30 @@
  .Ic found
  (i.e. accessible) or
  .Ic not found
@@ -56,7 +56,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  In case of multiple location statements in the same context, the
  first matching location statement will be put into effect, while all
  later ones will be ignored.
-@@ -476,7 +500,8 @@
+@@ -482,7 +506,8 @@
  .Ic tcp
  and
  .Ic tls .
@@ -75,16 +75,16 @@ Index: usr.sbin/httpd/httpd.h
  #define HTTPD_DEFAULT_TYPE	{ \
  	"bin", "application", "octet-stream", "", NULL }
  #define HTTPD_LOGVIS		VIS_NL|VIS_TAB|VIS_CSTYLE
-@@ -399,6 +400,8 @@
- #define SRVFLAG_DEFAULT_TYPE	0x00800000
+@@ -400,6 +401,8 @@
  #define SRVFLAG_PATH_REWRITE	0x01000000
  #define SRVFLAG_NO_PATH_REWRITE	0x02000000
+ #define SRVFLAG_GZIP_STATIC	0x04000000
 +#define SRVFLAG_CLIENT_FROM	0x10000000
 +#define SRVFLAG_CLIENT_NOT_FROM 0x20000000
  #define SRVFLAG_LOCATION_FOUND	0x40000000
  #define SRVFLAG_LOCATION_NOT_FOUND 0x80000000
  
-@@ -408,7 +411,8 @@
+@@ -409,7 +412,8 @@
  	"\14SYSLOG\15NO_SYSLOG\16TLS\17ACCESS_LOG\20ERROR_LOG"		\
  	"\21AUTH\22NO_AUTH\23BLOCK\24NO_BLOCK\25LOCATION_MATCH"		\
  	"\26SERVER_MATCH\27SERVER_HSTS\30DEFAULT_TYPE\31PATH\32NO_PATH" \
@@ -94,7 +94,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define TCPFLAG_NODELAY		0x01
  #define TCPFLAG_NNODELAY	0x02
-@@ -479,6 +483,28 @@
+@@ -480,6 +484,28 @@
  };
  TAILQ_HEAD(server_fcgiparams, fastcgi_param);
  
@@ -123,7 +123,7 @@ Index: usr.sbin/httpd/httpd.h
  struct server_config {
  	uint32_t		 id;
  	uint32_t		 parent_id;
-@@ -552,6 +578,7 @@
+@@ -553,6 +579,7 @@
  	char			 errdocroot[HTTPD_ERRDOCROOT_MAX];
  
  	char			 fcgiscript[PATH_MAX];
@@ -147,8 +147,8 @@ Index: usr.sbin/httpd/parse.y
  %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
  %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
  %token	CA CLIENT CRL OPTIONAL PARAM FORWARDED FOUND NOT
--%token	ERRDOCS CACHE SCRIPT
-+%token	ERRDOCS CACHE SCRIPT FROM
+-%token	ERRDOCS GZIPSTATIC CACHE SCRIPT
++%token	ERRDOCS GZIPSTATIC CACHE SCRIPT FROM
  %token	<v.string>	STRING
  %token  <v.number>	NUMBER
  %type	<v.port>	port
@@ -160,9 +160,9 @@ Index: usr.sbin/httpd/parse.y
  %type	<v.auth>	authopts
  
  %%
-@@ -554,24 +559,27 @@
- 		| fastcgi
+@@ -555,24 +560,27 @@
  		| authenticate
+ 		| gzip_static
  		| filter
 -		| LOCATION optfound optmatch STRING	{
 +		| LOCATION optfound optmatch STRING optclientfilter	{
@@ -189,7 +189,7 @@ Index: usr.sbin/httpd/parse.y
  				YYACCEPT;
  			}
  
-@@ -583,6 +591,7 @@
+@@ -584,6 +592,7 @@
  			    sizeof(s->srv_conf.location)) {
  				yyerror("server location truncated");
  				free($4);
@@ -197,7 +197,7 @@ Index: usr.sbin/httpd/parse.y
  				free(s);
  				YYERROR;
  			}
-@@ -592,6 +601,7 @@
+@@ -593,6 +602,7 @@
  			    sizeof(s->srv_conf.name)) >=
  			    sizeof(s->srv_conf.name)) {
  				yyerror("server name truncated");
@@ -205,7 +205,7 @@ Index: usr.sbin/httpd/parse.y
  				free(s);
  				YYERROR;
  			}
-@@ -619,6 +629,26 @@
+@@ -620,6 +630,26 @@
  			}
  			if ($3)
  				s->srv_conf.flags |= SRVFLAG_LOCATION_MATCH;
@@ -232,7 +232,7 @@ Index: usr.sbin/httpd/parse.y
  			s->srv_s = -1;
  			memcpy(&s->srv_conf.ss, &srv->srv_conf.ss,
  			    sizeof(s->srv_conf.ss));
-@@ -639,7 +669,9 @@
+@@ -640,7 +670,9 @@
  			struct server	*s = NULL;
  			uint32_t	 f;
  
@@ -243,7 +243,7 @@ Index: usr.sbin/httpd/parse.y
  			    SRVFLAG_LOCATION_NOT_FOUND;
  
  			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
-@@ -650,7 +682,9 @@
+@@ -651,7 +683,9 @@
  				    (s->srv_conf.flags & f) ==
  				    (srv_conf->flags & f) &&
  				    strcmp(s->srv_conf.location,
@@ -254,7 +254,7 @@ Index: usr.sbin/httpd/parse.y
  					break;
  			}
  			if (s != NULL) {
-@@ -691,6 +725,51 @@
+@@ -692,6 +726,51 @@
  		| NOT FOUND	{ $$ = -1; }
  		;
  
@@ -306,7 +306,7 @@ Index: usr.sbin/httpd/parse.y
  hsts		: HSTS '{' optnl hstsflags_l '}'
  		| HSTS hstsflags
  		| HSTS
-@@ -1416,6 +1495,166 @@
+@@ -1425,6 +1504,166 @@
  };
  
  int
@@ -473,14 +473,14 @@ Index: usr.sbin/httpd/parse.y
  yyerror(const char *fmt, ...)
  {
  	va_list		 ap;
-@@ -1470,6 +1709,7 @@
+@@ -1479,6 +1718,7 @@
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
  		{ "found",		FOUND },
 +		{ "from",		FROM },
+ 		{ "gzip-static",	GZIPSTATIC },
  		{ "hsts",		HSTS },
  		{ "include",		INCLUDE },
- 		{ "index",		INDEX },
 Index: usr.sbin/httpd/server_http.c
 @@ -56,6 +56,8 @@
  char		*read_errdoc(const char *, const char *);
