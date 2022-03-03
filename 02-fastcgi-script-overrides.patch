@@ -49,7 +49,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  		fastcgi socket "/run/php-fpm.sock"
 Index: usr.sbin/httpd/httpd.h
 @@ -1,7 +1,7 @@
- /*	$OpenBSD: httpd.h,v 1.159 2022/02/27 20:30:30 bluhm Exp $	*/
+ /*	$OpenBSD: httpd.h,v 1.160 2022/03/02 11:10:43 florian Exp $	*/
  
  /*
 - * Copyright (c) 2020 Matthias Pressfreund
@@ -57,7 +57,7 @@ Index: usr.sbin/httpd/httpd.h
   * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
   * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
   * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
-@@ -551,6 +551,8 @@
+@@ -547,6 +547,8 @@
  	struct server_fcgiparams fcgiparams;
  	int			 fcgistrip;
  	char			 errdocroot[HTTPD_ERRDOCROOT_MAX];
@@ -103,7 +103,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "strip",		STRIP },
 Index: usr.sbin/httpd/server_fcgi.c
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: server_fcgi.c,v 1.89 2021/10/23 15:52:44 benno Exp $	*/
+ /*	$OpenBSD: server_fcgi.c,v 1.90 2022/03/02 11:10:43 florian Exp $	*/
  
  /*
 + * Copyright (c) 2020, 2021 Matthias Pressfreund

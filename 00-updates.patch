@@ -110,7 +110,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Sh SEE ALSO
  .Xr htpasswd 1 ,
 Index: usr.sbin/httpd/httpd.h
-@@ -673,6 +673,9 @@
+@@ -669,6 +669,9 @@
  
  SPLAY_PROTOTYPE(client_tree, client, clt_nodes, server_client_cmp);
  
@@ -120,7 +120,7 @@ Index: usr.sbin/httpd/httpd.h
  /* server_http.c */
  void	 server_http_init(struct server *);
  void	 server_http(void);
-@@ -701,7 +704,6 @@
+@@ -697,7 +700,6 @@
  	 server_root_strip(const char *, int);
  struct server_config *
  	 server_getlocation(struct client *, const char *);
@@ -129,7 +129,7 @@ Index: usr.sbin/httpd/httpd.h
  	 server_http_host(struct sockaddr_storage *, char *, size_t);
  char	*server_http_parsehost(char *, char *, size_t, int *);
 Index: usr.sbin/httpd/server_file.c
-@@ -165,10 +165,17 @@
+@@ -161,10 +161,17 @@
  	struct server_config	*srv_conf = clt->clt_srv_conf;
  	char			 path[PATH_MAX];
  	const char		*stripped, *errstr = NULL;
@@ -206,7 +206,7 @@ Index: usr.sbin/httpd/server_http.c
  		return (-1);
  
  	path = server_root_strip(path, srv_conf->strip) + 1;
-@@ -1759,22 +1763,20 @@
+@@ -1756,22 +1760,20 @@
  }
  
  /*
@@ -232,7 +232,7 @@ Index: usr.sbin/httpd/server_http.c
  		return (NULL);
  	}
  	free(path);
-@@ -1791,8 +1793,7 @@
+@@ -1788,8 +1790,7 @@
  		log_warn("%s: read", __func__);
  		close(fd);
  		free(ret);
