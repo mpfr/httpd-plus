@@ -49,7 +49,7 @@ Index: usr.sbin/httpd/httpd.8
  .Bl -tag -width Dssmacro=value
 Index: usr.sbin/httpd/httpd.conf.5
 @@ -1,5 +1,6 @@
- .\"	$OpenBSD: httpd.conf.5,v 1.120 2022/02/27 20:30:30 bluhm Exp $
+ .\"	$OpenBSD: httpd.conf.5,v 1.121 2022/03/09 13:50:41 jsg Exp $
  .\"
 +.\" Copyright (c) 2020, 2021 Matthias Pressfreund
  .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
