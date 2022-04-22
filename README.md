@@ -1,6 +1,6 @@
 # httpd-plus
 
-Add-ons for the [OpenBSD](https://www.openbsd.org) [`httpd(8)`](http://man.openbsd.org/httpd) web server applicable to the latest `-current` branch.
+Add-ons for the [OpenBSD](https://www.openbsd.org) [`httpd(8)`](http://man.openbsd.org/httpd) web server applicable to the `7.1-stable` branch.
 
 Other branches available:
 * [current](https://github.com/mpfr/httpd-plus)
