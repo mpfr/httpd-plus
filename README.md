@@ -3,8 +3,8 @@
 Add-ons for the [OpenBSD](https://www.openbsd.org) [`httpd(8)`](http://man.openbsd.org/httpd) web server applicable to the latest `-current` branch.
 
 Other branches available:
+* [current](https://github.com/mpfr/httpd-plus)
 * [7.0-stable](https://github.com/mpfr/httpd-plus/tree/7.0-stable)
-* [6.9-stable](https://github.com/mpfr/httpd-plus/tree/6.9-stable)
 
 Notes:
 * The former [`location-access-tests`](https://github.com/mpfr/httpd-plus/blob/cb4a396d7fa8426a353e6a1b91887fc544f525f8/02-location-access-tests.patch) add-on has been [imported](https://github.com/openbsd/src/commit/e96b74b9e3e44aa22060826006547b90ccc38faa#diff-ed9bfab4d87ea6df040a9696cb1860f82d56e70486351f950b3fca91eab7175d) into `-current`.
@@ -21,11 +21,11 @@ Bug fixes:
 * Inappropriate `log_warn` in case of missing custom error documents and cleanup of `read_errdoc` function (see on [misc@](https://marc.info/?l=openbsd-misc&m=163869316928263&w=2))
 
 Amendments:
-* The info regarding the usage of the former `location-access-tests` add-on with [WordPress](https://wordpress.org) was moved from this website to [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/current/httpd.conf.5.html#EXAMPLES).
+* The info regarding the usage of the former `location-access-tests` add-on with [WordPress](https://wordpress.org) was moved from this website to [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/7.1-stable/httpd.conf.5.html#EXAMPLES).
 
 ### cache-control-headers
 
-Optional HTTP `Cache-Control` headers via [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/current/httpd.conf.5.html#TYPES).
+Optional HTTP `Cache-Control` headers via [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/7.1-stable/httpd.conf.5.html#TYPES).
 
 ```
 types {
@@ -39,7 +39,7 @@ types {
 
 ### fastcgi-script-overrides
 
-Definition of `script` overrides for `fastcgi` environments via [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/current/httpd.conf.5.html#script). This may be used either to run a dedicated `script` in its specific `param` environment for a certain `location`, or simply as a shortcut avoiding unnecessary evaluation rounds for the server (as required when using `request rewrite`).
+Definition of `script` overrides for `fastcgi` environments via [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/7.1-stable/httpd.conf.5.html#script). This may be used either to run a dedicated `script` in its specific `param` environment for a certain `location`, or simply as a shortcut avoiding unnecessary evaluation rounds for the server (as required when using `request rewrite`).
 
 ```
 server "www.example.com" {
@@ -65,7 +65,7 @@ server "www.example.com" {
 
 ### client-address-filters
 
-Client address matching (`from` or `not from`) for `location` sections in [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/current/httpd.conf.5.html#location).
+Client address matching (`from` or `not from`) for `location` sections in [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/7.1-stable/httpd.conf.5.html#location).
 
 ```
 server "www.example.com" {
@@ -77,7 +77,7 @@ server "www.example.com" {
 
 ### notify-on-block
 
-Send notification messages to UNIX-domain sockets for `server` and/or `location` sections with a `block` directive in [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/current/httpd.conf.5.html#message).
+Send notification messages to UNIX-domain sockets for `server` and/or `location` sections with a `block` directive in [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/7.1-stable/httpd.conf.5.html#message).
 
 This cooperates perfectly with [pftbld(8)](https://github.com/mpfr/pftbld), offering an easy and straightforward means to effectively protect the web server from offensive clients and successively build customized firewall blocklists. In the example below, access to `/restricted*` URLs from outside the `10.0.0/24` network is not just blocked, but `httpd(8)` also reports client IP addresses to `pftbld(8)` (with its listening socket at `/var/www/run/pftbld-www.sock`) for further handling.
 
@@ -117,7 +117,7 @@ target "www" {
 
 ### brace-expansion
 
-Simple brace expansion for `alias <name>`, `include <path>` and `location <path>` option parameters in [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/current/httpd.conf.5.html#BRACE_EXPANSION).
+Simple brace expansion for `alias <name>`, `include <path>` and `location <path>` option parameters in [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/7.1-stable/httpd.conf.5.html#BRACE_EXPANSION).
 Helps to minimize the configuration file size by avoiding duplicate content.
 
 ```
@@ -148,24 +148,24 @@ $ pwd
 Download and extract patch files and installation script.
 
 ```
-$ rm -rf httpd-plus-current/
-$ ftp -Vo - https://codeload.github.com/mpfr/httpd-plus/tar.gz/current | tar xzvf -
-httpd-plus-current
-httpd-plus-current/00-updates.patch
-httpd-plus-current/01-cache-control-headers.patch
-httpd-plus-current/02-fastcgi-script-overrides.patch
-httpd-plus-current/03-client-address-filters.patch
-httpd-plus-current/04-notify-on-block.patch
-httpd-plus-current/05-brace-expansion.patch
-httpd-plus-current/LICENSE
-httpd-plus-current/README.md
-httpd-plus-current/install
+$ rm -rf httpd-plus-7.1-stable/
+$ ftp -Vo - https://codeload.github.com/mpfr/httpd-plus/tar.gz/7.1-stable | tar xzvf -
+httpd-plus-7.1-stable
+httpd-plus-7.1-stable/00-updates.patch
+httpd-plus-7.1-stable/01-cache-control-headers.patch
+httpd-plus-7.1-stable/02-fastcgi-script-overrides.patch
+httpd-plus-7.1-stable/03-client-address-filters.patch
+httpd-plus-7.1-stable/04-notify-on-block.patch
+httpd-plus-7.1-stable/05-brace-expansion.patch
+httpd-plus-7.1-stable/LICENSE
+httpd-plus-7.1-stable/README.md
+httpd-plus-7.1-stable/install
 ```
 
 Apply the patch files by running the installation script. This will build and install the `httpd-plus` binary. After the build process, the original source is restored.
 
 ```
-$ doas ksh httpd-plus-current/install 2>&1 | tee httpd-plus-install.log
+$ doas ksh httpd-plus-7.1-stable/install 2>&1 | tee httpd-plus-install.log
 Backing up original sources ... Done.
 Applying patch files ...
 ... 00-updates ...
@@ -192,7 +192,7 @@ Installing httpd-plus binary and manpage completed successfully.
 Please consult 'man httpd.conf' for further information on new features.
 ```
 
-Adapt your `httpd.conf` for the newly added features. For further information, have a look at the updated `httpd.conf(5)` [manpage](https://mpfr.net/man/httpd-plus/current/httpd.conf.5.html) (also via `man httpd.conf`). Make sure your new configuration is valid.
+Adapt your `httpd.conf` for the newly added features. For further information, have a look at the updated `httpd.conf(5)` [manpage](https://mpfr.net/man/httpd-plus/7.1-stable/httpd.conf.5.html) (also via `man httpd.conf`). Make sure your new configuration is valid.
 
 ```
 $ doas vi /etc/httpd.conf
