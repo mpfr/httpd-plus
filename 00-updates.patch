@@ -51,7 +51,7 @@ Index: usr.sbin/httpd/httpd.conf.5
 @@ -1,5 +1,6 @@
  .\"	$OpenBSD: httpd.conf.5,v 1.121 2022/03/09 13:50:41 jsg Exp $
  .\"
-+.\" Copyright (c) 2020, 2021 Matthias Pressfreund
++.\" Copyright (c) 2020 - 2022 Matthias Pressfreund
  .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
  .\"
  .\" Permission to use, copy, modify, and distribute this software for any
@@ -67,11 +67,12 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Pp
  .Nm
  is divided into the following main sections:
-@@ -859,6 +863,41 @@
+@@ -859,6 +863,43 @@
  		request rewrite "/new/%1"
  	}
  }
 +.Ed
++.Pp
 +The
 +.Ic location not found
 +option may be used to enable
@@ -92,6 +93,7 @@ Index: usr.sbin/httpd/httpd.conf.5
 +	}
 +}
 +.Ed
++.Pp
 +WordPress, however, is unable to discover that
 +.Xr httpd 8
 +is now capable to perform required URL rewrites.

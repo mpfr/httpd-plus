@@ -69,7 +69,11 @@ fi
 
 echo 'Applying patch files ...'
 for f in $(find $(pwd)/$(dirname $0) -type f -name '*.patch' | sort); do
-	echo "... $(basename ${f} .patch) ..."
+	addon=$(basename ${f} .patch)
+	len=$((${#addon}+10))
+	printf "%${len}s\n" | tr ' ' '='
+	printf '===  %s  ===\n' "${addon}"
+	printf "%${len}s\n" | tr ' ' '='
 	patch -d ${srcroot} -f -i ${f} -p0 --posix
 	if (($? != 0)); then
 		restore ${bakdir}

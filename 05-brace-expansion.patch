@@ -86,7 +86,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Sh FILES
  .Bl -tag -width /etc/examples/httpd.conf -compact
  .It Pa /etc/examples/httpd.conf
-@@ -1045,6 +1110,26 @@
+@@ -1047,6 +1112,28 @@
  file will straighten things out.
  .Bd -literal -offset indent
  add_filter('got_url_rewrite', '__return_true');
@@ -95,9 +95,11 @@ Index: usr.sbin/httpd/httpd.conf.5
 +Brace expansion can help clarify configuration files in which several
 +.Ic location
 +sections share the same content:
++.Pp
 +.Dl location \(dq/chapter/{A_0{1,2,5},F_{17..49}}-{B,C}/*\(dq { ... }
 +.Pp
 +replaces
++.Pp
 +.Bd -literal -offset indent -compact
 +location "/chapter/A_01-B/*" { ... }
 +location "/chapter/A_01-C/*" { ... }
@@ -203,7 +205,7 @@ Index: usr.sbin/httpd/parse.y
 +			while ((bs = TAILQ_FIRST(&bstrq)) != NULL) {
 +				if ((alias = calloc(1,
 +				    sizeof(*alias))) == NULL)
-+				fatal("out of memory");
++					fatal("out of memory");
  
 -			TAILQ_INSERT_TAIL(&srv->srv_hosts, alias, entry);
 +				if (strlcpy(alias->name, bs->str,
@@ -353,7 +355,51 @@ Index: usr.sbin/httpd/parse.y
  			srv = parentsrv;
  			srv_conf = &parentsrv->srv_conf;
  			parentsrv = NULL;
-@@ -1766,6 +1803,294 @@
+@@ -1611,14 +1648,16 @@
+ int
+ normalize_addr(char *dst, const char *src, size_t dstsize)
+ {
+-	int		 bits, c, in6 = strchr(src, ':') != NULL;
++	int		 bits, c, in6;
+ 	char		*d, *e;
+ 	const char	*errstr, *b;
+ 	size_t		 len;
+ 
++	in6 = strchr(src, ':') != NULL;
+ 	bits = (in6 ? sizeof(struct in6_addr) : sizeof(struct in_addr)) << 3;
+ 	/* prepare CIDR prefix length to be removed, if present */
+-	e = (d = strchr(src, '/')) != NULL ? d : strchr(src, '\0');
++	d = strchr(src, '/');
++	e = d != NULL ? d : strchr(src, '\0');
+ 	if ((len = e - src) >= dstsize)
+ 		goto fail;
+ 
+@@ -1666,13 +1705,13 @@
+ build_clientfilter(struct server_config *sc, char *cfgstr)
+ {
+ 	struct addr_filter	*clt_fltr = sc->clientfilter, rbuf;
+-	size_t			 cfglen = strlen(cfgstr), span;
++	size_t			 cfglen, span;
+ 	char			*cstr, buf[INET6_ADDRSTRLEN];
+ 	int			 i, bits, c, bytes, range;
+ 	unsigned char		*first, *last, b;
+ 
++	cfglen = strlen(cfgstr);
+ 	DPRINTF("%s: received \"%s\" len:%zu", __func__, cfgstr, cfglen);
+-
+ 	for (cstr = cfgstr, i = 0, cfgstr += cfglen; cstr <= cfgstr &&
+ 	    (cstr = strpbrk(cstr, "0123456789AaBbCcDdEeFf:>")) != NULL;) {
+ 		if (i == HTTPD_CLIENT_FILTER_MAX) {
+@@ -1757,7 +1796,7 @@
+ 			    sizeof(struct addr_filter)));
+ 
+ 		j = 0;
+-		while (1) {
++		for (;;) {
+ 			c = memcmp(&a[i], &b[j], sizeof(struct addr_filter));
+ 			if (c == 0)
+ 				break;
+@@ -1766,6 +1805,296 @@
  		}
  	}
  	return (0);
@@ -369,8 +415,9 @@ Index: usr.sbin/httpd/parse.y
 +	if (cstr == NULL)
 +		return (0);
 +
-+	if ((sc = str = strdup(cstr)) == NULL)
++	if ((sc = strdup(cstr)) == NULL)
 +		fatal("strdup");
++	str = sc;
 +
 +	TAILQ_INIT(&bsq);
 +	TAILQ_INIT(&trq);
@@ -438,7 +485,8 @@ Index: usr.sbin/httpd/parse.y
 +
 +	if ((s = strdup(str)) == NULL)
 +		fatal("strdup");
-+	*(c = &s[sidx - str]) = '\0';
++	c = &s[sidx - str];
++	*c = '\0';
 +	from = strtonum(s, LLONG_MIN, LLONG_MAX, &errstr);
 +	if (errstr != NULL)
 +		goto fail;

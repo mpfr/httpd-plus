@@ -168,7 +168,9 @@ Apply the patch files by running the installation script. This will build and in
 $ doas ksh httpd-plus-current/install 2>&1 | tee httpd-plus-install.log
 Backing up original sources ... Done.
 Applying patch files ...
-... 00-updates ...
+====================
+===  00-updates  ===
+====================
 Hmm...  Looks like a unified diff to me...
 The text leading up to this was:
 --------------------------
@@ -176,7 +178,9 @@ The text leading up to this was:
 .
 .
 done
-... 01-cache-control-headers ...
+==================================
+===  01-cache-control-headers  ===
+==================================
 Hmm...  Looks like a unified diff to me...
 .
 .
