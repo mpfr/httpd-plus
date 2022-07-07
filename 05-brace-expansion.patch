@@ -355,51 +355,7 @@ Index: usr.sbin/httpd/parse.y
  			srv = parentsrv;
  			srv_conf = &parentsrv->srv_conf;
  			parentsrv = NULL;
-@@ -1611,14 +1648,16 @@
- int
- normalize_addr(char *dst, const char *src, size_t dstsize)
- {
--	int		 bits, c, in6 = strchr(src, ':') != NULL;
-+	int		 bits, c, in6;
- 	char		*d, *e;
- 	const char	*errstr, *b;
- 	size_t		 len;
- 
-+	in6 = strchr(src, ':') != NULL;
- 	bits = (in6 ? sizeof(struct in6_addr) : sizeof(struct in_addr)) << 3;
- 	/* prepare CIDR prefix length to be removed, if present */
--	e = (d = strchr(src, '/')) != NULL ? d : strchr(src, '\0');
-+	d = strchr(src, '/');
-+	e = d != NULL ? d : strchr(src, '\0');
- 	if ((len = e - src) >= dstsize)
- 		goto fail;
- 
-@@ -1666,13 +1705,13 @@
- build_clientfilter(struct server_config *sc, char *cfgstr)
- {
- 	struct addr_filter	*clt_fltr = sc->clientfilter, rbuf;
--	size_t			 cfglen = strlen(cfgstr), span;
-+	size_t			 cfglen, span;
- 	char			*cstr, buf[INET6_ADDRSTRLEN];
- 	int			 i, bits, c, bytes, range;
- 	unsigned char		*first, *last, b;
- 
-+	cfglen = strlen(cfgstr);
- 	DPRINTF("%s: received \"%s\" len:%zu", __func__, cfgstr, cfglen);
--
- 	for (cstr = cfgstr, i = 0, cfgstr += cfglen; cstr <= cfgstr &&
- 	    (cstr = strpbrk(cstr, "0123456789AaBbCcDdEeFf:>")) != NULL;) {
- 		if (i == HTTPD_CLIENT_FILTER_MAX) {
-@@ -1757,7 +1796,7 @@
- 			    sizeof(struct addr_filter)));
- 
- 		j = 0;
--		while (1) {
-+		for (;;) {
- 			c = memcmp(&a[i], &b[j], sizeof(struct addr_filter));
- 			if (c == 0)
- 				break;
-@@ -1766,6 +1805,296 @@
+@@ -1768,6 +1805,296 @@
  		}
  	}
  	return (0);

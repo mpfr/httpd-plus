@@ -306,20 +306,22 @@ Index: usr.sbin/httpd/parse.y
  hsts		: HSTS '{' optnl hstsflags_l '}'
  		| HSTS hstsflags
  		| HSTS
-@@ -1425,6 +1504,166 @@
+@@ -1425,6 +1504,168 @@
  };
  
  int
 +normalize_addr(char *dst, const char *src, size_t dstsize)
 +{
-+	int		 bits, c, in6 = strchr(src, ':') != NULL;
++	int		 bits, c, in6;
 +	char		*d, *e;
 +	const char	*errstr, *b;
 +	size_t		 len;
 +
++	in6 = strchr(src, ':') != NULL;
 +	bits = (in6 ? sizeof(struct in6_addr) : sizeof(struct in_addr)) << 3;
 +	/* prepare CIDR prefix length to be removed, if present */
-+	e = (d = strchr(src, '/')) != NULL ? d : strchr(src, '\0');
++	d = strchr(src, '/');
++	e = d != NULL ? d : strchr(src, '\0');
 +	if ((len = e - src) >= dstsize)
 +		goto fail;
 +
@@ -367,13 +369,13 @@ Index: usr.sbin/httpd/parse.y
 +build_clientfilter(struct server_config *sc, char *cfgstr)
 +{
 +	struct addr_filter	*clt_fltr = sc->clientfilter, rbuf;
-+	size_t			 cfglen = strlen(cfgstr), span;
++	size_t			 cfglen, span;
 +	char			*cstr, buf[INET6_ADDRSTRLEN];
 +	int			 i, bits, c, bytes, range;
 +	unsigned char		*first, *last, b;
 +
++	cfglen = strlen(cfgstr);
 +	DPRINTF("%s: received \"%s\" len:%zu", __func__, cfgstr, cfglen);
-+
 +	for (cstr = cfgstr, i = 0, cfgstr += cfglen; cstr <= cfgstr &&
 +	    (cstr = strpbrk(cstr, "0123456789AaBbCcDdEeFf:>")) != NULL;) {
 +		if (i == HTTPD_CLIENT_FILTER_MAX) {
@@ -458,7 +460,7 @@ Index: usr.sbin/httpd/parse.y
 +			    sizeof(struct addr_filter)));
 +
 +		j = 0;
-+		while (1) {
++		for (;;) {
 +			c = memcmp(&a[i], &b[j], sizeof(struct addr_filter));
 +			if (c == 0)
 +				break;
@@ -473,7 +475,7 @@ Index: usr.sbin/httpd/parse.y
  yyerror(const char *fmt, ...)
  {
  	va_list		 ap;
-@@ -1479,6 +1718,7 @@
+@@ -1479,6 +1720,7 @@
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
  		{ "found",		FOUND },

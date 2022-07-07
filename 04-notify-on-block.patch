@@ -358,7 +358,7 @@ Index: usr.sbin/httpd/parse.y
  optmatch	: /* empty */		{ $$ = 0; }
  		| MATCH			{ $$ = 1; }
  		;
-@@ -1707,6 +1812,7 @@
+@@ -1709,6 +1814,7 @@
  		{ "combined",		COMBINED },
  		{ "common",		COMMON },
  		{ "connection",		CONNECTION },
@@ -366,7 +366,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "crl",		CRL },
  		{ "default",		DEFAULT },
  		{ "dhe",		DHE },
-@@ -1725,6 +1831,7 @@
+@@ -1727,6 +1833,7 @@
  		{ "index",		INDEX },
  		{ "ip",			IP },
  		{ "key",		KEY },
@@ -374,7 +374,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "lifetime",		LIFETIME },
  		{ "listen",		LISTEN },
  		{ "location",		LOCATION },
-@@ -1733,9 +1840,11 @@
+@@ -1735,9 +1842,11 @@
  		{ "match",		MATCH },
  		{ "max",		MAXIMUM },
  		{ "max-age",		MAXAGE },
