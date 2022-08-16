@@ -234,13 +234,21 @@ Index: usr.sbin/httpd/server_http.c
  		return (NULL);
  	}
  	free(path);
-@@ -1788,8 +1790,7 @@
- 		log_warn("%s: read", __func__);
- 		close(fd);
- 		free(ret);
--		ret = NULL;
+@@ -1783,16 +1785,10 @@
+ 
+ 	if ((ret = calloc(1, sb.st_size + 1)) == NULL)
+ 		fatal("calloc");
+-	if (sb.st_size == 0) {
+-		close(fd);
 -		return (ret);
-+		return (NULL);
+-	}
+-	if (read(fd, ret, sb.st_size) != sb.st_size) {
++	if (sb.st_size != 0 && read(fd, ret, sb.st_size) != sb.st_size) {
+ 		log_warn("%s: read", __func__);
+-		close(fd);
+ 		free(ret);
+ 		ret = NULL;
+-		return (ret);
  	}
  	close(fd);
  
