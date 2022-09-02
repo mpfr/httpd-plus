@@ -223,8 +223,8 @@ Index: usr.sbin/httpd/server_http.c
  	struct stat	 sb;
 -	char		*path;
 +	char		*path, *ret;
- 	int	 	 fd;
--	char	 	*ret = NULL;
+ 	int		 fd;
+-	char		*ret = NULL;
  
  	if (asprintf(&path, "%s/%s.html", root, file) == -1)
  		fatal("asprintf");
