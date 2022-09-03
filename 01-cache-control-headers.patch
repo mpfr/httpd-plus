@@ -31,7 +31,7 @@ Index: usr.sbin/httpd/http.h
  /*
   * Some default media types based on (2014-08-04 version):
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -748,15 +748,18 @@
+@@ -748,16 +748,19 @@
  section must include one or more lines of the following syntax,
  enclosed in curly braces:
  .Bl -tag -width Ds
@@ -45,15 +45,17 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Ar name .
 -One or more names can be specified per line.
 -Each line may end with an optional semicolon.
+-Later lines overwrite earlier lines.
 +One or more names can be specified per entry.
 +If required, a
 +.Ic cache
 +control header string may be specified.
 +Each entry may end with an optional semicolon.
++Later entries overwrite earlier entries.
  .It Ic include Ar file
  Include types definitions from an external file, for example
  .Pa /usr/share/misc/mime.types .
-@@ -787,14 +790,14 @@
+@@ -788,14 +791,14 @@
  }
  
  types {

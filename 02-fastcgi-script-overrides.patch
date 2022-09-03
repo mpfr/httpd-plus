@@ -24,7 +24,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .It Ic strip Ar number
  Strip
  .Ar number
-@@ -870,7 +873,9 @@
+@@ -871,7 +874,9 @@
  .Pp
  The
  .Ic location not found
@@ -35,7 +35,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Lk https://wordpress.org/support/article/using-permalinks/ WordPress Pretty Permalinks
  just like on an Apache web server with
  .Pa mod_rewrite
-@@ -881,7 +886,10 @@
+@@ -882,7 +887,10 @@
  	directory index "index.php"
  
  	location not found "/*" {
