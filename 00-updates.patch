@@ -160,7 +160,7 @@ Index: usr.sbin/httpd/server_http.c
  
  static struct http_method	 http_methods[] = HTTP_METHODS;
  static struct http_error	 http_errors[] = HTTP_ERRORS;
-@@ -1387,10 +1389,8 @@
+@@ -1384,10 +1386,8 @@
  		goto fail;
  
  	/* Now search for the location */
@@ -173,7 +173,7 @@ Index: usr.sbin/httpd/server_http.c
  
  	/* Optional rewrite */
  	if (srv_conf->flags & SRVFLAG_PATH_REWRITE) {
-@@ -1427,10 +1427,8 @@
+@@ -1424,10 +1424,8 @@
  
  		/* Now search for the updated location */
  		if ((srv_conf = server_getlocation(clt,
@@ -186,7 +186,7 @@ Index: usr.sbin/httpd/server_http.c
  	}
  
  	if (clt->clt_toread > 0 && (size_t)clt->clt_toread >
-@@ -1452,6 +1450,11 @@
+@@ -1449,6 +1447,11 @@
   fail:
  	server_abort_http(clt, 400, "bad request");
  	return (-1);
@@ -198,7 +198,7 @@ Index: usr.sbin/httpd/server_http.c
  }
  
  const char *
-@@ -1522,7 +1525,8 @@
+@@ -1519,7 +1522,8 @@
  	    srv_conf->flags) == 0)
  		return (0);
  
@@ -208,7 +208,7 @@ Index: usr.sbin/httpd/server_http.c
  		return (-1);
  
  	path = server_root_strip(path, srv_conf->strip) + 1;
-@@ -1756,22 +1760,20 @@
+@@ -1753,22 +1757,20 @@
  }
  
  /*
@@ -234,7 +234,7 @@ Index: usr.sbin/httpd/server_http.c
  		return (NULL);
  	}
  	free(path);
-@@ -1783,16 +1785,10 @@
+@@ -1780,16 +1782,10 @@
  
  	if ((ret = calloc(1, sb.st_size + 1)) == NULL)
  		fatal("calloc");
