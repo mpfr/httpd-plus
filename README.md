@@ -3,8 +3,8 @@
 Add-ons for the [OpenBSD](https://www.openbsd.org) [`httpd(8)`](http://man.openbsd.org/httpd) web server applicable to the latest `-current` branch.
 
 Other branches available:
+* [7.2-stable](https://github.com/mpfr/httpd-plus/tree/7.2-stable)
 * [7.1-stable](https://github.com/mpfr/httpd-plus/tree/7.1-stable)
-* [7.0-stable](https://github.com/mpfr/httpd-plus/tree/7.0-stable)
 
 Notes:
 * The former [`location-access-tests`](https://github.com/mpfr/httpd-plus/blob/cb4a396d7fa8426a353e6a1b91887fc544f525f8/02-location-access-tests.patch) add-on has been [imported](https://github.com/openbsd/src/commit/e96b74b9e3e44aa22060826006547b90ccc38faa#diff-ed9bfab4d87ea6df040a9696cb1860f82d56e70486351f950b3fca91eab7175d) into `-current`.
