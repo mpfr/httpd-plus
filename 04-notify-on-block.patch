@@ -175,7 +175,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #include <net/if.h>
  #include <netinet/in.h>
-@@ -90,6 +91,8 @@
+@@ -89,6 +90,8 @@
  #define SERVER_DEF_TLS_LIFETIME	(2 * 3600)
  #define SERVER_MIN_TLS_LIFETIME	(60)
  #define SERVER_MAX_TLS_LIFETIME	(24 * 3600)
@@ -184,7 +184,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define MEDIATYPE_NAMEMAX	128	/* file name extension */
  #define MEDIATYPE_TYPEMAX	64	/* length of type/subtype */
-@@ -502,6 +505,26 @@
+@@ -501,6 +504,26 @@
  	struct client_addr	 xff;
  };
  
@@ -211,7 +211,7 @@ Index: usr.sbin/httpd/httpd.h
  struct server_config {
  	uint32_t		 id;
  	uint32_t		 parent_id;
-@@ -576,6 +599,7 @@
+@@ -575,6 +598,7 @@
  
  	char			 fcgiscript[PATH_MAX];
  	struct addr_filter	 clientfilter[HTTPD_CLIENT_FILTER_MAX];

@@ -30,7 +30,7 @@ Index: usr.sbin/httpd/config.c
  		}
 Index: usr.sbin/httpd/httpd.8
 @@ -1,5 +1,6 @@
- .\"	$OpenBSD: httpd.8,v 1.53 2016/09/15 20:57:07 jmc Exp $
+ .\"	$OpenBSD: httpd.8,v 1.54 2022/10/24 15:02:01 jmc Exp $
  .\"
 +.\" Copyright (c) 2021 Matthias Pressfreund
  .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -112,7 +112,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Sh SEE ALSO
  .Xr htpasswd 1 ,
 Index: usr.sbin/httpd/httpd.h
-@@ -669,6 +669,9 @@
+@@ -668,6 +668,9 @@
  
  SPLAY_PROTOTYPE(client_tree, client, clt_nodes, server_client_cmp);
  
@@ -122,7 +122,7 @@ Index: usr.sbin/httpd/httpd.h
  /* server_http.c */
  void	 server_http_init(struct server *);
  void	 server_http(void);
-@@ -697,7 +700,6 @@
+@@ -696,7 +699,6 @@
  	 server_root_strip(const char *, int);
  struct server_config *
  	 server_getlocation(struct client *, const char *);
