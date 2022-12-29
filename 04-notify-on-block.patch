@@ -15,7 +15,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/config.c
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: config.c,v 1.62 2021/10/24 16:01:04 ian Exp $	*/
+ /*	$OpenBSD: config.c,v 1.63 2022/12/28 21:30:16 jmc Exp $	*/
  
  /*
 + * Copyright (c) 2021 Matthias Pressfreund
