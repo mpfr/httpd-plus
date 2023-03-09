@@ -17,7 +17,7 @@
 
 srcroot='/usr/src'
 srcdir=${srcroot}/usr.sbin/httpd
-chksum='28106dd64c104af19b5da678d9e3dbd8c3934b6de021e1ca01a9651d9389f8a4'
+chksum='fc17efdeb859ea3306910399bf31d95149778b14dfbe574998b56a6469b4fabc'
 
 restore()
 {
@@ -38,7 +38,7 @@ fi
 
 chksum0=$(find ${srcdir} \( -name '*.[chy578]' -o -name 'Makefile' \) \
 	-type f -maxdepth 1 -exec sha256 -q {} \; | sort | sha256)
-if [[ "${chksum0}" != "${chksum}" ]]; then
+if [[ ${chksum0} != ${chksum} ]]; then
 	echo 'Sources and patches do not match. Make sure ...'
 	echo '  ... the -current branch is in use.'
 	echo '  ... both are up-to-date.'
@@ -89,7 +89,7 @@ ret=$?
 
 restore ${bakdir}
 
-if ((${ret} != 0)); then
+if ((ret != 0)); then
 	echo "\nInstalling httpd-plus failed (exitcode: ${ret})."
 	exit 1
 fi
