@@ -40,7 +40,7 @@ chksum0=$(find ${srcdir} \( -name '*.[chy578]' -o -name 'Makefile' \) \
 	-type f -maxdepth 1 -exec sha256 -q {} \; | sort | sha256)
 if [[ ${chksum0} != ${chksum} ]]; then
 	echo 'Sources and patches do not match. Make sure ...'
-	echo '  ... the -current branch is in use.'
+	echo '  ... the 7.3-stable branch is in use.'
 	echo '  ... both are up-to-date.'
 	while :
 	do
