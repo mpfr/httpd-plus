@@ -1,5 +1,5 @@
 
-Copyright (c) 2020 - 2022 Matthias Pressfreund
+Copyright (c) 2020 - 2023 Matthias Pressfreund
 
 Permission to use, copy, modify, and distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
@@ -49,7 +49,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  		fastcgi socket "/run/php-fpm.sock"
 Index: usr.sbin/httpd/httpd.h
 @@ -1,7 +1,7 @@
- /*	$OpenBSD: httpd.h,v 1.161 2022/08/15 12:29:17 claudio Exp $	*/
+ /*	$OpenBSD: httpd.h,v 1.161.2.1 2023/07/12 12:46:33 tb Exp $	*/
  
  /*
 - * Copyright (c) 2020 Matthias Pressfreund
@@ -57,7 +57,7 @@ Index: usr.sbin/httpd/httpd.h
   * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
   * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
   * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
-@@ -547,6 +547,8 @@
+@@ -548,6 +548,8 @@
  	struct server_fcgiparams fcgiparams;
  	int			 fcgistrip;
  	char			 errdocroot[HTTPD_ERRDOCROOT_MAX];
@@ -103,7 +103,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "strip",		STRIP },
 Index: usr.sbin/httpd/server_fcgi.c
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: server_fcgi.c,v 1.95 2022/08/15 12:29:17 claudio Exp $	*/
+ /*	$OpenBSD: server_fcgi.c,v 1.95.2.1 2023/07/12 12:46:33 tb Exp $	*/
  
  /*
 + * Copyright (c) 2020, 2021 Matthias Pressfreund

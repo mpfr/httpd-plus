@@ -1,5 +1,5 @@
 
-Copyright (c) 2021, 2022 Matthias Pressfreund
+Copyright (c) 2021 - 2023 Matthias Pressfreund
 
 Permission to use, copy, modify, and distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
@@ -184,7 +184,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define MEDIATYPE_NAMEMAX	128	/* file name extension */
  #define MEDIATYPE_TYPEMAX	64	/* length of type/subtype */
-@@ -502,6 +505,26 @@
+@@ -503,6 +506,26 @@
  	struct client_addr	 xff;
  };
  
@@ -211,7 +211,7 @@ Index: usr.sbin/httpd/httpd.h
  struct server_config {
  	uint32_t		 id;
  	uint32_t		 parent_id;
-@@ -576,6 +599,7 @@
+@@ -577,6 +600,7 @@
  
  	char			 fcgiscript[PATH_MAX];
  	struct addr_filter	 clientfilter[HTTPD_CLIENT_FILTER_MAX];

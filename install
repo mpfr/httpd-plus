@@ -17,7 +17,8 @@
 
 srcroot='/usr/src'
 srcdir=${srcroot}/usr.sbin/httpd
-chksum='d274a69f532b5598ff11c872a6a005d90567dc407ba6172d1297eccd0a8e4bd7'
+chksum1='3c82147d829204b42c82c410793a3a14a96c43521cf26196a9ca4cda74929280'
+chksum2='493ffdf2545b84c71cc9e2da70eb0892788fa7e2d4c33d2b95d46549edf6a48b'
 
 restore()
 {
@@ -38,7 +39,7 @@ fi
 
 chksum0=$(find ${srcdir} \( -name '*.[chy578]' -o -name 'Makefile' \) \
 	-type f -maxdepth 1 -exec sha256 -q {} \; | sort | sha256)
-if [[ "${chksum0}" != "${chksum}" ]]; then
+if [[ ${chksum0} != ${chksum1} && ${checksum0} != ${checksum2} ]]; then
 	echo 'Sources and patches do not match. Make sure ...'
 	echo '  ... the 7.2-stable branch is in use.'
 	echo '  ... both are up-to-date.'
