@@ -1,5 +1,5 @@
 
-Copyright (c) 2020 - 2022 Matthias Pressfreund
+Copyright (c) 2020 - 2023 Matthias Pressfreund
 
 Permission to use, copy, modify, and distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
@@ -80,7 +80,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Pp
 Index: usr.sbin/httpd/httpd.h
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: httpd.h,v 1.162 2022/10/24 15:02:01 jmc Exp $	*/
+ /*	$OpenBSD: httpd.h,v 1.163 2023/07/12 12:37:27 tb Exp $	*/
  
  /*
 + * Copyright (c) 2020 Matthias Pressfreund
@@ -105,7 +105,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define CONFIG_RELOAD		0x00
  #define CONFIG_MEDIA		0x01
-@@ -445,6 +448,7 @@
+@@ -446,6 +449,7 @@
  	char			 media_name[MEDIATYPE_NAMEMAX];
  	char			 media_type[MEDIATYPE_TYPEMAX];
  	char			 media_subtype[MEDIATYPE_TYPEMAX];
