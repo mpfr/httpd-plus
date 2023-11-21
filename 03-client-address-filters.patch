@@ -75,7 +75,7 @@ Index: usr.sbin/httpd/httpd.h
  #define HTTPD_DEFAULT_TYPE	{ \
  	"bin", "application", "octet-stream", "", NULL }
  #define HTTPD_LOGVIS		VIS_NL|VIS_TAB|VIS_CSTYLE
-@@ -396,6 +397,8 @@
+@@ -397,6 +398,8 @@
  #define SRVFLAG_PATH_REWRITE	0x01000000
  #define SRVFLAG_NO_PATH_REWRITE	0x02000000
  #define SRVFLAG_GZIP_STATIC	0x04000000
@@ -84,7 +84,7 @@ Index: usr.sbin/httpd/httpd.h
  #define SRVFLAG_LOCATION_FOUND	0x40000000
  #define SRVFLAG_LOCATION_NOT_FOUND 0x80000000
  
-@@ -405,7 +408,8 @@
+@@ -406,7 +409,8 @@
  	"\14SYSLOG\15NO_SYSLOG\16TLS\17ACCESS_LOG\20ERROR_LOG"		\
  	"\21AUTH\22NO_AUTH\23BLOCK\24NO_BLOCK\25LOCATION_MATCH"		\
  	"\26SERVER_MATCH\27SERVER_HSTS\30DEFAULT_TYPE\31PATH\32NO_PATH" \
@@ -94,7 +94,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define TCPFLAG_NODELAY		0x01
  #define TCPFLAG_NNODELAY	0x02
-@@ -476,6 +480,28 @@
+@@ -477,6 +481,28 @@
  };
  TAILQ_HEAD(server_fcgiparams, fastcgi_param);
  
@@ -123,7 +123,7 @@ Index: usr.sbin/httpd/httpd.h
  struct server_config {
  	uint32_t		 id;
  	uint32_t		 parent_id;
-@@ -549,6 +575,7 @@
+@@ -550,6 +576,7 @@
  	char			 errdocroot[HTTPD_ERRDOCROOT_MAX];
  
  	char			 fcgiscript[PATH_MAX];

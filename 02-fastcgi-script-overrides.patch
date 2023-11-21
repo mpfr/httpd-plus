@@ -57,7 +57,7 @@ Index: usr.sbin/httpd/httpd.h
   * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
   * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
   * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
-@@ -547,6 +547,8 @@
+@@ -548,6 +548,8 @@
  	struct server_fcgiparams fcgiparams;
  	int			 fcgistrip;
  	char			 errdocroot[HTTPD_ERRDOCROOT_MAX];
