@@ -482,7 +482,7 @@ Index: usr.sbin/httpd/server_http.c
 +	}
 +	if (strstr(msg, "$HTTP_VERSION") != NULL) {
 +		if (stravis(&str, desc->http_version, HTTPD_LOGVIS) == -1)
-+		       goto err;
++			goto err;
 +
 +		msg = replace_var(msg, "$HTTP_VERSION", str);
 +		free(str);
@@ -490,7 +490,7 @@ Index: usr.sbin/httpd/server_http.c
 +	}
 +	if (strstr(msg, "$REMOTE_ADDR") != NULL) {
 +		if (print_host(&clt->clt_ss, hbuf, sizeof(hbuf)) == NULL)
-+		       goto err;
++			goto err;
 +
 +		msg = replace_var(msg, "$REMOTE_ADDR", hbuf);
 +	}
@@ -505,7 +505,7 @@ Index: usr.sbin/httpd/server_http.c
 +	    (srv_conf->flags & SRVFLAG_AUTH) && clt->clt_remote_user != NULL ?
 +	    clt->clt_remote_user : "");
 +	msg = replace_var(msg, "$REQUEST_METHOD",
-+		    server_httpmethod_byid(desc->http_method));
++	    server_httpmethod_byid(desc->http_method));
 +	msg = replace_var(msg, "$REQUEST_SCHEME",
 +	    srv_conf->flags & SRVFLAG_TLS ? "https" : "http");
 +	if (strstr(msg, "$REQUEST_URI") != NULL) {
