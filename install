@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# Copyright (c) 2020 - 2023 Matthias Pressfreund
+# Copyright (c) 2020 - 2024 Matthias Pressfreund
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,7 @@
 
 srcroot='/usr/src'
 srcdir=${srcroot}/usr.sbin/httpd
-chksum='d6ddbe6c993c994788be9b632f97d9ed239822ab46d161109a4fdf780f2277bd'
+chksum='37342db956b5d9944688739db0687668f9b8061e09059ae7676c3a8e1a24b136'
 
 restore()
 {
@@ -36,8 +36,9 @@ if [[ ! -d ${srcdir} ]]; then
 	exit 1
 fi
 
-chksum0=$(find ${srcdir} \( -name '*.[chy578]' -o -name 'Makefile' \) \
-	-type f -maxdepth 1 -exec sha256 -q {} \; | sort | sha256)
+chksum0=$(find ${srcdir} \( -name '*.[chy578]' -o -name '*.in' \
+    -o -name '*.sed' -o -name 'Makefile' \) -type f -maxdepth 1 -exec sha256 \
+    -q {} \; | sort | sha256)
 if [[ ${chksum0} != ${chksum} ]]; then
 	echo 'Sources and patches do not match. Make sure ...'
 	echo '  ... the -current branch is in use.'

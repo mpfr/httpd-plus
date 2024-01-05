@@ -1,5 +1,5 @@
 
-Copyright (c) 2020 - 2023 Matthias Pressfreund
+Copyright (c) 2020 - 2024 Matthias Pressfreund
 
 Permission to use, copy, modify, and distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
@@ -131,7 +131,7 @@ Index: usr.sbin/httpd/httpd.h
  	 server_http_host(struct sockaddr_storage *, char *, size_t);
  char	*server_http_parsehost(char *, char *, size_t, int *);
 Index: usr.sbin/httpd/server_file.c
-@@ -163,10 +163,17 @@
+@@ -166,10 +166,17 @@
  	struct server_config	*srv_conf = clt->clt_srv_conf;
  	char			 path[PATH_MAX];
  	const char		*stripped, *errstr = NULL;
