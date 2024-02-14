@@ -208,7 +208,7 @@ Index: usr.sbin/httpd/server_http.c
  		return (-1);
  
  	path = server_root_strip(path, srv_conf->strip) + 1;
-@@ -1753,22 +1757,20 @@
+@@ -1753,8 +1757,8 @@
  }
  
  /*
@@ -219,36 +219,3 @@ Index: usr.sbin/httpd/server_http.c
   */
  char *
  read_errdoc(const char *root, const char *file)
- {
- 	struct stat	 sb;
--	char		*path;
-+	char		*path, *ret;
- 	int		 fd;
--	char		*ret = NULL;
- 
- 	if (asprintf(&path, "%s/%s.html", root, file) == -1)
- 		fatal("asprintf");
- 	if ((fd = open(path, O_RDONLY)) == -1) {
- 		free(path);
--		log_warn("%s: open", __func__);
- 		return (NULL);
- 	}
- 	free(path);
-@@ -1780,16 +1782,10 @@
- 
- 	if ((ret = calloc(1, sb.st_size + 1)) == NULL)
- 		fatal("calloc");
--	if (sb.st_size == 0) {
--		close(fd);
--		return (ret);
--	}
--	if (read(fd, ret, sb.st_size) != sb.st_size) {
-+	if (sb.st_size != 0 && read(fd, ret, sb.st_size) != sb.st_size) {
- 		log_warn("%s: read", __func__);
--		close(fd);
- 		free(ret);
- 		ret = NULL;
--		return (ret);
- 	}
- 	close(fd);
- 
