@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# Copyright (c) 2020 - 2024 Matthias Pressfreund
+# Copyright (c) 2020 - 2025 Matthias Pressfreund
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,7 @@
 
 srcroot='/usr/src'
 srcdir=${srcroot}/usr.sbin/httpd
-chksum='708bb31e52da62ed2c667ffe83832abbb915a2aa192c0f402e134ea033883349'
+chksum='414349d3da3fb26d91d0748f6bb35da2b038250ddf35c6b9e53b716e4d5c10dc'
 
 restore()
 {

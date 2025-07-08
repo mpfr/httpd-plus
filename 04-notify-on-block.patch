@@ -1,5 +1,5 @@
 
-Copyright (c) 2021 - 2024 Matthias Pressfreund
+Copyright (c) 2021 - 2025 Matthias Pressfreund
 
 Permission to use, copy, modify, and distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
@@ -48,7 +48,7 @@ Index: usr.sbin/httpd/config.c
  		DPRINTF("%s: %s %d location \"%s\", "
  		    "parent \"%s[%u]\", flags: %s",
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -592,6 +592,117 @@
+@@ -597,6 +597,117 @@
  .Xr syslog 3
  instead of the log files.
  .El
