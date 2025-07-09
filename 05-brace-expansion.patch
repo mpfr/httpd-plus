@@ -14,11 +14,19 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/httpd.conf.5
+@@ -1,6 +1,6 @@
+ .\"	$OpenBSD: httpd.conf.5,v 1.127 2025/07/08 14:26:45 schwarze Exp $
+ .\"
+-.\" Copyright (c) 2020 - 2022 Matthias Pressfreund
++.\" Copyright (c) 2020 - 2025 Matthias Pressfreund
+ .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
+ .\"
+ .\" Permission to use, copy, modify, and distribute this software for any
 @@ -915,6 +915,71 @@
  Include types definitions from an external file, for example
  .Pa /usr/share/misc/mime.types .
  .El
-+.Sh BRACE EXPANSION
++.Ss Brace expansion
 +Text enclosed by curly braces inside the
 +.Ic alias Ar name ,
 +.Ic include Ar path ,
