@@ -14,7 +14,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/config.c
-@@ -492,7 +492,12 @@
+@@ -538,7 +538,12 @@
  		/* Inherit configuration from the parent */
  		f = SRVFLAG_INDEX|SRVFLAG_NO_INDEX;
  		if ((srv_conf->flags & f) == 0) {
