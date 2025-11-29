@@ -15,14 +15,14 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/httpd.conf.5
 @@ -1,6 +1,6 @@
- .\"	$OpenBSD: httpd.conf.5,v 1.127 2025/07/08 14:26:45 schwarze Exp $
+ .\"	$OpenBSD: httpd.conf.5,v 1.128 2025/11/28 16:10:00 rsadowski Exp $
  .\"
 -.\" Copyright (c) 2020 - 2022 Matthias Pressfreund
 +.\" Copyright (c) 2020 - 2025 Matthias Pressfreund
  .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
  .\"
  .\" Permission to use, copy, modify, and distribute this software for any
-@@ -915,6 +915,71 @@
+@@ -938,6 +938,71 @@
  Include types definitions from an external file, for example
  .Pa /usr/share/misc/mime.types .
  .El
@@ -94,7 +94,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Sh FILES
  .Bl -tag -width /etc/examples/httpd.conf -compact
  .It Pa /etc/examples/httpd.conf
-@@ -1059,6 +1124,28 @@
+@@ -1082,6 +1147,28 @@
  file will straighten things out.
  .Bd -literal -offset indent
  add_filter('got_url_rewrite', '__return_true');
@@ -181,7 +181,7 @@ Index: usr.sbin/httpd/parse.y
  		}
  		;
  
-@@ -475,6 +503,7 @@
+@@ -481,6 +509,7 @@
  			free($3);
  		}
  		| ALIAS optmatch STRING		{
@@ -189,7 +189,7 @@ Index: usr.sbin/httpd/parse.y
  			struct server_config	*alias;
  
  			if (parentsrv != NULL) {
-@@ -483,22 +512,37 @@
+@@ -489,22 +518,37 @@
  				YYERROR;
  			}
  
@@ -237,7 +237,7 @@ Index: usr.sbin/httpd/parse.y
  		}
  		| ERRDOCS STRING	{
  			if (parentsrv != NULL) {
-@@ -563,6 +607,8 @@
+@@ -570,6 +614,8 @@
  		| LOCATION optfound optmatch STRING optclientfilter	{
  			struct server		*s;
  			struct sockaddr_un	*sun;
@@ -246,7 +246,7 @@ Index: usr.sbin/httpd/parse.y
  
  			if (srv->srv_conf.ss.ss_family == AF_UNSPEC) {
  				yyerror("listen address not specified");
-@@ -584,25 +630,44 @@
+@@ -591,25 +637,44 @@
  				YYACCEPT;
  			}
  
@@ -294,7 +294,7 @@ Index: usr.sbin/httpd/parse.y
  				free(s);
  				YYERROR;
  			}
-@@ -634,6 +699,7 @@
+@@ -641,6 +706,7 @@
  				if (build_clientfilter(&s->srv_conf,
  				    $5 + 1) == NULL) {
  					free($5);
@@ -302,7 +302,7 @@ Index: usr.sbin/httpd/parse.y
  					free(s);
  					YYERROR;
  				}
-@@ -657,51 +723,22 @@
+@@ -664,51 +730,22 @@
  			s->srv_conf.prefixlen = srv->srv_conf.prefixlen;
  			s->srv_conf.tls_flags = srv->srv_conf.tls_flags;
  
@@ -363,7 +363,7 @@ Index: usr.sbin/httpd/parse.y
  			srv = parentsrv;
  			srv_conf = &parentsrv->srv_conf;
  			parentsrv = NULL;
-@@ -1768,6 +1805,296 @@
+@@ -1791,6 +1828,296 @@
  		}
  	}
  	return (0);

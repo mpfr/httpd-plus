@@ -49,7 +49,7 @@ Index: usr.sbin/httpd/httpd.8
  .Bl -tag -width Dssmacro=value
 Index: usr.sbin/httpd/httpd.conf.5
 @@ -1,5 +1,6 @@
- .\"	$OpenBSD: httpd.conf.5,v 1.127 2025/07/08 14:26:45 schwarze Exp $
+ .\"	$OpenBSD: httpd.conf.5,v 1.128 2025/11/28 16:10:00 rsadowski Exp $
  .\"
 +.\" Copyright (c) 2020 - 2022 Matthias Pressfreund
  .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
@@ -67,7 +67,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Pp
  .Nm
  is divided into the following main sections:
-@@ -871,6 +875,43 @@
+@@ -894,6 +898,43 @@
  		request rewrite "/new/%1"
  	}
  }
@@ -112,7 +112,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Sh SEE ALSO
  .Xr htpasswd 1 ,
 Index: usr.sbin/httpd/httpd.h
-@@ -666,6 +666,9 @@
+@@ -667,6 +667,9 @@
  
  SPLAY_PROTOTYPE(client_tree, client, clt_nodes, server_client_cmp);
  
@@ -122,7 +122,7 @@ Index: usr.sbin/httpd/httpd.h
  /* server_http.c */
  void	 server_http_init(struct server *);
  void	 server_http(void);
-@@ -694,7 +697,6 @@
+@@ -695,7 +698,6 @@
  	 server_root_strip(const char *, int);
  struct server_config *
  	 server_getlocation(struct client *, const char *);
@@ -160,7 +160,7 @@ Index: usr.sbin/httpd/server_http.c
  
  static struct http_method	 http_methods[] = HTTP_METHODS;
  static struct http_error	 http_errors[] = HTTP_ERRORS;
-@@ -1389,10 +1391,8 @@
+@@ -1414,10 +1416,8 @@
  		goto fail;
  
  	/* Now search for the location */
@@ -173,7 +173,7 @@ Index: usr.sbin/httpd/server_http.c
  
  	/* Optional rewrite */
  	if (srv_conf->flags & SRVFLAG_PATH_REWRITE) {
-@@ -1429,10 +1429,8 @@
+@@ -1454,10 +1454,8 @@
  
  		/* Now search for the updated location */
  		if ((srv_conf = server_getlocation(clt,
@@ -186,7 +186,7 @@ Index: usr.sbin/httpd/server_http.c
  	}
  
  	if (clt->clt_toread > 0 && (size_t)clt->clt_toread >
-@@ -1454,6 +1452,11 @@
+@@ -1479,6 +1477,11 @@
   fail:
  	server_abort_http(clt, 400, "bad request");
  	return (-1);
@@ -198,7 +198,7 @@ Index: usr.sbin/httpd/server_http.c
  }
  
  const char *
-@@ -1524,7 +1527,8 @@
+@@ -1549,7 +1552,8 @@
  	    srv_conf->flags) == 0)
  		return (0);
  
@@ -208,7 +208,7 @@ Index: usr.sbin/httpd/server_http.c
  		return (-1);
  
  	path = server_root_strip(path, srv_conf->strip) + 1;
-@@ -1758,8 +1762,8 @@
+@@ -1785,8 +1789,8 @@
  }
  
  /*
