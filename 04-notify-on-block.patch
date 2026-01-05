@@ -1,5 +1,5 @@
 
-Copyright (c) 2021 - 2025 Matthias Pressfreund
+Copyright (c) 2021 - 2026 Matthias Pressfreund
 
 Permission to use, copy, modify, and distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/config.c
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: config.c,v 1.67 2025/11/28 16:10:00 rsadowski Exp $	*/
+ /*	$OpenBSD: config.c,v 1.68 2026/01/04 06:43:34 rsadowski Exp $	*/
  
  /*
 + * Copyright (c) 2021 Matthias Pressfreund
@@ -30,7 +30,7 @@ Index: usr.sbin/httpd/config.c
  
  	if ((srv_conf = calloc(1, sizeof(*srv_conf))) == NULL)
  		return (-1);
-@@ -644,6 +646,16 @@
+@@ -648,6 +650,16 @@
  		    sizeof(srv_conf->errdocroot));
  
  		srv_conf->flags |= parent->flags & SRVFLAG_NO_BANNER;
