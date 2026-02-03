@@ -1,5 +1,5 @@
 
-Copyright (c) 2020 - 2024 Matthias Pressfreund
+Copyright (c) 2020 - 2026 Matthias Pressfreund
 
 Permission to use, copy, modify, and distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
@@ -493,7 +493,7 @@ Index: usr.sbin/httpd/server_http.c
  
  static struct http_method	 http_methods[] = HTTP_METHODS;
  static struct http_error	 http_errors[] = HTTP_ERRORS;
-@@ -1477,11 +1479,47 @@
+@@ -1478,11 +1480,47 @@
  struct server_config *
  server_getlocation(struct client *clt, const char *path)
  {
@@ -541,7 +541,7 @@ Index: usr.sbin/httpd/server_http.c
  	/* Now search for the location */
  	TAILQ_FOREACH(location, &srv->srv_hosts, entry) {
  #ifdef DEBUG
-@@ -1505,7 +1543,8 @@
+@@ -1506,7 +1544,8 @@
  				    path)) == -1)
  					return (NULL);
  
@@ -551,7 +551,7 @@ Index: usr.sbin/httpd/server_http.c
  					continue;
  				/* Replace host configuration */
  				clt->clt_srv_conf = srv_conf = location;
-@@ -1537,6 +1576,66 @@
+@@ -1538,6 +1577,66 @@
  	close(rootfd);
  	return ((ret == -1 && SRVFLAG_LOCATION_FOUND & srv_conf->flags) ||
  	    (ret == 0 && SRVFLAG_LOCATION_NOT_FOUND & srv_conf->flags));
