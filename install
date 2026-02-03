@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# Copyright (c) 2020 - 2025 Matthias Pressfreund
+# Copyright (c) 2020 - 2026 Matthias Pressfreund
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,8 @@
 
 srcroot='/usr/src'
 srcdir=${srcroot}/usr.sbin/httpd
-chksum='ea195483d4058ec232327cc763eb84ad74a428903e25786987cda2ac024a49ba'
+chksum0='8ef2a38c2afaf5a9d9f784609401b9fe23d40d0a6bc37da71e4dc16c5ea15f00'
+chksum1='4e907a1da8e38255647d6f46865f42b5d16a75c8fb1d70be092591800530f5ba'
 
 restore()
 {
@@ -36,10 +37,10 @@ if [[ ! -d ${srcdir} ]]; then
 	exit 1
 fi
 
-chksum0=$(find ${srcdir} \( -name '*.[chy578]' -o -name '*.in' \
+chksum=$(find ${srcdir} \( -name '*.[chy578]' -o -name '*.in' \
     -o -name '*.sed' -o -name 'Makefile' \) -type f -maxdepth 1 -exec sha256 \
     -q {} \; | sort | sha256)
-if [[ ${chksum0} != ${chksum} ]]; then
+if [[ ${chksum0} != ${chksum} && ${chksum1} != ${chksum} ]]; then
 	echo 'Sources and patches do not match. Make sure ...'
 	echo '  ... the 7.8-stable branch is in use.'
 	echo '  ... both are up-to-date.'
