@@ -37,7 +37,7 @@ if [[ ! -d ${srcdir} ]]; then
 	exit 1
 fi
 
-chksum0=$(find ${srcdir} \( -name '*.[chy578]' -o -name '*.in' \
+chksum=$(find ${srcdir} \( -name '*.[chy578]' -o -name '*.in' \
     -o -name '*.sed' -o -name 'Makefile' \) -type f -maxdepth 1 -exec sha256 \
     -q {} \; | sort | sha256)
 if [[ ${chksum0} != ${chksum} && ${chksum1} != ${chksum} ]]; then
