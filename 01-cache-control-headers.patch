@@ -1,5 +1,5 @@
 
-Copyright (c) 2020 - 2025 Matthias Pressfreund
+Copyright (c) 2020 - 2026 Matthias Pressfreund
 
 Permission to use, copy, modify, and distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
@@ -174,7 +174,7 @@ Index: usr.sbin/httpd/parse.y
  
  			if (media_add(conf->sc_mediatypes, &m) == NULL) {
 Index: usr.sbin/httpd/server_http.c
-@@ -1572,7 +1572,7 @@
+@@ -1573,7 +1573,7 @@
  	struct http_descriptor	*desc = clt->clt_descreq;
  	struct http_descriptor	*resp = clt->clt_descresp;
  	const char		*error;
@@ -183,7 +183,7 @@ Index: usr.sbin/httpd/server_http.c
  	char			 tmbuf[32];
  
  	if (desc == NULL || media == NULL ||
-@@ -1610,6 +1610,12 @@
+@@ -1611,6 +1611,12 @@
  	if (size >= 0 && ((cl =
  	    kv_add(&resp->http_headers, "Content-Length", NULL)) == NULL ||
  	    kv_set(cl, "%lld", (long long)size) == -1))
