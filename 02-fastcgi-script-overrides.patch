@@ -49,7 +49,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  		fastcgi socket "/run/php-fpm.sock"
 Index: usr.sbin/httpd/httpd.h
 @@ -1,7 +1,7 @@
- /*	$OpenBSD: httpd.h,v 1.168 2026/02/28 09:36:08 rsadowski Exp $	*/
+ /*	$OpenBSD: httpd.h,v 1.169 2026/03/02 19:24:58 rsadowski Exp $	*/
  
  /*
 - * Copyright (c) 2020 Matthias Pressfreund
@@ -67,7 +67,7 @@ Index: usr.sbin/httpd/httpd.h
  	TAILQ_ENTRY(server_config) entry;
  };
 Index: usr.sbin/httpd/parse.y
-@@ -141,7 +141,7 @@
+@@ -142,7 +142,7 @@
  %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
  %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
  %token	CA CLIENT CRL OPTIONAL PARAM FORWARDED FOUND NOT
@@ -76,7 +76,7 @@ Index: usr.sbin/httpd/parse.y
  %token	<v.string>	STRING
  %token  <v.number>	NUMBER
  %type	<v.port>	port
-@@ -823,6 +823,16 @@
+@@ -824,6 +824,16 @@
  			    param->name, param->value);
  			TAILQ_INSERT_HEAD(&srv_conf->fcgiparams, param, entry);
  		}
@@ -93,7 +93,7 @@ Index: usr.sbin/httpd/parse.y
  		| STRIP NUMBER			{
  			if ($2 < 0 || $2 > INT_MAX) {
  				yyerror("invalid fastcgi strip number");
-@@ -1525,6 +1535,7 @@
+@@ -1526,6 +1536,7 @@
  		{ "rewrite",		REWRITE },
  		{ "root",		ROOT },
  		{ "sack",		SACK },
@@ -103,14 +103,14 @@ Index: usr.sbin/httpd/parse.y
  		{ "strip",		STRIP },
 Index: usr.sbin/httpd/server_fcgi.c
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: server_fcgi.c,v 1.99 2026/01/02 08:45:16 rsadowski Exp $	*/
+ /*	$OpenBSD: server_fcgi.c,v 1.100 2026/03/02 19:24:58 rsadowski Exp $	*/
  
  /*
 + * Copyright (c) 2020, 2021 Matthias Pressfreund
   * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
   *
   * Permission to use, copy, modify, and distribute this software for any
-@@ -163,9 +164,12 @@
+@@ -164,9 +165,12 @@
  	h->type = FCGI_PARAMS;
  	h->content_len = param.total_len = 0;
  

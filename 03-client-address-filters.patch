@@ -133,7 +133,7 @@ Index: usr.sbin/httpd/httpd.h
  	TAILQ_ENTRY(server_config) entry;
  };
 Index: usr.sbin/httpd/parse.y
-@@ -73,6 +73,10 @@
+@@ -74,6 +74,10 @@
  int		 check_file_secrecy(int, const char *);
  int		 yyparse(void);
  int		 yylex(void);
@@ -144,7 +144,7 @@ Index: usr.sbin/httpd/parse.y
  int		 yyerror(const char *, ...)
      __attribute__((__format__ (printf, 1, 2)))
      __attribute__((__nonnull__ (1)));
-@@ -141,7 +145,7 @@
+@@ -142,7 +146,7 @@
  %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
  %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
  %token	CA CLIENT CRL OPTIONAL PARAM FORWARDED FOUND NOT
@@ -153,7 +153,7 @@ Index: usr.sbin/httpd/parse.y
  %token	<v.string>	STRING
  %token  <v.number>	NUMBER
  %type	<v.port>	port
-@@ -149,6 +153,7 @@
+@@ -150,6 +154,7 @@
  %type	<v.number>	opttls optmatch optfound
  %type	<v.tv>		timeout
  %type	<v.string>	numberstring optstring
@@ -161,7 +161,7 @@ Index: usr.sbin/httpd/parse.y
  %type	<v.auth>	authopts
  
  %%
-@@ -562,24 +567,27 @@
+@@ -563,24 +568,27 @@
  		| authenticate
  		| gzip_static
  		| filter
@@ -190,7 +190,7 @@ Index: usr.sbin/httpd/parse.y
  				YYACCEPT;
  			}
  
-@@ -591,6 +599,7 @@
+@@ -592,6 +600,7 @@
  			    sizeof(s->srv_conf.location)) {
  				yyerror("server location truncated");
  				free($4);
@@ -198,7 +198,7 @@ Index: usr.sbin/httpd/parse.y
  				free(s);
  				YYERROR;
  			}
-@@ -600,6 +609,7 @@
+@@ -601,6 +610,7 @@
  			    sizeof(s->srv_conf.name)) >=
  			    sizeof(s->srv_conf.name)) {
  				yyerror("server name truncated");
@@ -206,7 +206,7 @@ Index: usr.sbin/httpd/parse.y
  				free(s);
  				YYERROR;
  			}
-@@ -627,6 +637,26 @@
+@@ -628,6 +638,26 @@
  			}
  			if ($3)
  				s->srv_conf.flags |= SRVFLAG_LOCATION_MATCH;
@@ -233,7 +233,7 @@ Index: usr.sbin/httpd/parse.y
  			s->srv_s = -1;
  			memcpy(&s->srv_conf.ss, &srv->srv_conf.ss,
  			    sizeof(s->srv_conf.ss));
-@@ -647,7 +677,9 @@
+@@ -648,7 +678,9 @@
  			struct server	*s = NULL;
  			uint32_t	 f;
  
@@ -244,7 +244,7 @@ Index: usr.sbin/httpd/parse.y
  			    SRVFLAG_LOCATION_NOT_FOUND;
  
  			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
-@@ -658,7 +690,9 @@
+@@ -659,7 +691,9 @@
  				    (s->srv_conf.flags & f) ==
  				    (srv_conf->flags & f) &&
  				    strcmp(s->srv_conf.location,
@@ -255,7 +255,7 @@ Index: usr.sbin/httpd/parse.y
  					break;
  			}
  			if (s != NULL) {
-@@ -715,6 +749,51 @@
+@@ -716,6 +750,51 @@
  		| NOT FOUND	{ $$ = -1; }
  		;
  
@@ -307,7 +307,7 @@ Index: usr.sbin/httpd/parse.y
  hsts		: HSTS '{' optnl hstsflags_l '}'
  		| HSTS hstsflags
  		| HSTS
-@@ -1448,6 +1527,168 @@
+@@ -1449,6 +1528,168 @@
  };
  
  int
@@ -476,7 +476,7 @@ Index: usr.sbin/httpd/parse.y
  yyerror(const char *fmt, ...)
  {
  	va_list		 ap;
-@@ -1503,6 +1744,7 @@
+@@ -1504,6 +1745,7 @@
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
  		{ "found",		FOUND },
@@ -485,7 +485,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "hsts",		HSTS },
  		{ "include",		INCLUDE },
 Index: usr.sbin/httpd/server_http.c
-@@ -56,6 +56,8 @@
+@@ -57,6 +57,8 @@
  char		*read_errdoc(const char *, const char *);
  int		 server_locationaccesstest(struct server_config *,
  		    const char *);
@@ -494,7 +494,7 @@ Index: usr.sbin/httpd/server_http.c
  
  static struct http_method	 http_methods[] = HTTP_METHODS;
  static struct http_error	 http_errors[] = HTTP_ERRORS;
-@@ -1501,11 +1503,47 @@
+@@ -1502,11 +1504,47 @@
  struct server_config *
  server_getlocation(struct client *clt, const char *path)
  {
@@ -542,7 +542,7 @@ Index: usr.sbin/httpd/server_http.c
  	/* Now search for the location */
  	TAILQ_FOREACH(location, &srv->srv_hosts, entry) {
  #ifdef DEBUG
-@@ -1529,7 +1567,8 @@
+@@ -1530,7 +1568,8 @@
  				    path)) == -1)
  					return (NULL);
  
@@ -552,7 +552,7 @@ Index: usr.sbin/httpd/server_http.c
  					continue;
  				/* Replace host configuration */
  				clt->clt_srv_conf = srv_conf = location;
-@@ -1561,6 +1600,66 @@
+@@ -1562,6 +1601,66 @@
  	close(rootfd);
  	return ((ret == -1 && SRVFLAG_LOCATION_FOUND & srv_conf->flags) ||
  	    (ret == 0 && SRVFLAG_LOCATION_NOT_FOUND & srv_conf->flags));

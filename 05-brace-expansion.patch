@@ -124,7 +124,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Sh SEE ALSO
  .Xr htpasswd 1 ,
 Index: usr.sbin/httpd/parse.y
-@@ -87,6 +87,20 @@
+@@ -88,6 +88,20 @@
  void		 lungetc(int);
  int		 findeol(void);
  
@@ -145,7 +145,7 @@ Index: usr.sbin/httpd/parse.y
  TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
  struct sym {
  	TAILQ_ENTRY(sym)	 entry;
-@@ -169,17 +183,31 @@
+@@ -170,17 +184,31 @@
  		;
  
  include		: INCLUDE STRING		{
@@ -181,7 +181,7 @@ Index: usr.sbin/httpd/parse.y
  		}
  		;
  
-@@ -481,6 +509,7 @@
+@@ -482,6 +510,7 @@
  			free($3);
  		}
  		| ALIAS optmatch STRING		{
@@ -189,7 +189,7 @@ Index: usr.sbin/httpd/parse.y
  			struct server_config	*alias;
  
  			if (parentsrv != NULL) {
-@@ -489,22 +518,37 @@
+@@ -490,22 +519,37 @@
  				YYERROR;
  			}
  
@@ -237,7 +237,7 @@ Index: usr.sbin/httpd/parse.y
  		}
  		| ERRDOCS STRING	{
  			if (parentsrv != NULL) {
-@@ -570,6 +614,8 @@
+@@ -571,6 +615,8 @@
  		| LOCATION optfound optmatch STRING optclientfilter	{
  			struct server		*s;
  			struct sockaddr_un	*sun;
@@ -246,7 +246,7 @@ Index: usr.sbin/httpd/parse.y
  
  			if (srv->srv_conf.ss.ss_family == AF_UNSPEC) {
  				yyerror("listen address not specified");
-@@ -591,25 +637,44 @@
+@@ -592,25 +638,44 @@
  				YYACCEPT;
  			}
  
@@ -294,7 +294,7 @@ Index: usr.sbin/httpd/parse.y
  				free(s);
  				YYERROR;
  			}
-@@ -641,6 +706,7 @@
+@@ -642,6 +707,7 @@
  				if (build_clientfilter(&s->srv_conf,
  				    $5 + 1) == NULL) {
  					free($5);
@@ -302,7 +302,7 @@ Index: usr.sbin/httpd/parse.y
  					free(s);
  					YYERROR;
  				}
-@@ -664,51 +730,22 @@
+@@ -665,51 +731,22 @@
  			s->srv_conf.prefixlen = srv->srv_conf.prefixlen;
  			s->srv_conf.tls_flags = srv->srv_conf.tls_flags;
  
@@ -363,7 +363,7 @@ Index: usr.sbin/httpd/parse.y
  			srv = parentsrv;
  			srv_conf = &parentsrv->srv_conf;
  			parentsrv = NULL;
-@@ -1791,6 +1828,296 @@
+@@ -1792,6 +1829,296 @@
  		}
  	}
  	return (0);

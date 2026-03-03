@@ -14,7 +14,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/config.c
-@@ -542,7 +542,12 @@
+@@ -543,7 +543,12 @@
  		/* Inherit configuration from the parent */
  		f = SRVFLAG_INDEX|SRVFLAG_NO_INDEX;
  		if ((srv_conf->flags & f) == 0) {
@@ -151,7 +151,7 @@ Index: usr.sbin/httpd/server_file.c
  	/* Request path is already canonicalized */
  	stripped = server_root_strip(
 Index: usr.sbin/httpd/server_http.c
-@@ -54,6 +54,8 @@
+@@ -55,6 +55,8 @@
  		    char *, size_t);
  char		*replace_var(char *, const char *, const char *);
  char		*read_errdoc(const char *, const char *);
@@ -160,7 +160,7 @@ Index: usr.sbin/httpd/server_http.c
  
  static struct http_method	 http_methods[] = HTTP_METHODS;
  static struct http_error	 http_errors[] = HTTP_ERRORS;
-@@ -1413,10 +1415,8 @@
+@@ -1414,10 +1416,8 @@
  		goto fail;
  
  	/* Now search for the location */
@@ -173,7 +173,7 @@ Index: usr.sbin/httpd/server_http.c
  
  	/* Optional rewrite */
  	if (srv_conf->flags & SRVFLAG_PATH_REWRITE) {
-@@ -1453,10 +1453,8 @@
+@@ -1454,10 +1454,8 @@
  
  		/* Now search for the updated location */
  		if ((srv_conf = server_getlocation(clt,
@@ -186,7 +186,7 @@ Index: usr.sbin/httpd/server_http.c
  	}
  
  	if (clt->clt_toread > 0 && (size_t)clt->clt_toread >
-@@ -1478,6 +1476,11 @@
+@@ -1479,6 +1477,11 @@
   fail:
  	server_abort_http(clt, 400, "bad request");
  	return (-1);
@@ -198,7 +198,7 @@ Index: usr.sbin/httpd/server_http.c
  }
  
  const char *
-@@ -1548,7 +1551,8 @@
+@@ -1549,7 +1552,8 @@
  	    srv_conf->flags) == 0)
  		return (0);
  
@@ -208,7 +208,7 @@ Index: usr.sbin/httpd/server_http.c
  		return (-1);
  
  	path = server_root_strip(path, srv_conf->strip) + 1;
-@@ -1784,8 +1788,8 @@
+@@ -1785,8 +1789,8 @@
  }
  
  /*
