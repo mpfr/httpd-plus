@@ -80,7 +80,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Pp
 Index: usr.sbin/httpd/httpd.h
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: httpd.h,v 1.169 2026/03/02 19:24:58 rsadowski Exp $	*/
+ /*	$OpenBSD: httpd.h,v 1.170 2026/05/10 10:02:04 kirill Exp $	*/
  
  /*
 + * Copyright (c) 2020 Matthias Pressfreund
@@ -105,7 +105,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define CONFIG_RELOAD		0x00
  #define CONFIG_MEDIA		0x01
-@@ -444,6 +447,7 @@
+@@ -445,6 +448,7 @@
  	char			 media_name[MEDIATYPE_NAMEMAX];
  	char			 media_type[MEDIATYPE_TYPEMAX];
  	char			 media_subtype[MEDIATYPE_TYPEMAX];
@@ -123,7 +123,7 @@ Index: usr.sbin/httpd/parse.y
  %token	<v.string>	STRING
  %token  <v.number>	NUMBER
  %type	<v.port>	port
-@@ -1308,7 +1308,7 @@
+@@ -1310,7 +1310,7 @@
  		| mediaoptsl nl
  		;
  
@@ -132,7 +132,7 @@ Index: usr.sbin/httpd/parse.y
  		| include
  		;
  
-@@ -1329,6 +1329,24 @@
+@@ -1331,6 +1331,24 @@
  		}
  		;
  
@@ -157,7 +157,7 @@ Index: usr.sbin/httpd/parse.y
  medianames_l	: medianames_l medianamesl
  		| medianamesl
  		;
-@@ -1457,6 +1475,7 @@
+@@ -1459,6 +1477,7 @@
  		{ "body",		BODY },
  		{ "buffer",		BUFFER },
  		{ "ca",			CA },
@@ -165,7 +165,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "certificate",	CERTIFICATE },
  		{ "chroot",		CHROOT },
  		{ "ciphers",		CIPHERS },
-@@ -1974,6 +1993,7 @@
+@@ -1976,6 +1995,7 @@
  			(void)strlcpy(m.media_subtype,
  			    mediatypes[i].media_subtype,
  			    sizeof(m.media_subtype));
