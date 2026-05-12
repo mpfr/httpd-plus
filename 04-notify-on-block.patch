@@ -15,7 +15,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/config.c
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: config.c,v 1.70 2026/05/10 10:02:04 kirill Exp $	*/
+ /*	$OpenBSD: config.c,v 1.71 2026/05/11 22:33:10 kirill Exp $	*/
  
  /*
 + * Copyright (c) 2021 Matthias Pressfreund
@@ -24,7 +24,7 @@ Index: usr.sbin/httpd/config.c
   * Permission to use, copy, modify, and distribute this software for any
 @@ -503,6 +504,7 @@
  	uint8_t			*p = imsg->data;
- 	unsigned int		 f;
+ 	uint64_t		 f;
  	size_t			 s;
 +	struct timeval		*tv;
  
@@ -211,7 +211,7 @@ Index: usr.sbin/httpd/httpd.h
  struct server_config {
  	uint32_t		 id;
  	uint32_t		 parent_id;
-@@ -576,6 +599,7 @@
+@@ -575,6 +598,7 @@
  
  	char			 fcgiscript[PATH_MAX];
  	struct addr_filter	 clientfilter[HTTPD_CLIENT_FILTER_MAX];
@@ -239,7 +239,7 @@ Index: usr.sbin/httpd/parse.y
  %type	<v.auth>	authopts
  
  %%
-@@ -1297,6 +1297,25 @@
+@@ -1294,6 +1294,25 @@
  			srv_conf->flags &= ~SRVFLAG_BLOCK;
  			srv_conf->flags |= SRVFLAG_NO_BLOCK;
  		}
@@ -265,7 +265,7 @@ Index: usr.sbin/httpd/parse.y
  		;
  
  block		: BLOCK				{
-@@ -1305,6 +1324,92 @@
+@@ -1302,6 +1321,92 @@
  		}
  		;
  
@@ -358,7 +358,7 @@ Index: usr.sbin/httpd/parse.y
  optmatch	: /* empty */		{ $$ = 0; }
  		| MATCH			{ $$ = 1; }
  		;
-@@ -1739,6 +1844,7 @@
+@@ -1736,6 +1841,7 @@
  		{ "combined",		COMBINED },
  		{ "common",		COMMON },
  		{ "connection",		CONNECTION },
@@ -366,7 +366,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "crl",		CRL },
  		{ "default",		DEFAULT },
  		{ "dhe",		DHE },
-@@ -1757,6 +1863,7 @@
+@@ -1754,6 +1860,7 @@
  		{ "index",		INDEX },
  		{ "ip",			IP },
  		{ "key",		KEY },
@@ -374,7 +374,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "lifetime",		LIFETIME },
  		{ "listen",		LISTEN },
  		{ "location",		LOCATION },
-@@ -1765,9 +1872,11 @@
+@@ -1762,9 +1869,11 @@
  		{ "match",		MATCH },
  		{ "max",		MAXIMUM },
  		{ "max-age",		MAXAGE },

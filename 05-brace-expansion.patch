@@ -302,7 +302,7 @@ Index: usr.sbin/httpd/parse.y
  					free(s);
  					YYERROR;
  				}
-@@ -665,54 +731,22 @@
+@@ -665,51 +731,22 @@
  			s->srv_conf.prefixlen = srv->srv_conf.prefixlen;
  			s->srv_conf.tls_flags = srv->srv_conf.tls_flags;
  
@@ -317,14 +317,13 @@ Index: usr.sbin/httpd/parse.y
  			SPLAY_INIT(&srv->srv_clients);
  		} '{' optnl serveropts_l '}'	{
 -			struct server	*s = NULL;
--			uint32_t	 f;
--			uint8_t		 f_p;
+-			uint64_t	 f;
 +			struct bstr	*bs = NULL;
  
--			f = SRVFLAG_LOCATION_FOUND |
+-			f = SRVFLAG_CLIENT_FROM |
+-			    SRVFLAG_CLIENT_NOT_FROM |
+-			    SRVFLAG_LOCATION_FOUND |
 -			    SRVFLAG_LOCATION_NOT_FOUND;
--			f_p = SRVFLAGP_CLIENT_FROM |
--			    SRVFLAGP_CLIENT_NOT_FROM;
 +			do {
 +				if (location_add(bs == NULL ?
 +				    srv : location_cpy(srv, ++last_server_id),
@@ -341,8 +340,6 @@ Index: usr.sbin/httpd/parse.y
 -				    srv_conf->parent_id &&
 -				    (s->srv_conf.flags & f) ==
 -				    (srv_conf->flags & f) &&
--				    (s->srv_conf.flags_p & f_p) ==
--				    (srv_conf->flags_p & f_p) &&
 -				    strcmp(s->srv_conf.location,
 -				    srv_conf->location) == 0 &&
 -				    clientfilter_cmp(s->srv_conf.clientfilter,
@@ -366,7 +363,7 @@ Index: usr.sbin/httpd/parse.y
  			srv = parentsrv;
  			srv_conf = &parentsrv->srv_conf;
  			parentsrv = NULL;
-@@ -1797,6 +1831,297 @@
+@@ -1794,6 +1831,296 @@
  		}
  	}
  	return (0);
@@ -619,10 +616,10 @@ Index: usr.sbin/httpd/parse.y
 +{
 +	struct server_config	*nsrv_conf = &nsrv->srv_conf;
 +	struct server		*s;
-+	const uint32_t		 f = SRVFLAG_LOCATION_FOUND |
++	const uint64_t		 f = SRVFLAG_CLIENT_FROM |
++				     SRVFLAG_CLIENT_NOT_FROM |
++				     SRVFLAG_LOCATION_FOUND |
 +				     SRVFLAG_LOCATION_NOT_FOUND;
-+	const uint8_t		 f_p = SRVFLAGP_CLIENT_FROM |
-+				     SRVFLAGP_CLIENT_NOT_FROM;
 +
 +	if (bs != NULL) {
 +		if (strlcpy(nsrv->srv_conf.location, bs->str,
@@ -641,7 +638,6 @@ Index: usr.sbin/httpd/parse.y
 +		if ((s->srv_conf.flags & SRVFLAG_LOCATION) &&
 +		    s->srv_conf.parent_id == nsrv_conf->parent_id &&
 +		    (s->srv_conf.flags & f) == (nsrv_conf->flags & f) &&
-+		    (s->srv_conf.flags_p & f_p) == (nsrv_conf->flags_p & f_p) &&
 +		    strcmp(s->srv_conf.location, nsrv_conf->location) == 0 &&
 +		    clientfilter_cmp(s->srv_conf.clientfilter,
 +		    nsrv_conf->clientfilter) == 0)
