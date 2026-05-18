@@ -15,7 +15,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/config.c
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: config.c,v 1.71 2026/05/11 22:33:10 kirill Exp $	*/
+ /*	$OpenBSD: config.c,v 1.72 2026/05/17 10:56:41 kirill Exp $	*/
  
  /*
 + * Copyright (c) 2021 Matthias Pressfreund
@@ -30,7 +30,7 @@ Index: usr.sbin/httpd/config.c
  
  	if ((srv_conf = calloc(1, sizeof(*srv_conf))) == NULL)
  		return (-1);
-@@ -653,6 +655,16 @@
+@@ -658,6 +660,16 @@
  		    sizeof(srv_conf->errdocroot));
  
  		srv_conf->flags |= parent->flags & SRVFLAG_NO_BANNER;
@@ -48,7 +48,7 @@ Index: usr.sbin/httpd/config.c
  		DPRINTF("%s: %s %d location \"%s\", "
  		    "parent \"%s[%u]\", flags: %s",
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -620,6 +620,117 @@
+@@ -636,6 +636,117 @@
  .Xr syslog 3
  instead of the log files.
  .El
@@ -184,7 +184,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define MEDIATYPE_NAMEMAX	128	/* file name extension */
  #define MEDIATYPE_TYPEMAX	64	/* length of type/subtype */
-@@ -501,6 +504,26 @@
+@@ -504,6 +507,26 @@
  	struct client_addr	 xff;
  };
  
@@ -211,7 +211,7 @@ Index: usr.sbin/httpd/httpd.h
  struct server_config {
  	uint32_t		 id;
  	uint32_t		 parent_id;
-@@ -575,6 +598,7 @@
+@@ -578,6 +601,7 @@
  
  	char			 fcgiscript[PATH_MAX];
  	struct addr_filter	 clientfilter[HTTPD_CLIENT_FILTER_MAX];
@@ -220,12 +220,13 @@ Index: usr.sbin/httpd/httpd.h
  	TAILQ_ENTRY(server_config) entry;
  };
 Index: usr.sbin/httpd/parse.y
-@@ -146,15 +146,15 @@
+@@ -146,15 +146,16 @@
  %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
  %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
  %token	CA CLIENT CRL OPTIONAL PARAM FORWARDED FOUND NOT
--%token	ERRDOCS GZIPSTATIC BANNER CACHE SCRIPT FROM
-+%token	ERRDOCS GZIPSTATIC BANNER CACHE SCRIPT FROM NOTIFY MESSAGE CR LF
+-%token	ERRDOCS GZIPSTATIC BANNER STATIC_CACHE_CONTROL CACHE SCRIPT FROM
++%token	ERRDOCS GZIPSTATIC BANNER STATIC_CACHE_CONTROL
++%token	CACHE SCRIPT FROM NOTIFY MESSAGE CR LF
  %token	<v.string>	STRING
  %token  <v.number>	NUMBER
  %type	<v.port>	port
@@ -239,7 +240,7 @@ Index: usr.sbin/httpd/parse.y
  %type	<v.auth>	authopts
  
  %%
-@@ -1294,6 +1294,25 @@
+@@ -1296,6 +1297,25 @@
  			srv_conf->flags &= ~SRVFLAG_BLOCK;
  			srv_conf->flags |= SRVFLAG_NO_BLOCK;
  		}
@@ -265,7 +266,7 @@ Index: usr.sbin/httpd/parse.y
  		;
  
  block		: BLOCK				{
-@@ -1302,6 +1321,92 @@
+@@ -1304,6 +1324,92 @@
  		}
  		;
  
@@ -358,7 +359,7 @@ Index: usr.sbin/httpd/parse.y
  optmatch	: /* empty */		{ $$ = 0; }
  		| MATCH			{ $$ = 1; }
  		;
-@@ -1736,6 +1841,7 @@
+@@ -1748,6 +1854,7 @@
  		{ "combined",		COMBINED },
  		{ "common",		COMMON },
  		{ "connection",		CONNECTION },
@@ -366,7 +367,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "crl",		CRL },
  		{ "default",		DEFAULT },
  		{ "dhe",		DHE },
-@@ -1754,6 +1860,7 @@
+@@ -1766,6 +1873,7 @@
  		{ "index",		INDEX },
  		{ "ip",			IP },
  		{ "key",		KEY },
@@ -374,7 +375,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "lifetime",		LIFETIME },
  		{ "listen",		LISTEN },
  		{ "location",		LOCATION },
-@@ -1762,9 +1869,11 @@
+@@ -1774,9 +1882,11 @@
  		{ "match",		MATCH },
  		{ "max",		MAXIMUM },
  		{ "max-age",		MAXAGE },

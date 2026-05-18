@@ -14,7 +14,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -387,6 +387,9 @@
+@@ -403,6 +403,9 @@
  If the
  .Ar port
  is not specified, it defaults to port 9000.
@@ -24,7 +24,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .It Ic strip Ar number
  Strip
  .Ar number
-@@ -905,7 +908,9 @@
+@@ -926,7 +929,9 @@
  .Pp
  The
  .Ic location not found
@@ -35,7 +35,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Lk https://wordpress.org/support/article/using-permalinks/ WordPress Pretty Permalinks
  just like on an Apache web server with
  .Pa mod_rewrite
-@@ -916,7 +921,10 @@
+@@ -937,7 +942,10 @@
  	directory index "index.php"
  
  	location not found "/*" {
@@ -49,7 +49,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  		fastcgi socket "/run/php-fpm.sock"
 Index: usr.sbin/httpd/httpd.h
 @@ -1,7 +1,7 @@
- /*	$OpenBSD: httpd.h,v 1.171 2026/05/11 22:33:10 kirill Exp $	*/
+ /*	$OpenBSD: httpd.h,v 1.172 2026/05/17 10:56:41 kirill Exp $	*/
  
  /*
 - * Copyright (c) 2020 Matthias Pressfreund
@@ -57,7 +57,7 @@ Index: usr.sbin/httpd/httpd.h
   * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
   * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
   * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
-@@ -546,6 +546,8 @@
+@@ -549,6 +549,8 @@
  	struct server_fcgiparams fcgiparams;
  	int			 fcgistrip;
  	char			 errdocroot[HTTPD_ERRDOCROOT_MAX];
@@ -71,12 +71,12 @@ Index: usr.sbin/httpd/parse.y
  %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
  %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
  %token	CA CLIENT CRL OPTIONAL PARAM FORWARDED FOUND NOT
--%token	ERRDOCS GZIPSTATIC BANNER CACHE
-+%token	ERRDOCS GZIPSTATIC BANNER CACHE SCRIPT
+-%token	ERRDOCS GZIPSTATIC BANNER STATIC_CACHE_CONTROL CACHE
++%token	ERRDOCS GZIPSTATIC BANNER STATIC_CACHE_CONTROL CACHE SCRIPT
  %token	<v.string>	STRING
  %token  <v.number>	NUMBER
  %type	<v.port>	port
-@@ -824,6 +824,16 @@
+@@ -826,6 +826,16 @@
  			    param->name, param->value);
  			TAILQ_INSERT_HEAD(&srv_conf->fcgiparams, param, entry);
  		}
@@ -93,14 +93,14 @@ Index: usr.sbin/httpd/parse.y
  		| STRIP NUMBER			{
  			if ($2 < 0 || $2 > INT_MAX) {
  				yyerror("invalid fastcgi strip number");
-@@ -1528,6 +1538,7 @@
+@@ -1540,6 +1550,7 @@
  		{ "rewrite",		REWRITE },
  		{ "root",		ROOT },
  		{ "sack",		SACK },
 +		{ "script",		SCRIPT },
  		{ "server",		SERVER },
  		{ "socket",		SOCKET },
- 		{ "strip",		STRIP },
+ 		{ "static-cache-control",	STATIC_CACHE_CONTROL },
 Index: usr.sbin/httpd/server_fcgi.c
 @@ -1,6 +1,7 @@
  /*	$OpenBSD: server_fcgi.c,v 1.100 2026/03/02 19:24:58 rsadowski Exp $	*/
