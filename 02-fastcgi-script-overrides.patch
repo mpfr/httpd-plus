@@ -24,7 +24,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .It Ic strip Ar number
  Strip
  .Ar number
-@@ -926,7 +929,9 @@
+@@ -935,7 +938,9 @@
  .Pp
  The
  .Ic location not found
@@ -35,7 +35,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Lk https://wordpress.org/support/article/using-permalinks/ WordPress Pretty Permalinks
  just like on an Apache web server with
  .Pa mod_rewrite
-@@ -937,7 +942,10 @@
+@@ -946,7 +951,10 @@
  	directory index "index.php"
  
  	location not found "/*" {
@@ -49,7 +49,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  		fastcgi socket "/run/php-fpm.sock"
 Index: usr.sbin/httpd/httpd.h
 @@ -1,7 +1,7 @@
- /*	$OpenBSD: httpd.h,v 1.172 2026/05/17 10:56:41 kirill Exp $	*/
+ /*	$OpenBSD: httpd.h,v 1.173 2026/06/01 09:28:42 claudio Exp $	*/
  
  /*
 - * Copyright (c) 2020 Matthias Pressfreund
@@ -57,9 +57,9 @@ Index: usr.sbin/httpd/httpd.h
   * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
   * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
   * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
-@@ -549,6 +549,8 @@
- 	struct server_fcgiparams fcgiparams;
+@@ -551,6 +551,8 @@
  	int			 fcgistrip;
+ 	int			 fcgiallowchunked;
  	char			 errdocroot[HTTPD_ERRDOCROOT_MAX];
 +
 +	char			 fcgiscript[PATH_MAX];
@@ -93,7 +93,7 @@ Index: usr.sbin/httpd/parse.y
  		| STRIP NUMBER			{
  			if ($2 < 0 || $2 > INT_MAX) {
  				yyerror("invalid fastcgi strip number");
-@@ -1540,6 +1550,7 @@
+@@ -1550,6 +1560,7 @@
  		{ "rewrite",		REWRITE },
  		{ "root",		ROOT },
  		{ "sack",		SACK },
@@ -103,7 +103,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "static-cache-control",	STATIC_CACHE_CONTROL },
 Index: usr.sbin/httpd/server_fcgi.c
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: server_fcgi.c,v 1.100 2026/03/02 19:24:58 rsadowski Exp $	*/
+ /*	$OpenBSD: server_fcgi.c,v 1.101 2026/06/01 09:28:42 claudio Exp $	*/
  
  /*
 + * Copyright (c) 2020, 2021 Matthias Pressfreund
