@@ -15,7 +15,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/http.h
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: http.h,v 1.17 2024/03/24 10:53:27 job Exp $	*/
+ /*	$OpenBSD: http.h,v 1.18 2026/06/03 20:00:07 kirill Exp $	*/
  
  /*
 + * Copyright (c) 2020 Matthias Pressfreund
@@ -32,7 +32,7 @@ Index: usr.sbin/httpd/http.h
   * Some default media types based on (2014-08-04 version):
 Index: usr.sbin/httpd/httpd.conf.5
 @@ -1,6 +1,6 @@
- .\"	$OpenBSD: httpd.conf.5,v 1.131 2026/06/01 09:28:42 claudio Exp $
+ .\"	$OpenBSD: httpd.conf.5,v 1.133 2026/06/03 06:10:06 jsg Exp $
  .\"
 -.\" Copyright (c) 2020 - 2022 Matthias Pressfreund
 +.\" Copyright (c) 2020 - 2026 Matthias Pressfreund
@@ -106,7 +106,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Pp
 Index: usr.sbin/httpd/httpd.h
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: httpd.h,v 1.173 2026/06/01 09:28:42 claudio Exp $	*/
+ /*	$OpenBSD: httpd.h,v 1.174 2026/06/03 19:25:06 rsadowski Exp $	*/
  
  /*
 + * Copyright (c) 2020 Matthias Pressfreund
@@ -201,7 +201,7 @@ Index: usr.sbin/httpd/parse.y
  			if (media_add(conf->sc_mediatypes, &m) == NULL) {
 Index: usr.sbin/httpd/server_http.c
 @@ -1,7 +1,7 @@
- /*	$OpenBSD: server_http.c,v 1.163 2026/06/01 09:28:42 claudio Exp $	*/
+ /*	$OpenBSD: server_http.c,v 1.165 2026/06/03 20:00:07 kirill Exp $	*/
  
  /*
 - * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -209,7 +209,7 @@ Index: usr.sbin/httpd/server_http.c
   * Copyright (c) 2006 - 2018 Reyk Floeter <reyk@openbsd.org>
   *
   * Permission to use, copy, modify, and distribute this software for any
-@@ -1567,7 +1567,7 @@
+@@ -1571,7 +1571,7 @@
  	struct http_descriptor	*desc = clt->clt_descreq;
  	struct http_descriptor	*resp = clt->clt_descresp;
  	const char		*error;
@@ -218,7 +218,7 @@ Index: usr.sbin/httpd/server_http.c
  	char			 tmbuf[32];
  
  	if (desc == NULL || media == NULL ||
-@@ -1607,8 +1607,15 @@
+@@ -1611,8 +1611,15 @@
  	    kv_set(cl, "%lld", (long long)size) == -1))
  		return (-1);
  
