@@ -32,7 +32,7 @@ Index: usr.sbin/httpd/http.h
   * Some default media types based on (2014-08-04 version):
 Index: usr.sbin/httpd/httpd.conf.5
 @@ -1,6 +1,6 @@
- .\"	$OpenBSD: httpd.conf.5,v 1.133 2026/06/03 06:10:06 jsg Exp $
+ .\"	$OpenBSD: httpd.conf.5,v 1.134 2026/06/28 05:08:28 rsadowski Exp $
  .\"
 -.\" Copyright (c) 2020 - 2022 Matthias Pressfreund
 +.\" Copyright (c) 2020 - 2026 Matthias Pressfreund
@@ -52,7 +52,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  When
  .Ic gzip-static
  is enabled, also send
-@@ -803,16 +807,24 @@
+@@ -804,16 +808,24 @@
  section must include one or more lines of the following syntax,
  enclosed in curly braces:
  .Bl -tag -width Ds
@@ -81,7 +81,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .It Ic include Ar file
  Include types definitions from an external file, for example
  .Pa /usr/share/misc/mime.types .
-@@ -843,14 +855,14 @@
+@@ -844,14 +856,14 @@
  }
  
  types {
@@ -106,7 +106,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Pp
 Index: usr.sbin/httpd/httpd.h
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: httpd.h,v 1.174 2026/06/03 19:25:06 rsadowski Exp $	*/
+ /*	$OpenBSD: httpd.h,v 1.175 2026/06/28 05:08:28 rsadowski Exp $	*/
  
  /*
 + * Copyright (c) 2020 Matthias Pressfreund
