@@ -106,7 +106,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Pp
 Index: usr.sbin/httpd/httpd.h
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: httpd.h,v 1.175 2026/06/28 05:08:28 rsadowski Exp $	*/
+ /*	$OpenBSD: httpd.h,v 1.176 2026/07/01 18:15:46 martijn Exp $	*/
  
  /*
 + * Copyright (c) 2020 Matthias Pressfreund
@@ -131,7 +131,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define CONFIG_RELOAD		0x00
  #define CONFIG_MEDIA		0x01
-@@ -449,6 +452,7 @@
+@@ -420,6 +423,7 @@
  	char			 media_name[MEDIATYPE_NAMEMAX];
  	char			 media_type[MEDIATYPE_TYPEMAX];
  	char			 media_subtype[MEDIATYPE_TYPEMAX];
