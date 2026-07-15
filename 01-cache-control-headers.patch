@@ -140,16 +140,17 @@ Index: usr.sbin/httpd/httpd.h
  	RB_ENTRY(media_type)	 media_entry;
  };
 Index: usr.sbin/httpd/parse.y
-@@ -142,7 +142,7 @@
- %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
- %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
- %token	CA CLIENT CRL OPTIONAL PARAM FORWARDED FOUND NOT
--%token	ERRDOCS GZIPSTATIC BANNER STATIC_CACHE_CONTROL
-+%token	ERRDOCS GZIPSTATIC BANNER STATIC_CACHE_CONTROL CACHE
- %token	<v.string>	STRING
- %token  <v.number>	NUMBER
- %type	<v.port>	port
-@@ -1332,7 +1332,7 @@
+@@ -137,7 +137,8 @@
+ 
+ %token	ACCESS ALIAS AUTHENTICATE AUTO
+ %token	BACKLOG BANNER BLOCK BODY BUFFER
+-%token	CA CERTIFICATE CHROOT CIPHERS CLIENT COMBINED COMMON CONNECTION CRL
++%token	CA CACHE CERTIFICATE CHROOT CIPHERS CLIENT COMBINED COMMON CONNECTION
++%token	  CRL
+ %token	DEFAULT DHE DIRECTORY DROP
+ %token	ECDHE ERR ERRDOCS ERROR
+ %token	FCGI FORWARDED FOUND
+@@ -1343,7 +1344,7 @@
  		| mediaoptsl nl
  		;
  
@@ -158,7 +159,7 @@ Index: usr.sbin/httpd/parse.y
  		| include
  		;
  
-@@ -1353,6 +1353,24 @@
+@@ -1364,6 +1365,24 @@
  		}
  		;
  
@@ -183,7 +184,7 @@ Index: usr.sbin/httpd/parse.y
  medianames_l	: medianames_l medianamesl
  		| medianamesl
  		;
-@@ -1481,6 +1499,7 @@
+@@ -1492,6 +1511,7 @@
  		{ "body",		BODY },
  		{ "buffer",		BUFFER },
  		{ "ca",			CA },
@@ -191,7 +192,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "certificate",	CERTIFICATE },
  		{ "chroot",		CHROOT },
  		{ "ciphers",		CIPHERS },
-@@ -1999,6 +2018,7 @@
+@@ -2010,6 +2030,7 @@
  			(void)strlcpy(m.media_subtype,
  			    mediatypes[i].media_subtype,
  			    sizeof(m.media_subtype));

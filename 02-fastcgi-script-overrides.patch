@@ -67,16 +67,17 @@ Index: usr.sbin/httpd/httpd.h
  	TAILQ_ENTRY(server_config) entry;
  };
 Index: usr.sbin/httpd/parse.y
-@@ -142,7 +142,7 @@
- %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
- %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
- %token	CA CLIENT CRL OPTIONAL PARAM FORWARDED FOUND NOT
--%token	ERRDOCS GZIPSTATIC BANNER STATIC_CACHE_CONTROL CACHE
-+%token	ERRDOCS GZIPSTATIC BANNER STATIC_CACHE_CONTROL CACHE SCRIPT
+@@ -152,7 +152,8 @@
+ %token	OCSP ON OPTIONAL
+ %token	PARAM PASS PORT PREFORK PRELOAD PROTOCOLS
+ %token	REQUEST REQUESTS RETURN REWRITE ROOT
+-%token	SACK SERVER SOCKET STATIC_CACHE_CONTROL STRIP STYLE SUBDOMAINS SYSLOG
++%token	SACK SERVER SCRIPT SOCKET STATIC_CACHE_CONTROL STRIP STYLE SUBDOMAINS
++%token	  SYSLOG
+ %token	TCP TICKET TIMEOUT TLS TYPE TYPES
+ %token	WITH
  %token	<v.string>	STRING
- %token  <v.number>	NUMBER
- %type	<v.port>	port
-@@ -826,6 +826,16 @@
+@@ -838,6 +839,16 @@
  			    param->name, param->value);
  			TAILQ_INSERT_HEAD(&srv_conf->fcgiparams, param, entry);
  		}
@@ -93,7 +94,7 @@ Index: usr.sbin/httpd/parse.y
  		| STRIP NUMBER			{
  			if ($2 < 0 || $2 > INT_MAX) {
  				yyerror("invalid fastcgi strip number");
-@@ -1550,6 +1560,7 @@
+@@ -1562,6 +1573,7 @@
  		{ "rewrite",		REWRITE },
  		{ "root",		ROOT },
  		{ "sack",		SACK },

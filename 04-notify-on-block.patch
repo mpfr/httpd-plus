@@ -220,16 +220,29 @@ Index: usr.sbin/httpd/httpd.h
  	TAILQ_ENTRY(server_config) entry;
  };
 Index: usr.sbin/httpd/parse.y
-@@ -146,15 +146,16 @@
- %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
- %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
- %token	CA CLIENT CRL OPTIONAL PARAM FORWARDED FOUND NOT
--%token	ERRDOCS GZIPSTATIC BANNER STATIC_CACHE_CONTROL CACHE SCRIPT FROM
-+%token	ERRDOCS GZIPSTATIC BANNER STATIC_CACHE_CONTROL
-+%token	CACHE SCRIPT FROM NOTIFY MESSAGE CR LF
- %token	<v.string>	STRING
- %token  <v.number>	NUMBER
- %type	<v.port>	port
+@@ -142,7 +142,7 @@
+ %token	ACCESS ALIAS AUTHENTICATE AUTO
+ %token	BACKLOG BANNER BLOCK BODY BUFFER
+ %token	CA CACHE CERTIFICATE CHROOT CIPHERS CLIENT COMBINED COMMON CONNECTION
+-%token	  CRL
++%token	  CR CRL
+ %token	DEFAULT DHE DIRECTORY DROP
+ %token	ECDHE ERR ERRDOCS ERROR
+ %token	FCGI FORWARDED FOUND FROM
+@@ -150,9 +150,9 @@
+ %token	HSTS
+ %token	INCLUDE INDEX IP
+ %token	KEY
+-%token	LIFETIME LISTEN LOCATION LOG LOGDIR
+-%token	MATCH MAXAGE MAXIMUM
+-%token	NO NODELAY NOT
++%token	LF LIFETIME LISTEN LOCATION LOG LOGDIR
++%token	MATCH MAXAGE MAXIMUM MESSAGE
++%token	NO NODELAY NOT NOTIFY
+ %token	OCSP ON OPTIONAL
+ %token	PARAM PASS PORT PREFORK PRELOAD PROTOCOLS
+ %token	REQUEST REQUESTS RETURN REWRITE ROOT
+@@ -166,8 +166,8 @@
  %type	<v.string>	fcgiport
  %type	<v.number>	opttls optmatch optfound
  %type	<v.tv>		timeout
@@ -240,7 +253,7 @@ Index: usr.sbin/httpd/parse.y
  %type	<v.auth>	authopts
  
  %%
-@@ -1306,6 +1307,25 @@
+@@ -1319,6 +1319,25 @@
  			srv_conf->flags &= ~SRVFLAG_BLOCK;
  			srv_conf->flags |= SRVFLAG_NO_BLOCK;
  		}
@@ -266,7 +279,7 @@ Index: usr.sbin/httpd/parse.y
  		;
  
  block		: BLOCK				{
-@@ -1314,6 +1334,92 @@
+@@ -1327,6 +1346,92 @@
  		}
  		;
  
@@ -359,7 +372,7 @@ Index: usr.sbin/httpd/parse.y
  optmatch	: /* empty */		{ $$ = 0; }
  		| MATCH			{ $$ = 1; }
  		;
-@@ -1758,6 +1864,7 @@
+@@ -1771,6 +1876,7 @@
  		{ "combined",		COMBINED },
  		{ "common",		COMMON },
  		{ "connection",		CONNECTION },
@@ -367,7 +380,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "crl",		CRL },
  		{ "default",		DEFAULT },
  		{ "dhe",		DHE },
-@@ -1776,6 +1883,7 @@
+@@ -1789,6 +1895,7 @@
  		{ "index",		INDEX },
  		{ "ip",			IP },
  		{ "key",		KEY },
@@ -375,7 +388,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "lifetime",		LIFETIME },
  		{ "listen",		LISTEN },
  		{ "location",		LOCATION },
-@@ -1784,9 +1892,11 @@
+@@ -1797,9 +1904,11 @@
  		{ "match",		MATCH },
  		{ "max",		MAXIMUM },
  		{ "max-age",		MAXAGE },

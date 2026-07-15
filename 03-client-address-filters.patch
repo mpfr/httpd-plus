@@ -143,16 +143,16 @@ Index: usr.sbin/httpd/parse.y
  int		 yyerror(const char *, ...)
      __attribute__((__format__ (printf, 1, 2)))
      __attribute__((__nonnull__ (1)));
-@@ -142,7 +146,7 @@
- %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
- %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
- %token	CA CLIENT CRL OPTIONAL PARAM FORWARDED FOUND NOT
--%token	ERRDOCS GZIPSTATIC BANNER STATIC_CACHE_CONTROL CACHE SCRIPT
-+%token	ERRDOCS GZIPSTATIC BANNER STATIC_CACHE_CONTROL CACHE SCRIPT FROM
- %token	<v.string>	STRING
- %token  <v.number>	NUMBER
- %type	<v.port>	port
-@@ -150,6 +154,7 @@
+@@ -141,7 +145,7 @@
+ %token	  CRL
+ %token	DEFAULT DHE DIRECTORY DROP
+ %token	ECDHE ERR ERRDOCS ERROR
+-%token	FCGI FORWARDED FOUND
++%token	FCGI FORWARDED FOUND FROM
+ %token	GZIPSTATIC
+ %token	HSTS
+ %token	INCLUDE INDEX IP
+@@ -163,6 +167,7 @@
  %type	<v.number>	opttls optmatch optfound
  %type	<v.tv>		timeout
  %type	<v.string>	numberstring optstring
@@ -160,7 +160,7 @@ Index: usr.sbin/httpd/parse.y
  %type	<v.auth>	authopts
  
  %%
-@@ -565,24 +570,27 @@
+@@ -578,24 +583,27 @@
  		| authenticate
  		| gzip_static
  		| filter
@@ -189,7 +189,7 @@ Index: usr.sbin/httpd/parse.y
  				YYACCEPT;
  			}
  
-@@ -594,6 +602,7 @@
+@@ -607,6 +615,7 @@
  			    sizeof(s->srv_conf.location)) {
  				yyerror("server location truncated");
  				free($4);
@@ -197,7 +197,7 @@ Index: usr.sbin/httpd/parse.y
  				free(s);
  				YYERROR;
  			}
-@@ -603,6 +612,7 @@
+@@ -616,6 +625,7 @@
  			    sizeof(s->srv_conf.name)) >=
  			    sizeof(s->srv_conf.name)) {
  				yyerror("server name truncated");
@@ -205,7 +205,7 @@ Index: usr.sbin/httpd/parse.y
  				free(s);
  				YYERROR;
  			}
-@@ -630,6 +640,26 @@
+@@ -643,6 +653,26 @@
  			}
  			if ($3)
  				s->srv_conf.flags |= SRVFLAG_LOCATION_MATCH;
@@ -232,7 +232,7 @@ Index: usr.sbin/httpd/parse.y
  			s->srv_s = -1;
  			memcpy(&s->srv_conf.ss, &srv->srv_conf.ss,
  			    sizeof(s->srv_conf.ss));
-@@ -650,7 +680,9 @@
+@@ -663,7 +693,9 @@
  			struct server	*s = NULL;
  			uint64_t	 f;
  
@@ -243,7 +243,7 @@ Index: usr.sbin/httpd/parse.y
  			    SRVFLAG_LOCATION_NOT_FOUND;
  
  			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
-@@ -661,7 +693,9 @@
+@@ -674,7 +706,9 @@
  				    (s->srv_conf.flags & f) ==
  				    (srv_conf->flags & f) &&
  				    strcmp(s->srv_conf.location,
@@ -254,7 +254,7 @@ Index: usr.sbin/httpd/parse.y
  					break;
  			}
  			if (s != NULL) {
-@@ -718,6 +752,51 @@
+@@ -731,6 +765,51 @@
  		| NOT FOUND	{ $$ = -1; }
  		;
  
@@ -306,7 +306,7 @@ Index: usr.sbin/httpd/parse.y
  hsts		: HSTS '{' optnl hstsflags_l '}'
  		| HSTS hstsflags
  		| HSTS
-@@ -1473,6 +1552,168 @@
+@@ -1486,6 +1565,168 @@
  };
  
  int
@@ -475,7 +475,7 @@ Index: usr.sbin/httpd/parse.y
  yyerror(const char *fmt, ...)
  {
  	va_list		 ap;
-@@ -1528,6 +1769,7 @@
+@@ -1541,6 +1782,7 @@
  		{ "fastcgi",		FCGI },
  		{ "forwarded",		FORWARDED },
  		{ "found",		FOUND },
