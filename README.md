@@ -1,3 +1,6 @@
+| :warning: With the release of OpenBSD version 8.0, this branch will reach its end of life and will no longer be maintained.
+| --- |
+
 # httpd-plus
 
 Add-ons for the [OpenBSD](https://www.openbsd.org) [`httpd(8)`](http://man.openbsd.org/httpd) web server applicable to the `7.8-stable` branch.
