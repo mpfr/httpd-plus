@@ -15,14 +15,14 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/config.c
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: config.c,v 1.72 2026/05/17 10:56:41 kirill Exp $	*/
+ /*	$OpenBSD: config.c,v 1.74 2026/07/19 04:17:31 rsadowski Exp $	*/
  
  /*
 + * Copyright (c) 2021 Matthias Pressfreund
   * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
   *
   * Permission to use, copy, modify, and distribute this software for any
-@@ -503,6 +504,7 @@
+@@ -496,6 +497,7 @@
  	uint8_t			*p = imsg->data;
  	uint64_t		 f;
  	size_t			 s;
@@ -30,7 +30,7 @@ Index: usr.sbin/httpd/config.c
  
  	if ((srv_conf = calloc(1, sizeof(*srv_conf))) == NULL)
  		return (-1);
-@@ -658,6 +660,16 @@
+@@ -651,6 +653,16 @@
  		    sizeof(srv_conf->errdocroot));
  
  		srv_conf->flags |= parent->flags & SRVFLAG_NO_BANNER;
