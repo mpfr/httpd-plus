@@ -25,7 +25,7 @@ Amendments:
 
 ### cache-control-headers
 
-Optional HTTP `Cache-Control` headers via [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/current/httpd.conf.5.html#TYPES).
+Optional HTTP `Cache-Control` headers via media `types` definitions in [`httpd.conf(5)`](https://mpfr.net/man/httpd-plus/current/httpd.conf.5.html#TYPES).
 
 ```
 types {

@@ -24,7 +24,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .It Ic strip Ar number
  Strip
  .Ar number
-@@ -936,7 +939,9 @@
+@@ -1012,7 +1015,9 @@
  .Pp
  The
  .Ic location not found
@@ -35,7 +35,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Lk https://wordpress.org/support/article/using-permalinks/ WordPress Pretty Permalinks
  just like on an Apache web server with
  .Pa mod_rewrite
-@@ -947,7 +952,10 @@
+@@ -1023,7 +1028,10 @@
  	directory index "index.php"
  
  	location not found "/*" {
@@ -49,7 +49,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  		fastcgi socket "/run/php-fpm.sock"
 Index: usr.sbin/httpd/httpd.h
 @@ -1,7 +1,7 @@
- /*	$OpenBSD: httpd.h,v 1.179 2026/07/19 09:09:25 kirill Exp $	*/
+ /*	$OpenBSD: httpd.h,v 1.181 2026/07/25 08:58:14 rsadowski Exp $	*/
  
  /*
 - * Copyright (c) 2020 Matthias Pressfreund
@@ -57,9 +57,9 @@ Index: usr.sbin/httpd/httpd.h
   * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
   * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
   * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
-@@ -524,6 +524,8 @@
- 	int			 fcgistrip;
+@@ -555,6 +555,8 @@
  	int			 fcgiallowchunked;
+ 	struct server_headers	 headers;
  	char			 errdocroot[HTTPD_ERRDOCROOT_MAX];
 +
 +	char			 fcgiscript[PATH_MAX];
@@ -67,19 +67,20 @@ Index: usr.sbin/httpd/httpd.h
  	TAILQ_ENTRY(server_config) entry;
  };
 Index: usr.sbin/httpd/parse.y
-@@ -152,7 +152,8 @@
+@@ -155,8 +155,8 @@
  %token	OCSP ON OPTIONAL
  %token	PARAM PASS PORT PREFORK PRELOAD PROTOCOLS
- %token	REQUEST REQUESTS RETURN REWRITE ROOT
--%token	SACK SERVER SOCKET STATIC_CACHE_CONTROL STRIP STYLE SUBDOMAINS SYSLOG
-+%token	SACK SERVER SCRIPT SOCKET STATIC_CACHE_CONTROL STRIP STYLE SUBDOMAINS
-+%token	  SYSLOG
+ %token	REMOVE REQUEST REQUESTS RETURN REWRITE ROOT
+-%token	SACK SERVER SET SOCKET STATIC_CACHE_CONTROL STRIP STYLE SUBDOMAINS
+-%token	SYSLOG
++%token	SACK SCRIPT SERVER SET SOCKET STATIC_CACHE_CONTROL STRIP STYLE
++%token	SUBDOMAINS SYSLOG
  %token	TCP TICKET TIMEOUT TLS TYPE TYPES
  %token	WITH
  %token	<v.string>	STRING
-@@ -838,6 +839,16 @@
- 			    param->name, param->value);
- 			TAILQ_INSERT_HEAD(&srv_conf->fcgiparams, param, entry);
+@@ -953,6 +953,16 @@
+ 
+ 			TAILQ_INSERT_TAIL(&srv_conf->fcgiparams, param, entry);
  		}
 +		| SCRIPT STRING {
 +			if (strlcpy(srv_conf->fcgiscript, $2,
@@ -94,17 +95,17 @@ Index: usr.sbin/httpd/parse.y
  		| STRIP NUMBER			{
  			if ($2 < 0 || $2 > INT_MAX) {
  				yyerror("invalid fastcgi strip number");
-@@ -1562,6 +1573,7 @@
+@@ -1681,6 +1691,7 @@
  		{ "rewrite",		REWRITE },
  		{ "root",		ROOT },
  		{ "sack",		SACK },
 +		{ "script",		SCRIPT },
  		{ "server",		SERVER },
+ 		{ "set",		SET },
  		{ "socket",		SOCKET },
- 		{ "static-cache-control",	STATIC_CACHE_CONTROL },
 Index: usr.sbin/httpd/server_fcgi.c
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: server_fcgi.c,v 1.101 2026/06/01 09:28:42 claudio Exp $	*/
+ /*	$OpenBSD: server_fcgi.c,v 1.102 2026/07/25 05:48:39 rsadowski Exp $	*/
  
  /*
 + * Copyright (c) 2020, 2021 Matthias Pressfreund
