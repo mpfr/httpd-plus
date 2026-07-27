@@ -112,7 +112,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Sh SEE ALSO
  .Xr htpasswd 1 ,
 Index: usr.sbin/httpd/httpd.h
-@@ -669,6 +669,9 @@
+@@ -670,6 +670,9 @@
  
  SPLAY_PROTOTYPE(client_tree, client, clt_nodes, server_client_cmp);
  
@@ -120,16 +120,17 @@ Index: usr.sbin/httpd/httpd.h
 +	open(*(srv_conf)->root != '\0' ? (srv_conf)->root : "/", mode)
 +
  /* server_http.c */
- void	 server_http(void);
- int	 server_httpdesc_init(struct client *);
-@@ -698,7 +701,6 @@
- 	 server_root_strip(const char *, int);
- struct server_config *
- 	 server_getlocation(struct client *, const char *);
--int	 server_locationaccesstest(struct server_config *, const char *);
- const char *
- 	 server_http_host(struct sockaddr_storage *, char *, size_t);
- char	*server_http_parsehost(char *, char *, size_t, int *);
+ void			 server_http(void);
+ int			 server_httpdesc_init(struct client *);
+@@ -696,8 +699,6 @@
+ int			 server_response(struct httpd *, struct client *);
+ const char		*server_root_strip(const char *, int);
+ struct server_config	*server_getlocation(struct client *, const char *);
+-int			 server_locationaccesstest(struct server_config *,
+-    const char *);
+ const char		*server_http_host(struct sockaddr_storage *, char *,
+     size_t);
+ char			*server_http_parsehost(char *, char *, size_t, int *);
 Index: usr.sbin/httpd/server_file.c
 @@ -218,10 +218,17 @@
  	struct server_config	*srv_conf = clt->clt_srv_conf;
@@ -153,10 +154,10 @@ Index: usr.sbin/httpd/server_file.c
 Index: usr.sbin/httpd/server_http.c
 @@ -61,6 +61,8 @@
  char		*server_create_errdoc(struct server_config *, unsigned int,
- 		    const char *);
+     const char *);
  static char	*get_custom_headers(struct kvtree *);
 +int		 server_locationaccesstest(struct server_config *,
-+		    const char *);
++    const char *);
  
  static struct http_method	 http_methods[] = HTTP_METHODS;
  static struct http_error	 http_errors[] = HTTP_ERRORS;

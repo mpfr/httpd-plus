@@ -15,7 +15,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/http.h
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: http.h,v 1.18 2026/06/03 20:00:07 kirill Exp $	*/
+ /*	$OpenBSD: http.h,v 1.19 2026/07/26 14:46:32 rsadowski Exp $	*/
  
  /*
 + * Copyright (c) 2020 Matthias Pressfreund
@@ -106,7 +106,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Pp
 Index: usr.sbin/httpd/httpd.h
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: httpd.h,v 1.181 2026/07/25 08:58:14 rsadowski Exp $	*/
+ /*	$OpenBSD: httpd.h,v 1.182 2026/07/26 14:46:32 rsadowski Exp $	*/
  
  /*
 + * Copyright (c) 2020 Matthias Pressfreund
@@ -202,7 +202,7 @@ Index: usr.sbin/httpd/parse.y
  			if (media_add(conf->sc_mediatypes, &m) == NULL) {
 Index: usr.sbin/httpd/server_http.c
 @@ -1,7 +1,7 @@
- /*	$OpenBSD: server_http.c,v 1.169 2026/07/25 05:48:39 rsadowski Exp $	*/
+ /*	$OpenBSD: server_http.c,v 1.170 2026/07/26 14:46:32 rsadowski Exp $	*/
  
  /*
 - * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>

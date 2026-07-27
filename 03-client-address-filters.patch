@@ -121,15 +121,15 @@ Index: usr.sbin/httpd/httpd.h
 +};
 +
  struct server_config {
- 	uint32_t		 id;
- 	uint32_t		 parent_id;
+ 	uint32_t			 id;
+ 	uint32_t			 parent_id;
 @@ -557,6 +583,7 @@
- 	char			 errdocroot[HTTPD_ERRDOCROOT_MAX];
+ 	char				 errdocroot[HTTPD_ERRDOCROOT_MAX];
  
- 	char			 fcgiscript[PATH_MAX];
-+	struct addr_filter	 clientfilter[HTTPD_CLIENT_FILTER_MAX];
+ 	char				 fcgiscript[PATH_MAX];
++	struct addr_filter		 clientfilter[HTTPD_CLIENT_FILTER_MAX];
  
- 	TAILQ_ENTRY(server_config) entry;
+ 	TAILQ_ENTRY(server_config)	 entry;
  };
 Index: usr.sbin/httpd/parse.y
 @@ -76,6 +76,10 @@
@@ -487,9 +487,9 @@ Index: usr.sbin/httpd/server_http.c
 @@ -63,6 +63,8 @@
  static char	*get_custom_headers(struct kvtree *);
  int		 server_locationaccesstest(struct server_config *,
- 		    const char *);
+     const char *);
 +int		 server_clientfilter(struct server_config *,
-+		    struct server_client_addr *);
++    struct server_client_addr *);
  
  static struct http_method	 http_methods[] = HTTP_METHODS;
  static struct http_error	 http_errors[] = HTTP_ERRORS;
@@ -608,10 +608,10 @@ Index: usr.sbin/httpd/server_http.c
 +		    memcmp(&caddr->value.ipv4, &clt_fltr[i].last.ipv4,
 +		    sizeof(struct in_addr)) <= 0) ||
 +		    (caddr->family == AF_INET6 &&
-+		    memcmp(&caddr->value.ipv6, &clt_fltr[i].first.ipv6,
-+		    sizeof(struct in6_addr)) >= 0 &&
-+		    memcmp(&caddr->value.ipv6, &clt_fltr[i].last.ipv6,
-+		    sizeof(struct in6_addr)) <= 0))
++		     memcmp(&caddr->value.ipv6, &clt_fltr[i].first.ipv6,
++		     sizeof(struct in6_addr)) >= 0 &&
++		     memcmp(&caddr->value.ipv6, &clt_fltr[i].last.ipv6,
++		     sizeof(struct in6_addr)) <= 0))
 +			return ((SRVFLAG_CLIENT_FROM & srv_conf->flags) == 0);
 +	}
 +	return ((SRVFLAG_CLIENT_NOT_FROM & srv_conf->flags) == 0);
