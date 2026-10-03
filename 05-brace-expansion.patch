@@ -14,7 +14,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/httpd.conf.5
-@@ -1033,6 +1033,71 @@
+@@ -1066,6 +1066,71 @@
  Include types definitions from an external file, for example
  .Pa /usr/share/misc/mime.types .
  .El
@@ -86,7 +86,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Sh FILES
  .Bl -tag -width /etc/examples/httpd.conf -compact
  .It Pa /etc/examples/httpd.conf
-@@ -1203,6 +1268,28 @@
+@@ -1236,6 +1301,28 @@
  file will straighten things out.
  .Bd -literal -offset indent
  add_filter('got_url_rewrite', '__return_true');
@@ -173,7 +173,7 @@ Index: usr.sbin/httpd/parse.y
  		}
  		;
  
-@@ -500,6 +528,7 @@
+@@ -501,6 +529,7 @@
  			free($3);
  		}
  		| ALIAS optmatch STRING		{
@@ -181,7 +181,7 @@ Index: usr.sbin/httpd/parse.y
  			struct server_config	*alias;
  
  			if (parentsrv != NULL) {
-@@ -508,22 +537,37 @@
+@@ -509,22 +538,37 @@
  				YYERROR;
  			}
  
@@ -229,7 +229,7 @@ Index: usr.sbin/httpd/parse.y
  		}
  		| ERRDOCS STRING	{
  			if (parentsrv != NULL) {
-@@ -591,6 +635,8 @@
+@@ -592,6 +636,8 @@
  		| LOCATION optfound optmatch STRING optclientfilter	{
  			struct server		*s;
  			struct sockaddr_un	*sun;
@@ -238,7 +238,7 @@ Index: usr.sbin/httpd/parse.y
  
  			if (srv->srv_conf.ss.ss_family == AF_UNSPEC) {
  				yyerror("listen address not specified");
-@@ -612,25 +658,44 @@
+@@ -613,25 +659,44 @@
  				YYACCEPT;
  			}
  
@@ -286,7 +286,7 @@ Index: usr.sbin/httpd/parse.y
  				free(s);
  				YYERROR;
  			}
-@@ -662,6 +727,7 @@
+@@ -663,6 +728,7 @@
  				if (build_clientfilter(&s->srv_conf,
  				    $5 + 1) == NULL) {
  					free($5);
@@ -294,7 +294,7 @@ Index: usr.sbin/httpd/parse.y
  					free(s);
  					YYERROR;
  				}
-@@ -685,11 +751,6 @@
+@@ -686,11 +752,6 @@
  			s->srv_conf.prefixlen = srv->srv_conf.prefixlen;
  			s->srv_conf.tls_flags = srv->srv_conf.tls_flags;
  
@@ -306,8 +306,8 @@ Index: usr.sbin/httpd/parse.y
  			parentsrv = srv;
  			srv = s;
  			srv_conf = &srv->srv_conf;
-@@ -697,41 +758,17 @@
- 			TAILQ_INIT(&srv_conf->headers);
+@@ -699,41 +760,17 @@
+ 			TAILQ_INIT(&srv_conf->header_rules);
  			TAILQ_INIT(&srv_conf->fcgiparams);
  		} '{' optnl serveropts_l '}'	{
 -			struct server	*s = NULL;
@@ -357,7 +357,7 @@ Index: usr.sbin/httpd/parse.y
  			srv = parentsrv;
  			srv_conf = &parentsrv->srv_conf;
  			parentsrv = NULL;
-@@ -1943,6 +1980,296 @@
+@@ -2030,6 +2067,296 @@
  		}
  	}
  	return (0);

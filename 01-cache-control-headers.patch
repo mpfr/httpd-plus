@@ -32,7 +32,7 @@ Index: usr.sbin/httpd/http.h
   * Some default media types based on (2014-08-04 version):
 Index: usr.sbin/httpd/httpd.conf.5
 @@ -1,6 +1,6 @@
- .\"	$OpenBSD: httpd.conf.5,v 1.136 2026/09/27 10:16:36 kn Exp $
+ .\"	$OpenBSD: httpd.conf.5,v 1.137 2026/10/02 04:47:07 rsadowski Exp $
  .\"
 -.\" Copyright (c) 2020 - 2022 Matthias Pressfreund
 +.\" Copyright (c) 2020 - 2026 Matthias Pressfreund
@@ -52,7 +52,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  When
  .Ic gzip-static
  is enabled, also send
-@@ -866,16 +870,24 @@
+@@ -899,16 +903,24 @@
  section must include one or more lines of the following syntax,
  enclosed in curly braces:
  .Bl -tag -width Ds
@@ -81,7 +81,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .It Ic include Ar file
  Include types definitions from an external file, for example
  .Pa /usr/share/misc/mime.types .
-@@ -906,14 +918,14 @@
+@@ -939,14 +951,14 @@
  }
  
  types {
@@ -106,7 +106,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Pp
 Index: usr.sbin/httpd/httpd.h
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: httpd.h,v 1.184 2026/09/10 12:31:09 deraadt Exp $	*/
+ /*	$OpenBSD: httpd.h,v 1.185 2026/10/02 04:47:07 rsadowski Exp $	*/
  
  /*
 + * Copyright (c) 2020 Matthias Pressfreund
@@ -131,7 +131,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define CONFIG_RELOAD		0x00
  #define CONFIG_MEDIA		0x01
-@@ -437,6 +440,7 @@
+@@ -453,6 +456,7 @@
  	char			 media_name[MEDIATYPE_NAMEMAX];
  	char			 media_type[MEDIATYPE_TYPEMAX];
  	char			 media_subtype[MEDIATYPE_TYPEMAX];
@@ -150,7 +150,7 @@ Index: usr.sbin/httpd/parse.y
  %token	DEFAULT DHE DIRECTORY DROP
  %token	ECDHE ERR ERRDOCS ERROR
  %token	FCGI FORWARDED FOUND
-@@ -1458,7 +1459,7 @@
+@@ -1545,7 +1546,7 @@
  		| mediaoptsl nl
  		;
  
@@ -159,7 +159,7 @@ Index: usr.sbin/httpd/parse.y
  		| include
  		;
  
-@@ -1479,6 +1480,24 @@
+@@ -1566,6 +1567,24 @@
  		}
  		;
  
@@ -184,7 +184,7 @@ Index: usr.sbin/httpd/parse.y
  medianames_l	: medianames_l medianamesl
  		| medianamesl
  		;
-@@ -1609,6 +1628,7 @@
+@@ -1696,6 +1715,7 @@
  		{ "body",		BODY },
  		{ "buffer",		BUFFER },
  		{ "ca",			CA },
@@ -192,7 +192,7 @@ Index: usr.sbin/httpd/parse.y
  		{ "certificate",	CERTIFICATE },
  		{ "chroot",		CHROOT },
  		{ "ciphers",		CIPHERS },
-@@ -2130,6 +2150,7 @@
+@@ -2217,6 +2237,7 @@
  			(void)strlcpy(m.media_subtype,
  			    mediatypes[i].media_subtype,
  			    sizeof(m.media_subtype));
@@ -202,7 +202,7 @@ Index: usr.sbin/httpd/parse.y
  			if (media_add(conf->sc_mediatypes, &m) == NULL) {
 Index: usr.sbin/httpd/server_http.c
 @@ -1,7 +1,7 @@
- /*	$OpenBSD: server_http.c,v 1.171 2026/09/17 17:53:31 rsadowski Exp $	*/
+ /*	$OpenBSD: server_http.c,v 1.172 2026/10/02 04:47:07 rsadowski Exp $	*/
  
  /*
 - * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -210,7 +210,7 @@ Index: usr.sbin/httpd/server_http.c
   * Copyright (c) 2006 - 2018 Reyk Floeter <reyk@openbsd.org>
   *
   * Permission to use, copy, modify, and distribute this software for any
-@@ -1706,7 +1706,7 @@
+@@ -1756,7 +1756,7 @@
  	struct http_descriptor	*desc = clt->clt_descreq;
  	struct http_descriptor	*resp = clt->clt_descresp;
  	const char		*error;
@@ -219,7 +219,7 @@ Index: usr.sbin/httpd/server_http.c
  	char			 tmbuf[32];
  
  	if (desc == NULL || media == NULL ||
-@@ -1746,8 +1746,15 @@
+@@ -1796,8 +1796,15 @@
  	    kv_set(cl, "%lld", (long long)size) == -1))
  		return (-1);
  

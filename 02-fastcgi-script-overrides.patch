@@ -24,7 +24,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .It Ic strip Ar number
  Strip
  .Ar number
-@@ -1024,7 +1027,9 @@
+@@ -1057,7 +1060,9 @@
  .Pp
  The
  .Ic location not found
@@ -35,7 +35,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Lk https://wordpress.org/support/article/using-permalinks/ WordPress Pretty Permalinks
  just like on an Apache web server with
  .Pa mod_rewrite
-@@ -1035,7 +1040,10 @@
+@@ -1068,7 +1073,10 @@
  	directory index "index.php"
  
  	location not found "/*" {
@@ -49,7 +49,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  		fastcgi socket "/run/php-fpm.sock"
 Index: usr.sbin/httpd/httpd.h
 @@ -1,7 +1,7 @@
- /*	$OpenBSD: httpd.h,v 1.184 2026/09/10 12:31:09 deraadt Exp $	*/
+ /*	$OpenBSD: httpd.h,v 1.185 2026/10/02 04:47:07 rsadowski Exp $	*/
  
  /*
 - * Copyright (c) 2020 Matthias Pressfreund
@@ -57,8 +57,8 @@ Index: usr.sbin/httpd/httpd.h
   * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
   * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
   * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
-@@ -555,6 +555,8 @@
- 	int				 fcgiallowchunked;
+@@ -583,6 +583,8 @@
+ 	struct server_header_rules	 header_rules;
  	struct server_headers		 headers;
  	char				 errdocroot[HTTPD_ERRDOCROOT_MAX];
 +
@@ -78,7 +78,7 @@ Index: usr.sbin/httpd/parse.y
  %token	TCP TICKET TIMEOUT TLS TYPE TYPES
  %token	WITH
  %token	<v.string>	STRING
-@@ -953,6 +953,16 @@
+@@ -1040,6 +1040,16 @@
  
  			TAILQ_INSERT_TAIL(&srv_conf->fcgiparams, param, entry);
  		}
@@ -95,7 +95,7 @@ Index: usr.sbin/httpd/parse.y
  		| STRIP NUMBER			{
  			if ($2 < 0 || $2 > INT_MAX) {
  				yyerror("invalid fastcgi strip number");
-@@ -1681,6 +1691,7 @@
+@@ -1768,6 +1778,7 @@
  		{ "rewrite",		REWRITE },
  		{ "root",		ROOT },
  		{ "sack",		SACK },
