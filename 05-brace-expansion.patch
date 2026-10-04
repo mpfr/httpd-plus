@@ -357,7 +357,7 @@ Index: usr.sbin/httpd/parse.y
  			srv = parentsrv;
  			srv_conf = &parentsrv->srv_conf;
  			parentsrv = NULL;
-@@ -2030,6 +2067,296 @@
+@@ -2030,6 +2067,320 @@
  		}
  	}
  	return (0);
@@ -575,6 +575,10 @@ Index: usr.sbin/httpd/parse.y
 +	struct server_config		*src_conf, *dst_conf;
 +	struct server_fcgiparams	*dst_fparams;
 +	struct fastcgi_param		*src_fparam, *dst_fparam;
++	struct server_headers		*dst_headers;
++	struct custom_header		*src_header, *dst_header;
++	struct server_header_rules	*dst_header_rules;
++	struct header_rule		*src_header_rule, *dst_header_rule;
 +
 +	if ((dst = calloc(1, sizeof(*dst))) == NULL)
 +		fatal("calloc");
@@ -598,6 +602,26 @@ Index: usr.sbin/httpd/parse.y
 +			fatal("malloc");
 +		memcpy(dst_fparam, src_fparam, sizeof(*dst_fparam));
 +		TAILQ_INSERT_TAIL(dst_fparams, dst_fparam, entry);
++	}
++
++	dst_headers = &dst_conf->headers;
++	TAILQ_INIT(dst_headers);
++	TAILQ_FOREACH(src_header, &src_conf->headers, entry) {
++		if ((dst_header = malloc(sizeof(*dst_header))) == NULL)
++			fatal("malloc");
++		memcpy(dst_header, src_header, sizeof(*dst_header));
++		TAILQ_INSERT_TAIL(dst_headers, dst_header, entry);
++	}
++
++	dst_header_rules = &dst_conf->header_rules;
++	TAILQ_INIT(dst_header_rules);
++	TAILQ_FOREACH(src_header_rule, &src_conf->header_rules, entry) {
++		if ((dst_header_rule = malloc(sizeof(*dst_header_rule)))
++		    == NULL)
++			fatal("malloc");
++		memcpy(dst_header_rule, src_header_rule,
++		    sizeof(*dst_header_rule));
++		TAILQ_INSERT_TAIL(dst_header_rules, dst_header_rule, entry);
 +	}
 +
 +	SPLAY_INIT(&dst->srv_clients);
