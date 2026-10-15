@@ -15,14 +15,14 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/config.c
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: config.c,v 1.78 2026/10/02 04:47:07 rsadowski Exp $	*/
+ /*	$OpenBSD: config.c,v 1.80 2026/10/14 04:47:41 rsadowski Exp $	*/
  
  /*
 + * Copyright (c) 2021 Matthias Pressfreund
   * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
   *
   * Permission to use, copy, modify, and distribute this software for any
-@@ -741,6 +742,7 @@
+@@ -740,6 +741,7 @@
  	uint8_t			*p = imsg->data;
  	uint64_t		 f;
  	size_t			 s;
@@ -186,7 +186,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define MEDIATYPE_NAMEMAX	128	/* file name extension */
  #define MEDIATYPE_TYPEMAX	64	/* length of type/subtype */
-@@ -535,6 +538,26 @@
+@@ -530,6 +533,26 @@
  	struct client_addr	 xff;
  };
  
@@ -213,7 +213,7 @@ Index: usr.sbin/httpd/httpd.h
  struct server_config {
  	uint32_t			 id;
  	uint32_t			 parent_id;
-@@ -612,6 +635,7 @@
+@@ -607,6 +630,7 @@
  
  	char				 fcgiscript[PATH_MAX];
  	struct addr_filter		 clientfilter[HTTPD_CLIENT_FILTER_MAX];
