@@ -14,7 +14,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/config.c
-@@ -781,7 +781,12 @@
+@@ -780,7 +780,12 @@
  		/* Inherit configuration from the parent */
  		f = SRVFLAG_INDEX|SRVFLAG_NO_INDEX;
  		if ((srv_conf->flags & f) == 0) {
@@ -112,7 +112,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Sh SEE ALSO
  .Xr htpasswd 1 ,
 Index: usr.sbin/httpd/httpd.h
-@@ -694,6 +694,9 @@
+@@ -698,6 +698,9 @@
  
  SPLAY_PROTOTYPE(client_tree, client, clt_nodes, server_client_cmp);
  
@@ -122,7 +122,7 @@ Index: usr.sbin/httpd/httpd.h
  /* server_http.c */
  void			 server_http(void);
  int			 server_httpdesc_init(struct client *);
-@@ -722,8 +725,6 @@
+@@ -726,8 +729,6 @@
  int			 server_response(struct httpd *, struct client *);
  const char		*server_root_strip(const char *, int);
  struct server_config	*server_getlocation(struct client *, const char *);
