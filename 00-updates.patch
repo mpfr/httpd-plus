@@ -161,7 +161,7 @@ Index: usr.sbin/httpd/server_http.c
  
  static struct http_method	 http_methods[] = HTTP_METHODS;
  static struct http_error	 http_errors[] = HTTP_ERRORS;
-@@ -1504,10 +1506,9 @@
+@@ -1502,10 +1504,9 @@
  		goto fail;
  
  	/* Now search for the location */
@@ -175,7 +175,7 @@ Index: usr.sbin/httpd/server_http.c
  	if ((mrule = server_match_header_rule(srv_conf, desc)) != NULL) {
  		switch (mrule->action) {
  		case HEADER_ACTION_DROP:
-@@ -1559,10 +1560,8 @@
+@@ -1557,10 +1558,8 @@
  
  		/* Now search for the updated location */
  		if ((srv_conf = server_getlocation(clt,
@@ -188,7 +188,7 @@ Index: usr.sbin/httpd/server_http.c
  	}
  
  	if (clt->clt_toread > 0 && (size_t)clt->clt_toread >
-@@ -1589,6 +1588,11 @@
+@@ -1587,6 +1586,11 @@
   fail:
  	server_abort_http(clt, 400, "bad request");
  	return (-1);
@@ -200,7 +200,7 @@ Index: usr.sbin/httpd/server_http.c
  }
  
  const char *
-@@ -1659,7 +1663,8 @@
+@@ -1657,7 +1661,8 @@
  	    srv_conf->flags) == 0)
  		return (0);
  
@@ -210,7 +210,7 @@ Index: usr.sbin/httpd/server_http.c
  		return (-1);
  
  	path = server_root_strip(path, srv_conf->strip) + 1;
-@@ -1981,8 +1986,8 @@
+@@ -1979,8 +1984,8 @@
  }
  
  /*
