@@ -1,4 +1,4 @@
-| :warning: With the release of OpenBSD version 8.0, this branch will reach its end of life and will no longer be maintained.
+| :warning: With the release of OpenBSD version 8.0 on Oct 20, this branch has reached its end of life and is no longer being maintained.
 | --- |
 
 # httpd-plus
