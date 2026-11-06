@@ -15,14 +15,14 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Index: usr.sbin/httpd/config.c
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: config.c,v 1.81 2026/10/15 10:59:00 rsadowski Exp $	*/
+ /*	$OpenBSD: config.c,v 1.83 2026/11/05 06:04:16 rsadowski Exp $	*/
  
  /*
 + * Copyright (c) 2021 Matthias Pressfreund
   * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
   *
   * Permission to use, copy, modify, and distribute this software for any
-@@ -740,6 +741,7 @@
+@@ -743,6 +744,7 @@
  	uint8_t			*p = imsg->data;
  	uint64_t		 f;
  	size_t			 s;
@@ -30,7 +30,7 @@ Index: usr.sbin/httpd/config.c
  
  	if ((srv_conf = calloc(1, sizeof(*srv_conf))) == NULL)
  		return (-1);
-@@ -895,6 +897,16 @@
+@@ -899,6 +901,16 @@
  		    sizeof(srv_conf->errdocroot));
  
  		srv_conf->flags |= parent->flags & SRVFLAG_NO_BANNER;
@@ -186,7 +186,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define MEDIATYPE_NAMEMAX	128	/* file name extension */
  #define MEDIATYPE_TYPEMAX	64	/* length of type/subtype */
-@@ -534,6 +537,26 @@
+@@ -529,6 +532,26 @@
  	struct client_addr	 xff;
  };
  
@@ -213,7 +213,7 @@ Index: usr.sbin/httpd/httpd.h
  struct server_config {
  	uint32_t			 id;
  	uint32_t			 parent_id;
-@@ -611,6 +634,7 @@
+@@ -606,6 +629,7 @@
  
  	char				 fcgiscript[PATH_MAX];
  	struct addr_filter		 clientfilter[HTTPD_CLIENT_FILTER_MAX];
