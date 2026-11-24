@@ -132,7 +132,7 @@ Index: usr.sbin/httpd/httpd.h
      size_t);
  char			*server_http_parsehost(char *, char *, size_t, int *);
 Index: usr.sbin/httpd/server_file.c
-@@ -218,7 +218,7 @@
+@@ -253,7 +253,7 @@
  	struct server_config	*srv_conf = clt->clt_srv_conf;
  	char			 path[PATH_MAX];
  	const char		*stripped, *errstr = NULL;
@@ -141,7 +141,7 @@ Index: usr.sbin/httpd/server_file.c
  
  	/*
  	 * Check the location that serves the request as a directory
-@@ -229,6 +229,13 @@
+@@ -264,6 +264,13 @@
  
  	if (srv_conf->flags & SRVFLAG_FCGI)
  		return (server_fcgi(env, clt));
