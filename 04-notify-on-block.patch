@@ -186,7 +186,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define MEDIATYPE_NAMEMAX	128	/* file name extension */
  #define MEDIATYPE_TYPEMAX	64	/* length of type/subtype */
-@@ -529,6 +532,26 @@
+@@ -532,6 +535,26 @@
  	struct client_addr	 xff;
  };
  
@@ -213,7 +213,7 @@ Index: usr.sbin/httpd/httpd.h
  struct server_config {
  	uint32_t			 id;
  	uint32_t			 parent_id;
-@@ -606,6 +629,7 @@
+@@ -609,6 +632,7 @@
  
  	char				 fcgiscript[PATH_MAX];
  	struct addr_filter		 clientfilter[HTTPD_CLIENT_FILTER_MAX];
@@ -422,7 +422,7 @@ Index: usr.sbin/httpd/server_http.c
  
  static struct http_method	 http_methods[] = HTTP_METHODS;
  static struct http_error	 http_errors[] = HTTP_ERRORS;
-@@ -1665,6 +1670,7 @@
+@@ -1674,6 +1679,7 @@
  server_http_access(struct client *clt, struct server_config *srv_conf)
  {
  	struct http_descriptor	*desc = clt->clt_descreq;
@@ -430,7 +430,7 @@ Index: usr.sbin/httpd/server_http.c
  
  	if (server_http_header_rules(clt, srv_conf) == -1)
  		return (-1);
-@@ -1682,8 +1688,17 @@
+@@ -1691,8 +1697,17 @@
  
  	/* Location is blocked */
  	if (srv_conf->flags & SRVFLAG_BLOCK) {
@@ -448,7 +448,7 @@ Index: usr.sbin/httpd/server_http.c
  		return (-1);
  	}
  
-@@ -1695,6 +1710,192 @@
+@@ -1704,6 +1719,192 @@
  	}
  
  	return (0);

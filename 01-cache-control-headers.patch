@@ -106,7 +106,7 @@ Index: usr.sbin/httpd/httpd.conf.5
  .Pp
 Index: usr.sbin/httpd/httpd.h
 @@ -1,6 +1,7 @@
- /*	$OpenBSD: httpd.h,v 1.195 2026/11/22 19:17:44 rsadowski Exp $	*/
+ /*	$OpenBSD: httpd.h,v 1.197 2026/11/26 08:32:40 armani Exp $	*/
  
  /*
 + * Copyright (c) 2020 Matthias Pressfreund
@@ -131,7 +131,7 @@ Index: usr.sbin/httpd/httpd.h
  
  #define CONFIG_RELOAD		0x00
  #define CONFIG_MEDIA		0x01
-@@ -447,6 +450,7 @@
+@@ -450,6 +453,7 @@
  	char			 media_name[MEDIATYPE_NAMEMAX];
  	char			 media_type[MEDIATYPE_TYPEMAX];
  	char			 media_subtype[MEDIATYPE_TYPEMAX];
@@ -202,7 +202,7 @@ Index: usr.sbin/httpd/parse.y
  			if (media_add(conf->sc_mediatypes, &m) == NULL) {
 Index: usr.sbin/httpd/server_http.c
 @@ -1,7 +1,7 @@
- /*	$OpenBSD: server_http.c,v 1.176 2026/11/21 07:45:22 rsadowski Exp $	*/
+ /*	$OpenBSD: server_http.c,v 1.177 2026/11/26 08:32:40 armani Exp $	*/
  
  /*
 - * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -210,7 +210,7 @@ Index: usr.sbin/httpd/server_http.c
   * Copyright (c) 2006 - 2018 Reyk Floeter <reyk@openbsd.org>
   *
   * Permission to use, copy, modify, and distribute this software for any
-@@ -1856,7 +1856,7 @@
+@@ -1969,7 +1969,7 @@
  	struct http_descriptor	*desc = clt->clt_descreq;
  	struct http_descriptor	*resp = clt->clt_descresp;
  	const char		*error;
@@ -219,8 +219,8 @@ Index: usr.sbin/httpd/server_http.c
  	char			 tmbuf[32];
  
  	if (desc == NULL || media == NULL ||
-@@ -1896,8 +1896,15 @@
- 	    kv_set(cl, "%lld", (long long)size) == -1))
+@@ -1991,8 +1991,15 @@
+ 	    kv_set(ct, "%s/%s", media->media_type, media->media_subtype) == -1)
  		return (-1);
  
 +	/* Set cache control, if appropriate */
